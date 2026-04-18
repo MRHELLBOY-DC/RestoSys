@@ -1,0 +1,89 @@
+version: "3.9"
+
+services:
+  db-write:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: menu_db_write
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_write_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db_write"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-read:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: menu_db_read
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_read_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db_read"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  auth:
+    image: python:3.11
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./auth_service:/app
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-write
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+    command: sh -c "pip install -r requirements.txt && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - db-write
+      - rabbitmq
+
+  celery:
+    image: python:3.11
+    volumes:
+      - ./auth_service:/app
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-write
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+    command: sh -c "pip install -r requirements.txt && celery -A auth_project worker -l info"
+    depends_on:
+      - db-write
+      - rabbitmq
+      - redis
+
+volumes:
+  postgres_write_data:
+  postgres_read_data:
+  rabbitmq_data:
+  redis_data:
