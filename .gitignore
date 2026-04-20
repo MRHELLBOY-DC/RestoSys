@@ -1,29 +1,14 @@
 # ============================================
-# GITIGNORE GENERAL - Menú Digital
+# GITIGNORE - Menú Digital
 # ============================================
 
-# --- Python ---
+# --- Python (IMPORTANTE: evitar .pyc y __pycache__) ---
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+*.pyc
 
 # Virtual Environment
 venv/
@@ -31,8 +16,9 @@ env/
 ENV/
 .venv
 
-# Base de datos local (SQLite)
+# Base de datos local (NUNCA SUBIR)
 *.sqlite3
+*.db
 db.sqlite3
 
 # Entorno
@@ -59,8 +45,9 @@ yarn-error.log*
 pnpm-debug.log*
 
 # --- Docker ---
-# No subir volúmenes de Docker (datos de DB, etc.)
 docker-compose.override.yml
+.containers/
+volumes/
 
 # --- Logs ---
 *.log
@@ -74,3 +61,28 @@ celerybeat.pid
 *.tmp
 *.bak
 *.cache
+*.temp
+
+# --- Media / Uploads ---
+media/
+uploads/
+staticfiles/
+
+# --- Testing ---
+.coverage
+htmlcov/
+.pytest_cache/
+
+# --- Archivos de migración (opcional, descomenta si quieres excluirlos) ---
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# --- Windows ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Mac ---
+.DS_Store
+.AppleDouble
+.LSOverride
