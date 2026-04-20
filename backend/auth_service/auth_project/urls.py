@@ -7,18 +7,23 @@ from users.views import (
     profile,
     users_list,
     user_detail,
-    event_history
+    event_history,
+    login,  # Importar login personalizado
+    admin_restaurantes,
+    admin_restaurante_detail,
+    admin_usuarios,
+    admin_usuario_detail,
+    admin_asignar_restaurante,
 )
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    # Admin
     path('admin/', admin.site.urls),
 
     # ============================================
     # JWT Authentication
     # ============================================
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/login/', login, name='login'),  # Login personalizado
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # ============================================
@@ -35,4 +40,21 @@ urlpatterns = [
     path('api/users/', users_list, name='users_list'),
     path('api/users/<int:user_id>/', user_detail, name='user_detail'),
     path('api/events/', event_history, name='event_history'),
+
+    # ============================================
+    # ADMIN - CRUD RESTAURANTES
+    # ============================================
+    path('api/admin/restaurantes/', admin_restaurantes, name='admin_restaurantes'),
+    path('api/admin/restaurantes/<int:restaurante_id>/', admin_restaurante_detail, name='admin_restaurante_detail'),
+    
+    # ============================================
+    # ADMIN - CRUD USUARIOS
+    # ============================================
+    path('api/admin/usuarios/', admin_usuarios, name='admin_usuarios'),
+    path('api/admin/usuarios/<int:usuario_id>/', admin_usuario_detail, name='admin_usuario_detail'),
+    
+    # ============================================
+    # ADMIN - ASIGNAR RESTAURANTE A USUARIO
+    # ============================================
+    path('api/admin/usuarios/<int:usuario_id>/asignar-restaurante/', admin_asignar_restaurante, name='admin_asignar_restaurante'),
 ]

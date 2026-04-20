@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# 👤 USUARIO
+#  USUARIO
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('cliente', 'Cliente'),
@@ -12,7 +12,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
 
 
-# 🏢 RESTAURANTE
+#  RESTAURANTE
 class Restaurant(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
@@ -21,7 +21,7 @@ class Restaurant(models.Model):
         return self.name
 
 
-# 🔗 RELACIÓN USUARIO - RESTAURANTE (multi-tenant)
+#  RELACIÓN USUARIO - RESTAURANTE (multi-tenant)
 class UserRestaurant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)

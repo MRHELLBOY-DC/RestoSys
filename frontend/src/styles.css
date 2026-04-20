@@ -71,7 +71,7 @@ button:hover {
 }
 
 .home p {
-    color: #666;
+    color: #94a3b8; /* Cambiado de #666 para mejor contraste */
     margin-bottom: 30px;
 }
 
@@ -81,3 +81,168 @@ button:hover {
     font-size: 16px;
     cursor: pointer;
 }
+
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 5%; /* Usa porcentaje en lugar de píxeles fijos */
+    background: #ff3d00;
+    color: white;
+    width: 100vw; /* Usa viewport width en lugar de 100% */
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    overflow-x: hidden; /* Previene scroll horizontal */
+}
+
+/* Contenedor izquierdo (logo) */
+.navbar .logo {
+    display: flex;
+    align-items: center;
+}
+
+.navbar .logo a {
+    font-size: 20px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Contenedor derecho (login y registro) */
+.navbar .right-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.navbar .right-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: opacity 0.3s ease;
+}
+
+.navbar .right-links a:hover {
+    opacity: 0.8;
+}
+
+/* HOME HERO */
+.hero {
+    margin-top: 40px;
+    padding: 30px;
+    background: #1e293b; /* Cambiado para que coincida con el tema oscuro */
+    border-radius: 10px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero h2 {
+    color: #ff3d00;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: #94a3b8;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 15px 20px;
+    }
+    
+    .navbar .logo a {
+        font-size: 18px;
+    }
+    
+    .navbar .right-links {
+        gap: 15px;
+    }
+    
+    .home h1 {
+        font-size: 2rem;
+    }
+    
+    .hero {
+        margin: 20px;
+        padding: 20px;
+    }
+}
+
+.admin-panel {
+                    padding: 20px;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    font-family: Arial, sans-serif;
+                }
+                .tabs {
+                    margin-bottom: 20px;
+                    border-bottom: 2px solid #ddd;
+                }
+                .tabs button {
+                    padding: 10px 20px;
+                    margin-right: 10px;
+                    background: #007bff;
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                    border-radius: 5px;
+                }
+                .tabs button:hover {
+                    background: #0056b3;
+                }
+                .form {
+                    background: #f0f0f0;
+                    padding: 20px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                }
+                .form input, .form select {
+                    margin: 5px;
+                    padding: 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 3px;
+                }
+                .form button {
+                    margin: 5px;
+                    padding: 8px 15px;
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                }
+                .form button:hover {
+                    background: #218838;
+                }
+                .item-card {
+                    border: 1px solid #ddd;
+                    padding: 10px;
+                    margin: 10px 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 5px;
+                }
+                .item-actions button {
+                    margin-left: 10px;
+                    padding: 5px 10px;
+                    border: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                }
+                .item-actions button:first-child {
+                    background: #ffc107;
+                    color: #000;
+                }
+                .item-actions button:last-child {
+                    background: #dc3545;
+                    color: white;
+                }
+                h1, h2, h3 {
+                    color: #333;
+                }

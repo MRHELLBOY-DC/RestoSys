@@ -9,7 +9,7 @@ export default function Dashboard() {
     useEffect(() => {
         const token = localStorage.getItem("token");
 
-        // 🔒 PROTECCIÓN
+        // PROTECCIÓN
         if (!token) {
             navigate("/login");
             return;
