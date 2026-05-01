@@ -1,6 +1,14 @@
+import sys
+import os
 from pathlib import Path
 from datetime import timedelta
-import os
+
+# Agregar el directorio backend al path para poder importar 'shared'
+# Esto permite que auth_service y menu_service compartan el módulo 'shared'
+BASE_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = str(BASE_DIR.parent)  # Esto apunta a /backend/
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +20,7 @@ SECRET_KEY = 'django-insecure-xgp=59ff8*(y8*@k-wpr@lpsh(pxt)h9fxsew5)pa3cke0@e)z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']  #  Cambiado para permitir todas las conexiones
+ALLOWED_HOSTS = ['*']  # Cambiado para permitir todas las conexiones
 
 
 # Application definition
@@ -69,7 +77,7 @@ DATABASES = {
         'NAME': 'menu_db_write',
         'USER': 'admin',
         'PASSWORD': '1234',
-        'HOST': 'db-write',  #  nombre del servicio en docker-compose
+        'HOST': 'db-write',  # nombre del servicio en docker-compose
         'PORT': '5432',
     }
 }
@@ -111,7 +119,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# ====================  CONFIGURACIÓN CORS (AGREGAR ESTO) ====================
+# ==================== CONFIGURACIÓN CORS ====================
 
 # Permitir solicitudes desde estos orígenes (frontend)
 CORS_ALLOWED_ORIGINS = [
@@ -147,9 +155,6 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Opcional: Para desarrollo, puedes permitir todos los orígenes (NO usar en producción)
-# CORS_ALLOW_ALL_ORIGINS = True  # Descomentar SOLO para desarrollo
-
 # ==================== JWT AUTHENTICATION ====================
 # JWT Configuration (misma que en auth_service)
 
@@ -170,10 +175,17 @@ SIMPLE_JWT = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'menu.authentication.JWTAuthenticationCustom',  # Usamos nuestro autenticador personalizado
+        'menu.interfaces.api.authentication.JWTAuthenticationCustom',  # Ruta actualizada a interfaces/api/
     ),
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
 }
 
 # ==================== MEDIA FILES (para imágenes) ====================
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

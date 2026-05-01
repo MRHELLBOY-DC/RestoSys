@@ -1,9 +1,9 @@
-const API = "http://localhost:8002";
+const API = "http://localhost:8001";
 
 // Helper para manejar errores
 const handleResponse = async (res) => {
     if (!res.ok) {
-        const error = await res.json();
+        const error = await res.json().catch(() => ({ error: 'Error desconocido' }));
         throw error;
     }
     return res.json();
@@ -13,7 +13,6 @@ const handleResponse = async (res) => {
 const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
     };
 };
@@ -26,21 +25,49 @@ export const getProducts = async () => {
     return handleResponse(res);
 };
 
+// Crear producto (con o sin imagen) - UNIFICADA
 export const createProduct = async (data) => {
+    const isFormData = data instanceof FormData;
+    
+    console.log("createProduct - isFormData:", isFormData);
+    
+    const headers = {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+    };
+    
+    if (!isFormData) {
+        headers["Content-Type"] = "application/json";
+    }
+    
     const res = await fetch(`${API}/api/products/`, {
         method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data)
+        headers: headers,
+        body: isFormData ? data : JSON.stringify(data)
     });
+    
     return handleResponse(res);
 };
 
+// Actualizar producto (con o sin imagen) - UNIFICADA
 export const updateProduct = async (id, data) => {
+    const isFormData = data instanceof FormData;
+    
+    console.log("updateProduct - isFormData:", isFormData);
+    
+    const headers = {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+    };
+    
+    if (!isFormData) {
+        headers["Content-Type"] = "application/json";
+    }
+    
     const res = await fetch(`${API}/api/products/${id}/`, {
         method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data)
+        headers: headers,
+        body: isFormData ? data : JSON.stringify(data)
     });
+    
     return handleResponse(res);
 };
 
@@ -64,7 +91,10 @@ export const getCategories = async () => {
 export const createCategory = async (data) => {
     const res = await fetch(`${API}/api/categories/`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
@@ -73,7 +103,10 @@ export const createCategory = async (data) => {
 export const updateCategory = async (id, data) => {
     const res = await fetch(`${API}/api/categories/${id}/`, {
         method: "PUT",
-        headers: getAuthHeaders(),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify(data)
     });
     return handleResponse(res);
@@ -88,9 +121,10 @@ export const deleteCategory = async (id) => {
     return handleResponse(res);
 };
 
-// ========== OPCIONES (requieren auth) ==========
-export const getOptions = async () => {
-    const res = await fetch(`${API}/api/options/`, {
+// ========== OPCIONES (requieren auth y product_id) ==========
+export const getOptions = async (productId) => {
+    if (!productId) return [];
+    const res = await fetch(`${API}/api/options/?product_id=${productId}`, {
         headers: getAuthHeaders()
     });
     return handleResponse(res);
@@ -99,9 +133,33 @@ export const getOptions = async () => {
 export const createOption = async (data) => {
     const res = await fetch(`${API}/api/options/`, {
         method: "POST",
-        headers: getAuthHeaders(),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify(data)
     });
+    return handleResponse(res);
+};
+
+export const updateOption = async (id, data) => {
+    const res = await fetch(`${API}/api/options/${id}/`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+};
+
+export const deleteOption = async (id) => {
+    const res = await fetch(`${API}/api/options/${id}/`, {
+        method: "DELETE",
+        headers: getAuthHeaders()
+    });
+    if (res.status === 204) return null;
     return handleResponse(res);
 };
 

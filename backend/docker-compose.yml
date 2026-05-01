@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db-write:
     image: postgres:15
@@ -54,48 +52,65 @@ services:
   auth:
     image: python:3.11
     ports:
-      - "8001:8000"
+      - "8000:8000" # Cambiado de 8001 a 8000
     volumes:
       - ./auth_service:/app
+      - ./shared:/shared # Agregar shared
     working_dir: /app
     environment:
       - DATABASE_HOST=db-write
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
-    #command: sh -c "pip install -r requirements.txt && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      - PYTHONPATH=/app:/shared # Agregar shared al path
     command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     depends_on:
-      - db-write
-      - rabbitmq
+      db-write:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
 
   menu:
     image: python:3.11
     ports:
-      - "8002:8000"
+      - "8001:8000" # Cambiado de 8002 a 8001
     volumes:
       - ./menu_service:/app
+      - ./shared:/shared # Agregar shared
+      - menu_media:/app/media
     working_dir: /app
+    environment:
+      - PYTHONPATH=/app:/shared # Agregar shared al path
     command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     depends_on:
-      - db-write
+      db-write:
+        condition: service_healthy
+    restart: always
 
   celery:
     image: python:3.11
     volumes:
       - ./auth_service:/app
+      - ./shared:/shared
     working_dir: /app
     environment:
       - DATABASE_HOST=db-write
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
+      - PYTHONPATH=/app:/shared
     command: sh -c "pip install -r requirements.txt && celery -A auth_project worker -l info"
     depends_on:
-      - db-write
-      - rabbitmq
-      - redis
+      db-write:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: always
 
 volumes:
   postgres_write_data:
   postgres_read_data:
   rabbitmq_data:
   redis_data:
+  menu_media:

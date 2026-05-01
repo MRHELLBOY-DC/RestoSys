@@ -1,4 +1,13 @@
+import sys
+import os
 from pathlib import Path
+
+# Agregar el directorio backend al path para poder importar 'shared'
+# Esto permite que auth_service y menu_service compartan el módulo 'shared'
+BASE_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = str(BASE_DIR.parent)  # Esto apunta a /backend/
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

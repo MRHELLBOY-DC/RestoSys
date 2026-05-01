@@ -1,8 +1,13 @@
-const API = "http://localhost:8001";
+const AUTH_API = "http://localhost:8000";
+const MENU_API = "http://localhost:8001";
 
-//  LOGIN 
+// ============================================
+// AUTH ENDPOINTS (puerto 8000)
+// ============================================
+
+// LOGIN
 export const loginUser = async (data) => {
-    const res = await fetch(`${API}/api/login/`, {
+    const res = await fetch(`${AUTH_API}/api/login/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -13,7 +18,6 @@ export const loginUser = async (data) => {
     const result = await res.json();
     
     if (result.success) {
-        // Guardar token y datos del usuario
         localStorage.setItem("token", result.access);
         localStorage.setItem("refresh_token", result.refresh);
         localStorage.setItem("user", JSON.stringify(result.user));
@@ -22,9 +26,9 @@ export const loginUser = async (data) => {
     return result;
 };
 
-// REGISTER (mejorado)
+// REGISTER
 export const registerUser = async (data) => {
-    const res = await fetch(`${API}/api/register/`, {
+    const res = await fetch(`${AUTH_API}/api/register/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -35,13 +39,13 @@ export const registerUser = async (data) => {
     return res.json();
 };
 
-// OBTENER PERFIL (mejorado)
+// OBTENER PERFIL
 export const getProfile = async () => {
     const token = localStorage.getItem("token");
     
     if (!token) return null;
 
-    const res = await fetch(`${API}/api/profile/`, {
+    const res = await fetch(`${AUTH_API}/api/profile/`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -58,7 +62,207 @@ export const getProfile = async () => {
     return res.json();
 };
 
-// Obtener usuario actual
+// ============================================
+// ADMIN ENDPOINTS (puerto 8000)
+// ============================================
+
+// Obtener lista de usuarios
+export const getAdminUsuarios = async () => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/usuarios/`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    
+    if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        throw new Error("No autorizado");
+    }
+    
+    return res.json();
+};
+
+// Obtener lista de restaurantes
+export const getAdminRestaurantes = async () => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/restaurantes/`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    
+    if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        throw new Error("No autorizado");
+    }
+    
+    return res.json();
+};
+
+// Crear restaurante
+export const createRestaurante = async (data) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/restaurantes/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    
+    return res.json();
+};
+
+// Crear usuario (admin)
+export const createAdminUsuario = async (data) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/usuarios/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    
+    return res.json();
+};
+
+// Actualizar usuario
+export const updateAdminUsuario = async (usuarioId, data) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/usuarios/${usuarioId}/`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    
+    return res.json();
+};
+
+// Eliminar usuario
+export const deleteAdminUsuario = async (usuarioId) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/usuarios/${usuarioId}/`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    
+    return res;
+};
+
+// Actualizar restaurante
+export const updateRestaurante = async (restauranteId, data) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/restaurantes/${restauranteId}/`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+    });
+    
+    return res.json();
+};
+
+// Eliminar restaurante
+export const deleteRestaurante = async (restauranteId) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/restaurantes/${restauranteId}/`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    });
+    
+    return res;
+};
+
+// Asignar restaurante a usuario
+export const asignarRestaurante = async (usuarioId, restauranteId) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${AUTH_API}/api/admin/usuarios/${usuarioId}/asignar-restaurante/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ restaurante_id: restauranteId })
+    });
+    
+    return res.json();
+};
+
+// ============================================
+// MENU ENDPOINTS (puerto 8001)
+// ============================================
+
+export const getCategories = async (restaurantId) => {
+    const token = localStorage.getItem("token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+    
+    const res = await fetch(`${MENU_API}/api/public/categories/?restaurant_id=${restaurantId}`, {
+        method: "GET",
+        headers
+    });
+    
+    return res.json();
+};
+
+export const getProducts = async (restaurantId) => {
+    const token = localStorage.getItem("token");
+    const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+    
+    const res = await fetch(`${MENU_API}/api/public/products/?restaurant_id=${restaurantId}`, {
+        method: "GET",
+        headers
+    });
+    
+    return res.json();
+};
+
+export const createCategory = async (name, restaurantId) => {
+    const token = localStorage.getItem("token");
+    
+    const res = await fetch(`${MENU_API}/api/categories/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, restaurant_id: restaurantId })
+    });
+    
+    return res.json();
+};
+
+// ============================================
+// UTILS
+// ============================================
+
 export const getCurrentUser = () => {
     const userStr = localStorage.getItem("user");
     if (!userStr) return null;
@@ -70,26 +274,22 @@ export const getCurrentUser = () => {
     }
 };
 
-// Logout
 export const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
 };
 
-// Verificar si es admin
 export const isAdmin = () => {
     const user = getCurrentUser();
     return user && user.role === 'admin';
 };
 
-// Verificar si es restaurante
 export const isRestaurante = () => {
     const user = getCurrentUser();
     return user && user.role === 'restaurante';
 };
 
-// Verificar si es cliente
 export const isCliente = () => {
     const user = getCurrentUser();
     return user && user.role === 'cliente';

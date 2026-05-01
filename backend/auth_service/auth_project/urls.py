@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from users.views import (
+from users.interfaces.api.views import (  # ✅ CAMBIADO: de users.views a users.interfaces.api.views
     RegisterView,
     UpdateUserView,
     DeleteUserView,

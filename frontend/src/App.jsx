@@ -1,14 +1,27 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AdminDashboard from "./pages/AdminDashboard";
-import RestauranteDashboard from "./pages/RestauranteDashboard";
-import ClienteDashboard from "./pages/ClienteDashboard";
-import Menu from "./pages/Menu";
-import AdminPanel from './components/AdminPanel';
 import { getCurrentUser } from './services/api';
-import AdminRestaurantes from "./pages/AdminRestaurantes";
-import AdminUsuarios from "./pages/AdminUsuarios";
+
+// Auth
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+
+// Admin
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminRestaurantes from "./pages/admin/AdminRestaurantes";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
+
+// Restaurante
+import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
+import RestauranteMenu from "./pages/restaurante/RestauranteMenu";
+
+// Cliente
+import ClienteDashboard from "./pages/cliente/ClienteDashboard";
+import Menu from "./pages/cliente/Menu";
+import Carrito from "./pages/cliente/Carrito";
+import MisPedidos from "./pages/cliente/MisPedidos";
+
+// Shared
+import AdminPanel from './components/AdminPanel';
 
 function ProtectedRoute({ children, allowedRoles }) {
     const user = getCurrentUser();
@@ -33,46 +46,67 @@ function App() {
     return (
         <div className="container">
             <Routes>
+                {/* Auth - Rutas públicas */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/menu" element={<Menu />} />
                 
-                <Route path="/admin/dashboard" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                        <AdminDashboard />
-                    </ProtectedRoute>
-                } />
-                
-                <Route path="/restaurante/dashboard" element={
-                    <ProtectedRoute allowedRoles={['restaurante']}>
-                        <RestauranteDashboard />
-                    </ProtectedRoute>
-                } />
-                
+                {/* Cliente */}
                 <Route path="/cliente/dashboard" element={
                     <ProtectedRoute allowedRoles={['cliente']}>
                         <ClienteDashboard />
                     </ProtectedRoute>
                 } />
-                
-                <Route path="/admin/*" element={
-                    <ProtectedRoute allowedRoles={['admin', 'restaurante']}>
-                        <AdminPanel />
+                <Route path="/menu" element={
+                    <ProtectedRoute allowedRoles={['cliente']}>
+                        <Menu />
                     </ProtectedRoute>
                 } />
-
+                <Route path="/carrito" element={
+                    <ProtectedRoute allowedRoles={['cliente']}>
+                        <Carrito />
+                    </ProtectedRoute>
+                } />
+                <Route path="/mis-pedidos" element={
+                    <ProtectedRoute allowedRoles={['cliente']}>
+                        <MisPedidos />
+                    </ProtectedRoute>
+                } />
+                
+                {/* Admin */}
+                <Route path="/admin/dashboard" element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                    </ProtectedRoute>
+                } />
                 <Route path="/admin/restaurantes" element={
                     <ProtectedRoute allowedRoles={['admin']}>
                         <AdminRestaurantes />
                     </ProtectedRoute>
                 } />
-
                 <Route path="/admin/usuarios" element={
                     <ProtectedRoute allowedRoles={['admin']}>
                         <AdminUsuarios />
                     </ProtectedRoute>
                 } />
+                <Route path="/admin/*" element={
+                    <ProtectedRoute allowedRoles={['admin', 'restaurante']}>
+                        <AdminPanel />
+                    </ProtectedRoute>
+                } />
                 
+                {/* Restaurante */}
+                <Route path="/restaurante/dashboard" element={
+                    <ProtectedRoute allowedRoles={['restaurante']}>
+                        <RestauranteDashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="/restaurante/menu" element={
+                    <ProtectedRoute allowedRoles={['restaurante']}>
+                        <RestauranteMenu />
+                    </ProtectedRoute>
+                } />
+                
+                {/* Redirección por defecto */}
                 <Route path="/" element={<Navigate to="/login" />} />
             </Routes>
         </div>
