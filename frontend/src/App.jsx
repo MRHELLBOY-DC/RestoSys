@@ -21,7 +21,8 @@ import Carrito from "./pages/cliente/Carrito";
 import MisPedidos from "./pages/cliente/MisPedidos";
 
 // Shared
-import AdminPanel from './components/AdminPanel';
+
+import Home from "./pages/shared/Home";
 
 function ProtectedRoute({ children, allowedRoles }) {
     const user = getCurrentUser();
@@ -44,8 +45,12 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 function App() {
     return (
-        <div className="container">
+      
             <Routes>
+                {/* Ruta pública - Home */}
+                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
+
                 {/* Auth - Rutas públicas */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -88,11 +93,7 @@ function App() {
                         <AdminUsuarios />
                     </ProtectedRoute>
                 } />
-                <Route path="/admin/*" element={
-                    <ProtectedRoute allowedRoles={['admin', 'restaurante']}>
-                        <AdminPanel />
-                    </ProtectedRoute>
-                } />
+         
                 
                 {/* Restaurante */}
                 <Route path="/restaurante/dashboard" element={
@@ -107,9 +108,8 @@ function App() {
                 } />
                 
                 {/* Redirección por defecto */}
-                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/" element="Home" />
             </Routes>
-        </div>
     );
 }
 
