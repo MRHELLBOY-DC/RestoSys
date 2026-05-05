@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
 import { 
-    getCurrentUser, 
     getAdminUsuarios, 
     getAdminRestaurantes, 
     createAdminUsuario, 
@@ -8,10 +8,10 @@ import {
     deleteAdminUsuario, 
     asignarRestaurante 
 } from "../../services/api";
-import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
 
 export default function AdminUsuarios() {
+    const { loading: authLoading } = useAuth(['admin']);
     const [usuarios, setUsuarios] = useState([]);
     const [restaurantes, setRestaurantes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,18 +22,12 @@ export default function AdminUsuarios() {
         role: "cliente",
         restaurante_id: ""
     });
-    const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        const user = getCurrentUser();
-        
-        if (!token || user?.role !== 'admin') {
-            navigate("/login");
-            return;
+        if (!authLoading) {
+            loadData();
         }
-        loadData();
-    }, [navigate]);
+    }, [authLoading]);
 
     const loadData = async () => {
         try {

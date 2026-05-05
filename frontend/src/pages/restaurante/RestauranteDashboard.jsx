@@ -1,32 +1,15 @@
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function RestauranteDashboard() {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useAuth(['restaurante']);
     const navigate = useNavigate();
+    
 
     // Degradado personalizado para identificar el panel administrativo
     const adminGradient = 'linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d)';
 
-    useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem("token");
-            const currentUser = getCurrentUser();
-
-            if (!token || currentUser?.role !== 'restaurante') {
-                navigate("/login");
-                return;
-            }
-
-            setUser(currentUser);
-            setLoading(false);
-        };
-        
-        checkAuth();
-    }, [navigate]);
 
     if (loading) {
         return (

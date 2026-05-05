@@ -1,34 +1,17 @@
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "../../services/api";
+import { useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
 
 export default function Carrito() {
-    const [user, setUser] = useState(null);
-    const [carrito, setCarrito] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useAuth(['cliente']);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem("token");
-            const currentUser = getCurrentUser();
-
-            if (!token || currentUser?.role !== 'cliente') {
-                navigate("/login");
-                return;
-            }
-
-            setUser(currentUser);
-            const storedCart = localStorage.getItem("carrito");
-            if (storedCart) {
-                setCarrito(JSON.parse(storedCart));
-            }
-            setLoading(false);
-        };
-        
-        checkAuth();
-    }, [navigate]);
+    // 1. SOLUCIÓN AL ERROR: Cargamos el localStorage directamente en la inicialización
+    const [carrito, setCarrito] = useState(() => {
+        const storedCart = localStorage.getItem("carrito");
+        return storedCart ? JSON.parse(storedCart) : [];
+    });
 
     const handleRemoveFromCart = (productId) => {
         const updatedCart = carrito.filter(item => item.id !== productId);
@@ -55,6 +38,9 @@ export default function Carrito() {
     const handleCheckout = () => {
         alert("🚀 Función de pago en desarrollo. Próximamente disponible.");
     };
+
+    // 2. ELIMINADO: Ya no necesitas el useEffect para cargar el carrito al montar
+    // useEffect(() => { ... }, []);
 
     if (loading) {
         return (

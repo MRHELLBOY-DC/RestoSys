@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser, getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante } from "../../services/api";
+import { useAuth } from "../../hooks/useAuth";
+import {getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
 
 export default function AdminRestaurantes() {
+    const {loading: authLoading } = useAuth(['admin']);
     const [restaurantes, setRestaurantes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(null);
@@ -14,16 +16,10 @@ export default function AdminRestaurantes() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        const user = getCurrentUser();
-        
-        if (!token || user?.role !== 'admin') {
-            navigate("/login");
-            return;
+        if (!authLoading) {
+            loadData();
         }
-        
-        loadData();
-    }, [navigate]);
+    }, [authLoading]);
 
     const loadData = async () => {
         try {

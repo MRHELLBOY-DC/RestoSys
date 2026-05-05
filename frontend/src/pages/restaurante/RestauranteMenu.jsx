@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
 /* eslint-disable no-unused-vars, no-undef */
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect } from "react";
 import { getCurrentUser } from "../../services/api";
+import { useAuth } from "../../hooks/useAuth";
 import { 
     getProducts, 
     createProduct,
@@ -18,13 +20,306 @@ import {
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
 
+// Modal Category Component
+const CategoryModal = ({ show, onClose, onSubmit, editing, initialData, adminGradient }) => {
+    const [name, setName] = useState('');
+    
+    useEffect(() => {
+        if (show) {
+            if (editing && initialData) {
+                setName(initialData.name || '');
+            } else {
+                setName('');
+            }
+        }
+    }, [editing, initialData, show]);
+    
+    if (!show) return null;
+    
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSubmit({ name });
+        onClose();
+    };
+    
+    return (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content" style={{ borderRadius: '20px' }}>
+                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
+                        <h5 className="modal-title fw-bold">{editing ? 'Editar' : 'Agregar'} Categoría</h5>
+                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="modal-body">
+                            <input
+                                type="text"
+                                className="form-control form-control-lg"
+                                placeholder="Nombre de la categoría"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                autoFocus
+                                required
+                            />
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Modal Product Component
+const ProductModal = ({ show, onClose, onSubmit, editing, initialData, categories, adminGradient }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        price: '',
+        description: '',
+        category: '',
+        image: null
+    });
+    
+    // Actualizar cuando se abre el modal o cambia initialData
+    useEffect(() => {
+        if (show) {
+            if (editing && initialData) {
+                setFormData({
+                    name: initialData.name || '',
+                    price: initialData.price || '',
+                    description: initialData.description || '',
+                    category: initialData.category ? String(initialData.category) : '',
+                    image: null
+                });
+            } else {
+                setFormData({
+                    name: '',
+                    price: '',
+                    description: '',
+                    category: '',
+                    image: null
+                });
+            }
+        }
+    }, [editing, initialData, show]);
+    
+    if (!show) return null;
+    
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleFileChange = (e) => {
+        setFormData(prev => ({ ...prev, image: e.target.files[0] }));
+    };
+    
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSubmit(formData);
+        onClose();
+    };
+    
+    return (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered modal-lg">
+                <div className="modal-content" style={{ borderRadius: '20px' }}>
+                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
+                        <h5 className="modal-title fw-bold">{editing ? 'Editar' : 'Agregar'} Producto</h5>
+                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Nombre del producto</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    className="form-control"
+                                    placeholder="Ej: Pizza Margherita"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-6">
+                                    <label className="form-label fw-bold">Precio</label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        step="0.01"
+                                        className="form-control"
+                                        placeholder="0.00"
+                                        value={formData.price}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="form-label fw-bold">Categoría</label>
+                                    <select
+                                        name="category"
+                                        className="form-select"
+                                        value={formData.category}
+                                        onChange={handleChange}
+                                        required
+                                    >
+                                        <option value="">Seleccionar Categoría</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id.toString()}>{cat.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Descripción</label>
+                                <textarea
+                                    name="description"
+                                    className="form-control"
+                                    placeholder="Describe el producto..."
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    rows="3"
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Imagen del producto</label>
+                                <input
+                                    type="file"
+                                    className="form-control"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                />
+                                {editing && initialData?.image && (
+                                    <small className="text-muted d-block mt-1">
+                                        Imagen actual: {initialData.image}
+                                    </small>
+                                )}
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Modal Option Component
+const OptionModal = ({ show, onClose, onSubmit, editing, initialData, products, adminGradient }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        extra_price: '',
+        product: ''
+    });
+    
+    useEffect(() => {
+        if (show) {
+            if (editing && initialData) {
+                setFormData({
+                    name: initialData.name || '',
+                    extra_price: initialData.extra_price || '',
+                    product: initialData.product ? String(initialData.product) : ''
+                });
+            } else {
+                setFormData({
+                    name: '',
+                    extra_price: '',
+                    product: initialData?.product ? String(initialData.product) : ''
+                });
+            }
+        }
+    }, [editing, initialData, show]);
+    
+    if (!show) return null;
+    
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSubmit(formData);
+        onClose();
+    };
+    
+    return (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content" style={{ borderRadius: '20px' }}>
+                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
+                        <h5 className="modal-title fw-bold">{editing ? 'Editar' : 'Agregar'} Opción</h5>
+                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
+                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="modal-body">
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Nombre de la opción</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    className="form-control"
+                                    placeholder="Ej: Extra queso"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Precio extra</label>
+                                <input
+                                    type="number"
+                                    name="extra_price"
+                                    step="0.01"
+                                    className="form-control"
+                                    placeholder="0.00"
+                                    value={formData.extra_price}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label fw-bold">Producto</label>
+                                <select
+                                    name="product"
+                                    className="form-select"
+                                    value={formData.product}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Seleccionar Producto</option>
+                                    {products.map(prod => (
+                                        <option key={prod.id} value={prod.id}>{prod.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Componente principal
 export default function RestauranteMenu() {
-    const [user, setUser] = useState(null);
+    const { user, loading } = useAuth(['restaurante']);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedProductId, setSelectedProductId] = useState(null);
+    const [loadingData, setLoadingData] = useState(true);
     const navigate = useNavigate();
 
     // Estados para formularios
@@ -46,82 +341,92 @@ export default function RestauranteMenu() {
     });
     const [optionData, setOptionData] = useState({ name: '', extra_price: '', product: '' });
 
-    // Degradado personalizado para identificar el panel administrativo
+    // Degradado personalizado
     const adminGradient = 'linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d)';
 
-    // Funciones de reset
-    const resetCategoryForm = () => {
-        setCategoryData({ name: '' });
+    // Control de modales
+    const openCategoryForm = () => {
         setEditingCategory(null);
+        setCategoryData({ name: '' });
+        setShowCategoryForm(true);
+    };
+
+    const closeCategoryForm = () => {
         setShowCategoryForm(false);
+        setEditingCategory(null);
+        setCategoryData({ name: '' });
     };
 
-    const resetProductForm = () => {
-        setProductData({ name: '', price: '', description: '', category: '', image: null });
+    const openProductForm = () => {
         setEditingProduct(null);
-        setShowProductForm(false);
+        setProductData({ name: '', price: '', description: '', category: '', image: null });
+        setShowProductForm(true);
     };
 
-    const resetOptionForm = () => {
-        setOptionData({ name: '', extra_price: '', product: '' });
-        setEditingOption(null);
-        setShowOptionForm(false);
+    const closeProductForm = () => {
+        setShowProductForm(false);
+        setEditingProduct(null);
+        setProductData({ name: '', price: '', description: '', category: '', image: null });
     };
+
+    const openOptionForm = () => {
+        setEditingOption(null);
+        setOptionData({ name: '', extra_price: '', product: '' });
+        setShowOptionForm(true);
+    };
+
+    const closeOptionForm = () => {
+        setShowOptionForm(false);
+        setEditingOption(null);
+        setOptionData({ name: '', extra_price: '', product: '' });
+    };
+
+   const loadData = async () => {
+    try {
+        // 1. Cargar categorías y productos
+        const [cats, prods] = await Promise.all([
+            getCategories(),
+            getProducts()
+        ]);
+        setCategories(cats);
+        setProducts(prods);
+        
+        // 2. Cargar opciones para cada producto (uno por uno)
+        let todasLasOpciones = [];
+        for (const prod of prods) {
+            try {
+                const opts = await getOptions(prod.id);
+                todasLasOpciones = [...todasLasOpciones, ...opts];
+            } catch (err) {
+                console.error(`Error cargando opciones para producto ${prod.id}:`, err);
+            }
+        }
+        
+        setOptions(todasLasOpciones);
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+    } finally {
+        setLoadingData(false);
+    }
+};
 
     useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem("token");
-            const currentUser = getCurrentUser();
-
-            if (!token || currentUser?.role !== 'restaurante') {
-                navigate("/login");
-                return;
-            }
-
-            setUser(currentUser);
-            loadData();
-        };
-
-        checkAuth();
-    }, [navigate]);
-
-    const loadData = async () => {
-        try {
-            const [cats, prods] = await Promise.all([
-                getCategories(),
-                getProducts()
-            ]);
-            setCategories(cats);
-            setProducts(prods);
-        } catch (error) {
-            console.error('Error loading data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadOptionsForProduct = async (productId) => {
-        try {
-            const data = await getOptions(productId);
-            setOptions(data);
-        } catch (error) {
-            console.error("Error loading options:", error);
-        }
-    };
+        loadData();
+    }, []);
 
     // ========== CATEGORÍAS ==========
-    const handleCategorySubmit = async (e) => {
-        e.preventDefault();
+    const handleCategorySubmit = async (data) => {
         try {
             if (editingCategory) {
-                await updateCategory(editingCategory.id, categoryData);
+                await updateCategory(editingCategory.id, data);
                 alert("Categoría actualizada");
             } else {
-                await createCategory(categoryData);
+                await createCategory(data);
                 alert("Categoría creada");
             }
-            loadData();
-            resetCategoryForm();
+            await loadData();
+            closeCategoryForm();
         } catch (error) {
             console.error('Error saving category:', error);
             alert("Error al guardar la categoría");
@@ -139,7 +444,7 @@ export default function RestauranteMenu() {
             try {
                 await deleteCategory(id);
                 alert("Categoría eliminada");
-                loadData();
+                await loadData();
             } catch (error) {
                 console.error('Error deleting category:', error);
                 alert("Error al eliminar la categoría");
@@ -148,12 +453,10 @@ export default function RestauranteMenu() {
     };
 
     // ========== PRODUCTOS ==========
-    const handleProductSubmit = async (e) => {
-        e.preventDefault();
-        
-        const nameValue = productData.name.trim();
-        const priceValue = parseFloat(productData.price);
-        const categoryValue = parseInt(productData.category);
+    const handleProductSubmit = async (data) => {
+        const nameValue = data.name.trim();
+        const priceValue = parseFloat(data.price);
+        const categoryValue = parseInt(data.category);
         
         if (!nameValue) {
             alert("El nombre del producto es requerido");
@@ -170,21 +473,21 @@ export default function RestauranteMenu() {
         
         try {
             let productToSend;
-            const hasImage = productData.image && productData.image instanceof File;
+            const hasImage = data.image && data.image instanceof File;
             
             if (hasImage) {
                 productToSend = new FormData();
                 productToSend.append('name', nameValue);
                 productToSend.append('price', priceValue);
                 productToSend.append('category_id', categoryValue);
-                productToSend.append('description', productData.description || '');
-                productToSend.append('image', productData.image);
+                productToSend.append('description', data.description || '');
+                productToSend.append('image', data.image);
             } else {
                 productToSend = {
                     name: nameValue,
                     price: priceValue,
                     category_id: categoryValue,
-                    description: productData.description || "",
+                    description: data.description || "",
                 };
             }
             
@@ -196,8 +499,8 @@ export default function RestauranteMenu() {
                 alert("Producto creado");
             }
             
-            resetProductForm();
-            loadData();
+            await loadData();
+            closeProductForm();
         } catch (error) {
             console.error('Error saving product:', error);
             alert(error.error || "Error al guardar el producto");
@@ -206,7 +509,6 @@ export default function RestauranteMenu() {
 
     const handleEditProduct = (product) => {
         setEditingProduct(product);
-        setSelectedProductId(product.id);
         setProductData({
             name: product.name || '',
             price: product.price ? product.price.toString() : '',
@@ -215,7 +517,6 @@ export default function RestauranteMenu() {
             image: null
         });
         setShowProductForm(true);
-        loadOptionsForProduct(product.id);
     };
 
     const handleDeleteProduct = async (id) => {
@@ -223,7 +524,7 @@ export default function RestauranteMenu() {
             try {
                 await deleteProduct(id);
                 alert("Producto eliminado");
-                loadData();
+                await loadData();
             } catch (error) {
                 console.error('Error deleting product:', error);
                 alert("Error al eliminar el producto");
@@ -232,41 +533,47 @@ export default function RestauranteMenu() {
     };
 
     // ========== OPCIONES ==========
-    const handleOptionSubmit = async (e) => {
-        e.preventDefault();
+const handleOptionSubmit = async (data) => {
+    if (!data.product) {
+        alert("Selecciona un producto primero");
+        return;
+    }
+    
+    try {
+        const productId = parseInt(data.product);
         
-        if (!optionData.product) {
-            alert("Selecciona un producto primero");
-            return;
+        if (editingOption) {
+            await updateOption(editingOption.id, {
+                name: data.name,
+                extra_price: parseFloat(data.extra_price)
+            });
+            alert("Opción actualizada");
+        } else {
+            await createOption({
+                name: data.name,
+                extra_price: parseFloat(data.extra_price),
+                product_id: productId
+            });
+            alert("Opción creada");
         }
         
-        try {
-            if (editingOption) {
-                await updateOption(editingOption.id, {
-                    name: optionData.name,
-                    extra_price: parseFloat(optionData.extra_price)
-                });
-                alert("Opción actualizada");
-            } else {
-                await createOption({
-                    name: optionData.name,
-                    extra_price: parseFloat(optionData.extra_price),
-                    product_id: parseInt(optionData.product)
-                });
-                alert("Opción creada");
-            }
-            
-            resetOptionForm();
-            
-            if (selectedProductId) {
-                const updatedOptions = await getOptions(selectedProductId);
-                setOptions(updatedOptions);
-            }
-        } catch (error) {
-            console.error("Error saving option:", error);
-            alert("Error al guardar la opción");
-        }
-    };
+        // Recargar SOLO las opciones del producto afectado
+        const nuevasOpcionesDelProducto = await getOptions(productId);
+        
+        // Actualizar el estado: mantener opciones de otros productos y actualizar las del producto modificado
+        setOptions(prevOptions => {
+            // Filtrar las opciones que NO son del producto que cambió
+            const otrasOpciones = prevOptions.filter(opt => opt.product_id !== productId);
+            // Unir con las nuevas opciones del producto
+            return [...otrasOpciones, ...nuevasOpcionesDelProducto];
+        });
+        
+        closeOptionForm();
+    } catch (error) {
+        console.error("Error saving option:", error);
+        alert("Error al guardar la opción");
+    }
+};
 
     const handleEditOption = (option) => {
         setEditingOption(option);
@@ -278,23 +585,35 @@ export default function RestauranteMenu() {
         setShowOptionForm(true);
     };
 
-    const handleDeleteOption = async (id) => {
-        if (window.confirm('¿Eliminar opción?')) {
-            try {
-                await deleteOption(id);
-                alert("Opción eliminada");
-                if (selectedProductId) {
-                    const updatedOptions = await getOptions(selectedProductId);
-                    setOptions(updatedOptions);
-                }
-            } catch (error) {
-                console.error('Error deleting option:', error);
-                alert("Error al eliminar la opción");
+const handleDeleteOption = async (id) => {
+    if (window.confirm('¿Eliminar opción?')) {
+        try {
+            // Obtener el product_id antes de eliminar
+            const optionToDelete = options.find(opt => opt.id === id);
+            const productId = optionToDelete?.product_id;
+            
+            await deleteOption(id);
+            alert("Opción eliminada");
+            
+            if (productId) {
+                // Recargar opciones del producto afectado
+                const nuevasOpciones = await getOptions(productId);
+                setOptions(prevOptions => {
+                    const otrasOpciones = prevOptions.filter(opt => opt.product_id !== productId);
+                    return [...otrasOpciones, ...nuevasOpciones];
+                });
+            } else {
+                // Si no sabemos el producto, recargar todo
+                await loadData();
             }
+        } catch (error) {
+            console.error('Error deleting option:', error);
+            alert("Error al eliminar la opción");
         }
-    };
+    }
+};
 
-    if (loading) {
+    if (loading || loadingData) {
         return (
             <div className="min-vh-100 d-flex flex-column" style={{ background: adminGradient }}>
                 <DashboardNavbar />
@@ -307,175 +626,6 @@ export default function RestauranteMenu() {
     }
 
     if (!user) return null;
-
-    // Modal Category Component
-    const CategoryModal = () => (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={resetCategoryForm}>
-            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-content" style={{ borderRadius: '20px' }}>
-                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
-                        <h5 className="modal-title fw-bold">{editingCategory ? 'Editar' : 'Agregar'} Categoría</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={resetCategoryForm}></button>
-                    </div>
-                    <form onSubmit={handleCategorySubmit}>
-                        <div className="modal-body">
-                            <input
-                                type="text"
-                                className="form-control form-control-lg"
-                                placeholder="Nombre de la categoría"
-                                value={categoryData.name}
-                                onChange={(e) => setCategoryData({...categoryData, name: e.target.value})}
-                                required
-                            />
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={resetCategoryForm}>Cancelar</button>
-                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-
-    // Modal Product Component
-    const ProductModal = () => (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={resetProductForm}>
-            <div className="modal-dialog modal-dialog-centered modal-lg" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-content" style={{ borderRadius: '20px' }}>
-                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
-                        <h5 className="modal-title fw-bold">{editingProduct ? 'Editar' : 'Agregar'} Producto</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={resetProductForm}></button>
-                    </div>
-                    <form onSubmit={handleProductSubmit}>
-                        <div className="modal-body">
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Nombre del producto</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Ej: Pizza Margherita"
-                                    value={productData.name}
-                                    onChange={(e) => setProductData({...productData, name: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="row mb-3">
-                                <div className="col-md-6">
-                                    <label className="form-label fw-bold">Precio</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        className="form-control"
-                                        placeholder="0.00"
-                                        value={productData.price}
-                                        onChange={(e) => setProductData({...productData, price: e.target.value})}
-                                        required
-                                    />
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label fw-bold">Categoría</label>
-                                    <select
-                                        className="form-select"
-                                        value={productData.category}
-                                        onChange={(e) => setProductData({...productData, category: e.target.value})}
-                                        required
-                                    >
-                                        <option value="">Seleccionar Categoría</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Descripción</label>
-                                <textarea
-                                    className="form-control"
-                                    placeholder="Describe el producto..."
-                                    value={productData.description}
-                                    onChange={(e) => setProductData({...productData, description: e.target.value})}
-                                    rows="3"
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Imagen del producto</label>
-                                <input
-                                    type="file"
-                                    className="form-control"
-                                    accept="image/*"
-                                    onChange={(e) => setProductData({...productData, image: e.target.files[0]})}
-                                />
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={resetProductForm}>Cancelar</button>
-                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-
-    // Modal Option Component
-    const OptionModal = () => (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={resetOptionForm}>
-            <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-content" style={{ borderRadius: '20px' }}>
-                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
-                        <h5 className="modal-title fw-bold">{editingOption ? 'Editar' : 'Agregar'} Opción</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={resetOptionForm}></button>
-                    </div>
-                    <form onSubmit={handleOptionSubmit}>
-                        <div className="modal-body">
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Nombre de la opción</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Ej: Extra queso"
-                                    value={optionData.name}
-                                    onChange={(e) => setOptionData({...optionData, name: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Precio extra</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    className="form-control"
-                                    placeholder="0.00"
-                                    value={optionData.extra_price}
-                                    onChange={(e) => setOptionData({...optionData, extra_price: e.target.value})}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Producto</label>
-                                <select
-                                    className="form-select"
-                                    value={optionData.product}
-                                    onChange={(e) => setOptionData({...optionData, product: e.target.value})}
-                                    required
-                                >
-                                    <option value="">Seleccionar Producto</option>
-                                    {products.map(prod => (
-                                        <option key={prod.id} value={prod.id}>{prod.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={resetOptionForm}>Cancelar</button>
-                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
 
     return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: adminGradient }}>
@@ -493,16 +643,8 @@ export default function RestauranteMenu() {
                 {/* Sección de Categorías */}
                 <div className="mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h2 className="text-white mb-0 fw-bold">
-                            <span className="me-2"></span> Categorías
-                        </h2>
-                        <button 
-                            className="btn btn-light rounded-pill px-4 fw-bold"
-                            onClick={() => {
-                                resetCategoryForm();
-                                setShowCategoryForm(true);
-                            }}
-                        >
+                        <h2 className="text-white mb-0 fw-bold">Categorías</h2>
+                        <button className="btn btn-light rounded-pill px-4 fw-bold" onClick={openCategoryForm}>
                             + Agregar Categoría
                         </button>
                     </div>
@@ -518,16 +660,10 @@ export default function RestauranteMenu() {
                                             <div className="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
                                                 <span className="fw-bold fs-5">{cat.name}</span>
                                                 <div className="btn-group">
-                                                    <button 
-                                                        className="btn btn-sm btn-outline-primary rounded-pill me-2"
-                                                        onClick={() => handleEditCategory(cat)}
-                                                    >
+                                                    <button className="btn btn-sm btn-outline-primary rounded-pill me-2" onClick={() => handleEditCategory(cat)}>
                                                         Editar
                                                     </button>
-                                                    <button 
-                                                        className="btn btn-sm btn-outline-danger rounded-pill"
-                                                        onClick={() => handleDeleteCategory(cat.id)}
-                                                    >
+                                                    <button className="btn btn-sm btn-outline-danger rounded-pill" onClick={() => handleDeleteCategory(cat.id)}>
                                                         Eliminar
                                                     </button>
                                                 </div>
@@ -540,19 +676,11 @@ export default function RestauranteMenu() {
                     </div>
                 </div>
 
-                {/* Sección de Productos */}
+                {/* Sección de Productos con Opciones dentro */}
                 <div className="mb-5">
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h2 className="text-white mb-0 fw-bold">
-                            <span className="me-2"></span> Productos
-                        </h2>
-                        <button 
-                            className="btn btn-light rounded-pill px-4 fw-bold"
-                            onClick={() => {
-                                resetProductForm();
-                                setShowProductForm(true);
-                            }}
-                        >
+                        <h2 className="text-white mb-0 fw-bold">Productos</h2>
+                        <button className="btn btn-light rounded-pill px-4 fw-bold" onClick={openProductForm}>
                             + Agregar Producto
                         </button>
                     </div>
@@ -565,111 +693,109 @@ export default function RestauranteMenu() {
                                 </div>
                             </div>
                         ) : (
-                            products.map(prod => (
-                                <div key={prod.id} className="col-12 col-md-6 col-lg-4">
-                                    <div className="card border-0 shadow-lg h-100" style={{ borderRadius: '20px', background: 'rgba(255, 255, 255, 0.95)', transition: 'all 0.3s ease' }}>
-                                        {prod.image && (
-                                            <img 
-                                                src={`http://localhost:8001${prod.image}`} 
-                                                alt={prod.name}
-                                                className="card-img-top"
-                                                style={{ height: '200px', objectFit: 'cover', borderRadius: '20px 20px 0 0' }}
-                                            />
-                                        )}
-                                        <div className="card-body">
-                                            <div className="d-flex justify-content-between align-items-start mb-2">
-                                                <h5 className="card-title fw-bold mb-0">{prod.name}</h5>
-                                                <span className="badge fs-6 px-3 py-2" style={{ background: adminGradient }}>
-                                                    ${prod.price}
-                                                </span>
-                                            </div>
-                                            {prod.description && (
-                                                <p className="card-text text-muted small">{prod.description}</p>
+                            products.map(prod => {
+                                const productOptions = options.filter(opt => opt.product_id === prod.id);
+                                return (
+                                    <div key={prod.id} className="col-12 col-md-6 col-lg-4">
+                                        <div className="card border-0 shadow-lg h-100" style={{ borderRadius: '20px', background: 'rgba(255, 255, 255, 0.95)' }}>
+                                            {prod.image && (
+                                                <img 
+                                                    src={`http://localhost:8001${prod.image}`} 
+                                                    alt={prod.name}
+                                                    className="card-img-top"
+                                                    style={{ height: '180px', objectFit: 'cover', borderRadius: '20px 20px 0 0' }}
+                                                />
                                             )}
-                                        </div>
-                                        <div className="card-footer bg-transparent border-0 pb-3">
-                                            <div className="btn-group w-100">
-                                                <button 
-                                                    className="btn btn-outline-primary rounded-pill me-2"
-                                                    onClick={() => handleEditProduct(prod)}
-                                                >
-                                                    Editar
-                                                </button>
-                                                <button 
-                                                    className="btn btn-outline-danger rounded-pill"
-                                                    onClick={() => handleDeleteProduct(prod.id)}
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                {/* Sección de Opciones */}
-                <div>
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h2 className="text-white mb-0 fw-bold">
-                            <span className="me-2"></span> Opciones de Producto
-                        </h2>
-                        <button 
-                            className="btn btn-light rounded-pill px-4 fw-bold"
-                            onClick={() => {
-                                resetOptionForm();
-                                setShowOptionForm(true);
-                            }}
-                        >
-                            + Agregar Opción
-                        </button>
-                    </div>
-                    
-                    <div className="card border-0 shadow-lg" style={{ borderRadius: '20px', background: 'rgba(255, 255, 255, 0.95)' }}>
-                        <div className="card-body p-4">
-                            {options.length === 0 ? (
-                                <p className="text-muted text-center mb-0">No hay opciones para este producto.</p>
-                            ) : (
-                                <div className="row g-3">
-                                    {options.map(opt => (
-                                        <div key={opt.id} className="col-12 col-md-6 col-lg-4">
-                                            <div className="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
-                                                <div>
-                                                    <span className="fw-bold">{opt.name}</span>
-                                                    <span className="badge ms-2" style={{ background: adminGradient }}>
-                                                        +${opt.extra_price}
-                                                    </span>
+                                            <div className="card-body">
+                                                <div className="d-flex justify-content-between align-items-start mb-2">
+                                                    <h5 className="card-title fw-bold mb-0">{prod.name}</h5>
+                                                    <span className="badge fs-6 px-3 py-2" style={{ background: adminGradient }}>${prod.price}</span>
                                                 </div>
-                                                <div className="btn-group">
-                                                    <button 
-                                                        className="btn btn-sm btn-outline-primary rounded-pill me-2"
-                                                        onClick={() => handleEditOption(opt)}
-                                                    >
-                                                        Editar
+                                                {prod.description && <p className="card-text text-muted small mb-2">{prod.description}</p>}
+                                                
+                                                {/* Opciones dentro del producto */}
+                                                <div className="mt-3">
+                                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                                        <small className="text-muted fw-bold">Extras:</small>
+                                                        <button 
+                                                            className="btn btn-sm btn-outline-primary rounded-pill"
+                                                            onClick={() => {
+                                                                setEditingOption(null);
+                                                                setOptionData({ 
+                                                                    name: '', 
+                                                                    extra_price: '', 
+                                                                    product: prod.id 
+                                                                });
+                                                                setShowOptionForm(true);
+                                                            }}
+                                                        >
+                                                            + Agregar Extra
+                                                        </button>
+                                                    </div>
+                                                    {productOptions.length === 0 ? (
+                                                        <small className="text-muted">Sin extras</small>
+                                                    ) : (
+                                                        productOptions.map(opt => (
+                                                            <div key={opt.id} className="d-flex justify-content-between align-items-center small bg-light p-2 rounded mb-1">
+                                                                <span>{opt.name}</span>
+                                                                <span className="text-primary">+${opt.extra_price}</span>
+                                                                <div className="btn-group btn-group-sm">
+                                                                    <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditOption(opt)}>✏️</button>
+                                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteOption(opt.id)}>🗑️</button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="card-footer bg-transparent border-0 pb-3">
+                                                <div className="btn-group w-100">
+                                                    <button className="btn btn-outline-primary rounded-pill me-2" onClick={() => handleEditProduct(prod)}>
+                                                        Editar Producto
                                                     </button>
-                                                    <button 
-                                                        className="btn btn-sm btn-outline-danger rounded-pill"
-                                                        onClick={() => handleDeleteOption(opt.id)}
-                                                    >
+                                                    <button className="btn btn-outline-danger rounded-pill" onClick={() => handleDeleteProduct(prod.id)}>
                                                         Eliminar
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Modales */}
-            {showCategoryForm && <CategoryModal />}
-            {showProductForm && <ProductModal />}
-            {showOptionForm && <OptionModal />}
+            <CategoryModal 
+                show={showCategoryForm}
+                onClose={closeCategoryForm}
+                onSubmit={handleCategorySubmit}
+                editing={!!editingCategory}
+                initialData={categoryData}
+                adminGradient={adminGradient}
+            />
+            
+            <ProductModal 
+                show={showProductForm}
+                onClose={closeProductForm}
+                onSubmit={handleProductSubmit}
+                editing={!!editingProduct}
+                initialData={productData}
+                categories={categories}
+                adminGradient={adminGradient}
+            />
+            
+            <OptionModal 
+                show={showOptionForm}
+                onClose={closeOptionForm}
+                onSubmit={handleOptionSubmit}
+                editing={!!editingOption}
+                initialData={optionData}
+                products={products}
+                adminGradient={adminGradient}
+            />
         </div>
     );
 }

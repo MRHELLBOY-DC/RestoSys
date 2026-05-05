@@ -29,8 +29,6 @@ export const getProducts = async () => {
 export const createProduct = async (data) => {
     const isFormData = data instanceof FormData;
     
-    console.log("createProduct - isFormData:", isFormData);
-    
     const headers = {
         "Authorization": `Bearer ${localStorage.getItem("token")}`
     };
@@ -51,8 +49,6 @@ export const createProduct = async (data) => {
 // Actualizar producto (con o sin imagen) - UNIFICADA
 export const updateProduct = async (id, data) => {
     const isFormData = data instanceof FormData;
-    
-    console.log("updateProduct - isFormData:", isFormData);
     
     const headers = {
         "Authorization": `Bearer ${localStorage.getItem("token")}`

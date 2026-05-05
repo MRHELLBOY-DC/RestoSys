@@ -1,33 +1,18 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "../../services/api";
+import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
 
 export default function MisPedidos() {
-    const [user, setUser] = useState(null);
+    const { user, loading } = useAuth(['cliente']);
     const [pedidos, setPedidos] = useState([]);
-    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem("token");
-            const currentUser = getCurrentUser();
-
-            if (!token || currentUser?.role !== 'cliente') {
-                navigate("/login");
-                return;
-            }
-
-            setUser(currentUser);
             
             // TODO: Conectar con el API de pedidos (Microservicio 3)
             // Por ahora, datos de ejemplo o vacío
             setPedidos([]);
-            setLoading(false);
-        };
-        
-        checkAuth();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

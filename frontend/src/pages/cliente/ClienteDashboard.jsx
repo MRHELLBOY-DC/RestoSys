@@ -1,30 +1,10 @@
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function ClienteDashboard() {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading } = useAuth(['cliente']);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const checkAuth = () => {
-            const token = localStorage.getItem("token");
-            const currentUser = getCurrentUser();
-
-            if (!token || currentUser?.role !== 'cliente') {
-                navigate("/login");
-                return;
-            }
-
-            setUser(currentUser);
-            setLoading(false);
-        };
-        
-        checkAuth();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     if (loading) {
         return (
