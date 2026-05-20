@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
     const [username, setUsername] = useState("");
+    const [email, setEmail] = useState(""); 
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("cliente");
     const [restaurantName, setRestaurantName] = useState("");
@@ -13,24 +14,117 @@ export default function Register() {
 
     const handleRegister = async () => {
         setError("");
-        const data = { username, password, role };
+
+        // ========== VALIDACIONES DE USUARIO ==========
+        if (!username.trim()) {
+            setError("El nombre de usuario es requerido");
+            return;
+        }
         
+        if (username.length < 3) {
+            setError("El nombre de usuario debe tener al menos 3 caracteres");
+            return;
+        }
+        
+        if (username.length > 30) {
+            setError("El nombre de usuario no puede tener más de 30 caracteres");
+            return;
+        }
+        
+        if (username.includes(' ')) {
+            setError("El nombre de usuario no puede contener espacios");
+            return;
+        }
+        
+        // ========== VALIDACIONES DE EMAIL ==========
+        if (!email.trim()) {
+            setError("El correo electrónico es requerido");
+            return;
+        }
+        
+        if (!email.includes('@')) {
+            setError("Ingresa un correo electrónico válido (debe contener @)");
+            return;
+        }
+        
+        if (!email.includes('.')) {
+            setError("Ingresa un correo electrónico válido (debe contener .)");
+            return;
+        }
+        
+        const emailParts = email.split('@');
+        if (emailParts.length !== 2 || !emailParts[0] || !emailParts[1]) {
+            setError("Ingresa un correo electrónico válido");
+            return;
+        }
+        
+        if (email.length > 100) {
+            setError("El correo electrónico no puede tener más de 100 caracteres");
+            return;
+        }
+        
+        // ========== VALIDACIONES DE CONTRASEÑA ==========
+        if (!password) {
+            setError("La contraseña es requerida");
+            return;
+        }
+        
+        if (password.length < 6) {
+            setError("La contraseña debe tener al menos 6 caracteres");
+            return;
+        }
+        
+        if (password.length > 128) {
+            setError("La contraseña no puede tener más de 128 caracteres");
+            return;
+        }
+        
+        // ========== CONSTRUIR DATOS ==========
+        const data = { 
+            username: username.trim(), 
+            password,
+            email: email.trim().toLowerCase(), 
+            role 
+        };
+        
+        // ========== VALIDACIONES PARA RESTAURANTE ==========
         if (role === 'restaurante') {
-            if (!restaurantName) {
+            if (!restaurantName.trim()) {
                 setError("El nombre del restaurante es requerido");
                 return;
             }
-            data.restaurant_name = restaurantName;
-            data.restaurant_address = restaurantAddress;
+            
+            if (restaurantName.length < 3) {
+                setError("El nombre del restaurante debe tener al menos 3 caracteres");
+                return;
+            }
+            
+            if (restaurantName.length > 100) {
+                setError("El nombre del restaurante no puede tener más de 100 caracteres");
+                return;
+            }
+            
+            data.restaurant_name = restaurantName.trim();
+            data.restaurant_address = restaurantAddress.trim() || "";
         }
         
+        // ========== ENVIAR AL BACKEND ==========
         const result = await registerUser(data);
 
         if (result.id) {
             alert("Usuario creado exitosamente");
             navigate("/login");
         } else {
-            setError(result.message || "Error al registrar");
+            // Mostrar error del backend si existe
+            if (typeof result === 'object' && result.message) {
+                setError(result.message);
+            } else if (typeof result === 'object' && result.email) {
+                setError("Este correo electrónico ya está registrado");
+            } else if (typeof result === 'object' && result.username) {
+                setError("Este nombre de usuario ya existe");
+            } else {
+                setError(result.message || "Error al registrar usuario");
+            }
         }
     };
 
@@ -59,6 +153,7 @@ export default function Register() {
                         </div>
                     )}
 
+                    {/* Campo Usuario */}
                     <div className="mb-3">
                         <input 
                             type="text"
@@ -70,6 +165,19 @@ export default function Register() {
                         />
                     </div>
 
+                    {/* Campo Email */}
+                    <div className="mb-3">
+                        <input 
+                            type="email"
+                            className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
+                            placeholder="Correo electrónico" 
+                            style={{ borderRadius: '10px' }}
+                            value={email}
+                            onChange={e => setEmail(e.target.value)} 
+                        />
+                    </div>
+
+                    {/* Campo Contraseña */}
                     <div className="mb-3">
                         <input 
                             type="password" 
@@ -81,6 +189,7 @@ export default function Register() {
                         />
                     </div>
 
+                    {/* Selector de Rol */}
                     <div className="mb-4 text-start">
                         <label className="small mb-2 ms-1 text-white-50 fw-bold text-uppercase" style={{ fontSize: '0.75rem' }}>Tipo de Usuario</label>
                         <select 
@@ -94,22 +203,36 @@ export default function Register() {
                         </select>
                     </div>
 
+                    {/* Campos para Restaurante */}
                     {role === 'restaurante' && (
-                        <div className="p-3 mb-4 rounded border border-white border-opacity-25 bg-white bg-opacity-5 animate__animated animate__fadeIn">
+                        <div className="p-3 mb-4 rounded animate__animated animate__fadeIn" 
+                            style={{ 
+                                background: 'rgba(0, 0, 0, 0.25)', 
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '12px'
+                            }}>
                             <div className="mb-3">
+                                <label className="small fw-bold text-white-50 mb-1" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
+                                    NOMBRE DEL NEGOCIO
+                                </label>
                                 <input 
                                     type="text"
-                                    className="form-control form-control-sm bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
-                                    placeholder="Nombre del Negocio" 
+                                    className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white"
+                                    style={{ borderRadius: '10px' }}
+                                    placeholder="Ej: La Cabaña Restaurante"
                                     value={restaurantName}
                                     onChange={e => setRestaurantName(e.target.value)} 
                                 />
                             </div>
                             <div className="mb-0">
+                                <label className="small fw-bold text-white-50 mb-1" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
+                                    DIRECCIÓN
+                                </label>
                                 <input 
                                     type="text"
-                                    className="form-control form-control-sm bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
-                                    placeholder="Dirección del Local" 
+                                    className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white"
+                                    style={{ borderRadius: '10px' }}
+                                    placeholder="Dirección del local (opcional)"
                                     value={restaurantAddress}
                                     onChange={e => setRestaurantAddress(e.target.value)} 
                                 />
@@ -117,6 +240,7 @@ export default function Register() {
                         </div>
                     )}
 
+                    {/* Botón Registro */}
                     <button 
                         className="btn btn-primary w-100 fw-bold py-2 shadow-sm mb-4"
                         style={{ 
@@ -129,6 +253,7 @@ export default function Register() {
                         Registrarse ahora
                     </button>
 
+                    {/* Link a Login */}
                     <div className="text-center small">
                         <p className="mb-1 text-white-50">¿Ya tienes cuenta?</p>
                         <Link to="/login" className="text-white fw-bold text-decoration-none border-bottom border-white border-opacity-50">

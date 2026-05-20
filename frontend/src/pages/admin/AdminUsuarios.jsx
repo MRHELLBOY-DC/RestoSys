@@ -250,8 +250,8 @@ export default function AdminUsuarios() {
                                                                 role: u.role,
                                                                 restaurante_id: u.restaurant?.id || ""
                                                             });
-                                                        }}>⚙️</button>
-                                                        <button className="btn btn-sm btn-outline-danger border-opacity-25" onClick={() => handleDelete(u.id, u.username)}>🗑️</button>
+                                                        }}>Editar</button>
+                                                        <button className="btn btn-sm btn-outline-danger border-opacity-25" onClick={() => handleDelete(u.id, u.username)}>Eliminar</button>
                                                     </div>
                                                 </td>
                                             </tr>

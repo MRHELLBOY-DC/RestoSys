@@ -740,8 +740,8 @@ const handleDeleteOption = async (id) => {
                                                                 <span>{opt.name}</span>
                                                                 <span className="text-primary">+${opt.extra_price}</span>
                                                                 <div className="btn-group btn-group-sm">
-                                                                    <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditOption(opt)}>✏️</button>
-                                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteOption(opt.id)}>🗑️</button>
+                                                                    <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditOption(opt)}>Edit</button>
+                                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteOption(opt.id)}>Delete</button>
                                                                 </div>
                                                             </div>
                                                         ))
