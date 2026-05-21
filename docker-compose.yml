@@ -1,0 +1,186 @@
+services:
+  db-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-menu:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: menu_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_menu_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-orders:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d orders_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  auth:
+    build:
+      context: ./backend/auth_service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/auth_service:/app
+      - ./backend/shared:/shared
+    environment:
+      - DATABASE_HOST=db-auth
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=auth_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - PYTHONPATH=/app:/shared
+    depends_on:
+      db-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+
+  menu:
+    build:
+      context: ./backend/menu_service
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend/menu_service:/app
+      - ./backend/shared:/shared
+      - menu_media:/app/media
+    environment:
+      - DATABASE_HOST=db-menu
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=menu_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - PYTHONPATH=/app:/shared
+    depends_on:
+      db-menu:
+        condition: service_healthy
+    restart: always
+
+  celery:
+    build:
+      context: ./backend/auth_service
+    volumes:
+      - ./backend/auth_service:/app
+      - ./backend/shared:/shared
+    environment:
+      - DATABASE_HOST=db-auth
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=auth_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - PYTHONPATH=/app:/shared
+    command: celery -A auth_project worker -l info
+    depends_on:
+      db-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: always
+
+  orders:
+    build:
+      context: ./backend/orders_services/msvc-orders_services
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./backend/orders_services/msvc-orders_services:/app
+      - maven_cache:/root/.m2
+    environment:
+      - DATABASE_HOST=db-orders
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=orders_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
+    depends_on:
+      db-orders:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - auth
+      - menu
+      - orders
+    restart: always
+
+volumes:
+  postgres_auth_data:
+  postgres_menu_data:
+  postgres_orders_data:
+  rabbitmq_data:
+  redis_data:
+  menu_media:
+  maven_cache:
+  frontend_node_modules:

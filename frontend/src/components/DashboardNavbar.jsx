@@ -12,6 +12,8 @@ export default function DashboardNavbar() {
         navigate("/login");
     };
 
+    const displayName = user?.full_name?.trim() || user?.username || user?.email || "";
+
     const getIconByRole = () => {
         switch (user?.role) {
             case 'admin': return '';
@@ -49,7 +51,7 @@ export default function DashboardNavbar() {
                         onClick={() => setIsOpen(!isOpen)}
                     >
                         <span className="fs-5">{getIconByRole()}</span>
-                        <span className="d-none d-sm-inline fw-medium">{user.username}</span>
+                        <span className="d-none d-sm-inline fw-medium">{displayName}</span>
                         <small className={isOpen ? "rotate-180 transition-all" : "transition-all"}>▼</small>
                     </button>
 
@@ -67,7 +69,7 @@ export default function DashboardNavbar() {
                             <div className="p-3 bg-light d-flex align-items-center gap-3">
                                 <div className="fs-2">{getIconByRole()}</div>
                                 <div>
-                                    <p className="mb-0 fw-bold text-dark">{user.username}</p>
+                                    <p className="mb-0 fw-bold text-dark">{displayName}</p>
                                     <p className="mb-0 small text-muted text-uppercase fw-semibold" style={{ fontSize: '0.7rem' }}>
                                         {getRoleName()}
                                     </p>

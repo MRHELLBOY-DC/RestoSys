@@ -1,32 +1,48 @@
 services:
-  db-write:
+  db-auth:
     image: postgres:15
     environment:
-      POSTGRES_DB: menu_db_write
+      POSTGRES_DB: auth_db
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: "1234"
     ports:
       - "5432:5432"
     volumes:
-      - postgres_write_data:/var/lib/postgresql/data
+      - postgres_auth_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db_write"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d auth_db"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  db-read:
+  db-menu:
     image: postgres:15
     environment:
-      POSTGRES_DB: menu_db_read
+      POSTGRES_DB: menu_db
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: "1234"
     ports:
       - "5433:5432"
     volumes:
-      - postgres_read_data:/var/lib/postgresql/data
+      - postgres_menu_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db_read"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-orders:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d orders_db"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -58,13 +74,17 @@ services:
       - ./shared:/shared # Agregar shared
     working_dir: /app
     environment:
-      - DATABASE_HOST=db-write
+      - DATABASE_HOST=db-auth
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=auth_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
       - PYTHONPATH=/app:/shared # Agregar shared al path
     command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     depends_on:
-      db-write:
+      db-auth:
         condition: service_healthy
       rabbitmq:
         condition: service_started
@@ -87,10 +107,15 @@ services:
       - menu_media:/app/media
     working_dir: /app
     environment:
+      - DATABASE_HOST=db-menu
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=menu_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
       - PYTHONPATH=/app:/shared # Agregar shared al path
     command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     depends_on:
-      db-write:
+      db-menu:
         condition: service_healthy
     restart: always
 
@@ -101,13 +126,17 @@ services:
       - ./shared:/shared
     working_dir: /app
     environment:
-      - DATABASE_HOST=db-write
+      - DATABASE_HOST=db-auth
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=auth_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
       - PYTHONPATH=/app:/shared
     command: sh -c "pip install -r requirements.txt && celery -A auth_project worker -l info"
     depends_on:
-      db-write:
+      db-auth:
         condition: service_healthy
       rabbitmq:
         condition: service_started
@@ -122,9 +151,36 @@ services:
         reservations:
           memory: 256M
 
+  orders:
+    image: eclipse-temurin:21
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./orders_services/msvc-orders_services:/app
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-orders
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=orders_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
+    command: sh -c "chmod +x ./mvnw && ./mvnw spring-boot:run"
+    depends_on:
+      db-orders:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+
 volumes:
-  postgres_write_data:
-  postgres_read_data:
+  postgres_auth_data:
+  postgres_menu_data:
+  postgres_orders_data:
   rabbitmq_data:
   redis_data:
   menu_media:

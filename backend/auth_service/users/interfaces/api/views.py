@@ -80,6 +80,7 @@ def profile(request):
         'username': user.username,
         'email': user.email,
         'role': user.role,
+        'full_name': user.full_name,
         'restaurant': restaurant_data,
         'date_joined': user.date_joined,
         'last_login': user.last_login,
@@ -125,9 +126,18 @@ def event_history(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
+    email = request.data.get('email')
     username = request.data.get('username')
     password = request.data.get('password')
-    user = authenticate(username=username, password=password)
+    user_lookup = None
+    if email:
+        user_lookup = User.objects.filter(email__iexact=email.strip()).first()
+    elif username:
+        user_lookup = User.objects.filter(username__iexact=username.strip()).first()
+
+    user = None
+    if user_lookup:
+        user = authenticate(username=user_lookup.username, password=password)
     if user:
         refresh = RefreshToken.for_user(user)
         restaurant_id = None
@@ -147,6 +157,7 @@ def login(request):
             'user': {
                 'id': user.id,
                 'username': user.username,
+                'full_name': user.full_name,
                 'role': user.role,
                 'restaurant': restaurant_data,
                 'restaurant_id': restaurant_id,

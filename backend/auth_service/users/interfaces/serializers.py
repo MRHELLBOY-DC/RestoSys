@@ -15,10 +15,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'email', 'role', 'restaurant_name', 'restaurant_address']
+        fields = ['id', 'username', 'password', 'email', 'role', 'full_name', 'restaurant_name', 'restaurant_address']
         extra_kwargs = {
+            'username': {'required': False},
             'password': {'write_only': True},
-            'email': {'required': True}
+            'email': {'required': True},
+            'full_name': {'required': False}
         }
 
     # ========== VALIDACIÓN DE USUARIO ==========
@@ -89,6 +91,11 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Rol inválido. Opciones: {', '.join(valid_roles)}")
         return value
 
+    def validate_full_name(self, value):
+        if value and len(value.strip()) > 100:
+            raise serializers.ValidationError("El nombre completo no puede tener más de 100 caracteres")
+        return value.strip() if value else ''
+
     # ========== VALIDACIÓN GENERAL ==========
     def validate(self, data):
         """Validaciones que dependen de múltiples campos"""
@@ -124,11 +131,14 @@ class UserSerializer(serializers.ModelSerializer):
         if not email:
             raise serializers.ValidationError({"email": "El email es requerido"})
 
+        username = validated_data.get('username') or email
+
         user = User.objects.create_user(
-            username=validated_data['username'],
+            username=username,
             password=validated_data['password'],
             email=email,
-            role=validated_data.get('role', 'cliente')
+            role=validated_data.get('role', 'cliente'),
+            full_name=validated_data.get('full_name', '')
         )
 
         if user.role == 'restaurante' and restaurant_name:
@@ -144,7 +154,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 'email', 'role']
+        fields = ['username', 'email', 'role', 'full_name']
 
     def validate_username(self, value):
         """Validar nombre de usuario en actualización"""
@@ -164,6 +174,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         instance.username = validated_data.get('username', instance.username)
         instance.email = validated_data.get('email', instance.email)
         instance.role = validated_data.get('role', instance.role)
+        instance.full_name = validated_data.get('full_name', instance.full_name)
         instance.save()
         return instance
 
@@ -173,7 +184,7 @@ class UserReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'date_joined', 'last_login', 'is_active', 'restaurant']
+        fields = ['id', 'username', 'email', 'role', 'full_name', 'date_joined', 'last_login', 'is_active', 'restaurant']
 
     def get_restaurant(self, obj):
         try:

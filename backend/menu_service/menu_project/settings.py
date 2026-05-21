@@ -74,11 +74,11 @@ WSGI_APPLICATION = 'menu_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'menu_db_write',
-        'USER': 'admin',
-        'PASSWORD': '1234',
-        'HOST': 'db-write',  # nombre del servicio en docker-compose
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_NAME', 'menu_db'),
+        'USER': os.environ.get('DATABASE_USER', 'admin'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', '1234'),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
     }
 }
 

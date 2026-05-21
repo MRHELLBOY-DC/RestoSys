@@ -3,7 +3,7 @@ import { registerUser } from "../../services/api";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
-    const [username, setUsername] = useState("");
+    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState(""); 
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("cliente");
@@ -15,27 +15,15 @@ export default function Register() {
     const handleRegister = async () => {
         setError("");
 
-        // ========== VALIDACIONES DE USUARIO ==========
-        if (!username.trim()) {
-            setError("El nombre de usuario es requerido");
+        if (!fullName.trim()) {
+            setError("El nombre completo es requerido");
             return;
         }
-        
-        if (username.length < 3) {
-            setError("El nombre de usuario debe tener al menos 3 caracteres");
+
+        if (fullName.trim().length > 100) {
+            setError("El nombre completo no puede tener más de 100 caracteres");
             return;
         }
-        
-        if (username.length > 30) {
-            setError("El nombre de usuario no puede tener más de 30 caracteres");
-            return;
-        }
-        
-        if (username.includes(' ')) {
-            setError("El nombre de usuario no puede contener espacios");
-            return;
-        }
-        
         // ========== VALIDACIONES DE EMAIL ==========
         if (!email.trim()) {
             setError("El correo electrónico es requerido");
@@ -81,7 +69,7 @@ export default function Register() {
         
         // ========== CONSTRUIR DATOS ==========
         const data = { 
-            username: username.trim(), 
+            full_name: fullName.trim(),
             password,
             email: email.trim().toLowerCase(), 
             role 
@@ -153,18 +141,17 @@ export default function Register() {
                         </div>
                     )}
 
-                    {/* Campo Usuario */}
+                    {/* Campo Nombre Completo */}
                     <div className="mb-3">
                         <input 
                             type="text"
                             className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
-                            placeholder="Nombre de Usuario" 
+                            placeholder="Ingrese su Nombre Completo" 
                             style={{ borderRadius: '10px' }}
-                            value={username}
-                            onChange={e => setUsername(e.target.value)} 
+                            value={fullName}
+                            onChange={e => setFullName(e.target.value)} 
                         />
                     </div>
-
                     {/* Campo Email */}
                     <div className="mb-3">
                         <input 

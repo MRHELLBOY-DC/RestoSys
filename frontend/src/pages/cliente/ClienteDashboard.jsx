@@ -27,13 +27,15 @@ export default function ClienteDashboard() {
         { title: "Mis Pedidos", icon: "", path: "/mis-pedidos", desc: "Estado de tus órdenes" },
     ];
 
+    const displayName = user.full_name?.trim() || user.username || user.email || "";
+
     return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
             <DashboardNavbar />
             
             <div className="container py-5 flex-grow-1 d-flex flex-column justify-content-center">
                 <div className="text-center text-white mb-5 animate__animated animate__fadeInDown">
-                    <h1 className="display-4 fw-bold mb-2">¡Hola, {user.username}!</h1>
+                    <h1 className="display-4 fw-bold mb-2">¡Hola, {displayName}!</h1>
                     <p className="lead opacity-75">¿Qué deseas hacer hoy en tu Menú Digital?</p>
                 </div>
 

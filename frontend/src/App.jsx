@@ -13,6 +13,7 @@ import AdminUsuarios from "./pages/admin/AdminUsuarios";
 // Restaurante
 import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
 import RestauranteMenu from "./pages/restaurante/RestauranteMenu";
+import RestaurantePedidos from "./pages/restaurante/RestaurantePedidos";
 
 // Cliente
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
@@ -104,6 +105,11 @@ function App() {
                 <Route path="/restaurante/menu" element={
                     <ProtectedRoute allowedRoles={['restaurante']}>
                         <RestauranteMenu />
+                    </ProtectedRoute>
+                } />
+                <Route path="/restaurante/pedidos" element={
+                    <ProtectedRoute allowedRoles={['restaurante']}>
+                        <RestaurantePedidos />
                     </ProtectedRoute>
                 } />
                 

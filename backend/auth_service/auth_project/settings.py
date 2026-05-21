@@ -78,11 +78,11 @@ WSGI_APPLICATION = 'auth_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'menu_db_write',
-        'USER': 'admin',
-        'PASSWORD': '1234',
-        'HOST': 'db-write',
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_NAME', 'auth_db'),
+        'USER': os.environ.get('DATABASE_USER', 'admin'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', '1234'),
+        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+        'PORT': os.environ.get('DATABASE_PORT', '5432'),
     }
 }
 
@@ -91,11 +91,11 @@ DATABASES = {
 DATABASES_READ = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'menu_db_read',
-        'USER': 'admin',
-        'PASSWORD': '1234',
-        'HOST': 'db',
-        'PORT': '5432',
+        'NAME': os.environ.get('DATABASE_READ_NAME', os.environ.get('DATABASE_NAME', 'auth_db')),
+        'USER': os.environ.get('DATABASE_USER', 'admin'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', '1234'),
+        'HOST': os.environ.get('DATABASE_READ_HOST', os.environ.get('DATABASE_HOST', 'localhost')),
+        'PORT': os.environ.get('DATABASE_READ_PORT', os.environ.get('DATABASE_PORT', '5432')),
     }
 }
 

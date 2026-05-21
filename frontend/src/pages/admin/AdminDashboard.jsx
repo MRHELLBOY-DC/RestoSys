@@ -22,6 +22,8 @@ export default function AdminDashboard() {
 
     if (!user) return null;
 
+    const displayName = user.full_name?.trim() || user.username || user.email || "";
+
     return (
         <div className="min-vh-100 w-100 d-flex flex-column" 
              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
@@ -34,7 +36,7 @@ export default function AdminDashboard() {
                         {/* Encabezado */}
                         <div className="text-white mb-5 animate__animated animate__fadeIn">
                             <h1 className="display-5 fw-bold">Panel de Administración</h1>
-                            <p className="lead text-white-50">Bienvenido, {user.username}. Gestiona la plataforma desde aquí.</p>
+                            <p className="lead text-white-50">Bienvenido, {displayName}. Gestiona la plataforma desde aquí.</p>
                         </div>
 
                         {/* Acciones en Grid de Bootstrap */}

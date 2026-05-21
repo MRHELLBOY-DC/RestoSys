@@ -3,17 +3,16 @@ import { loginUser } from "../../services/api";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
     const handleLogin = async () => {
         setError("");
-        const result = await loginUser({ username, password });
+        const result = await loginUser({ email, password });
 
         if (result.success) {
-            alert(`Bienvenido ${result.user.username}`);
             if (result.user.role === 'admin') {
                 navigate("/admin/dashboard");
             } else if (result.user.role === 'restaurante') {
@@ -52,12 +51,12 @@ export default function Login() {
 
                     <div className="mb-3">
                         <input 
-                            type="text"
+                            type="email"
                             className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
-                            placeholder="Usuario" 
+                            placeholder="Correo electrónico" 
                             style={{ borderRadius: '10px' }}
-                            value={username}
-                            onChange={e => setUsername(e.target.value)} 
+                            value={email}
+                            onChange={e => setEmail(e.target.value)} 
                         />
                     </div>
 
