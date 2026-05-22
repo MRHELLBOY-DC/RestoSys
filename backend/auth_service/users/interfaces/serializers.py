@@ -6,16 +6,17 @@ from ..domain.entities import User, Restaurant, UserRestaurant
 class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = ['id', 'name', 'address']
+        fields = ['id', 'name', 'address', 'logo'] 
 
 
 class UserSerializer(serializers.ModelSerializer):
     restaurant_name = serializers.CharField(write_only=True, required=False)
     restaurant_address = serializers.CharField(write_only=True, required=False)
+    restaurant_logo = serializers.CharField(write_only=True, required=False) 
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'email', 'role', 'full_name', 'restaurant_name', 'restaurant_address']
+        fields = ['id', 'username', 'password', 'email', 'role', 'full_name', 'restaurant_name', 'restaurant_address', 'restaurant_logo']
         extra_kwargs = {
             'username': {'required': False},
             'password': {'write_only': True},
@@ -124,6 +125,7 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         restaurant_name = validated_data.pop('restaurant_name', None)
         restaurant_address = validated_data.pop('restaurant_address', None)
+        restaurant_logo = validated_data.pop('restaurant_logo', None)  
         
         email = validated_data.pop('email', None)
         
@@ -144,7 +146,8 @@ class UserSerializer(serializers.ModelSerializer):
         if user.role == 'restaurante' and restaurant_name:
             restaurant = Restaurant.objects.create(
                 name=restaurant_name,
-                address=restaurant_address or ''
+                address=restaurant_address or '',
+                logo=restaurant_logo
             )
             UserRestaurant.objects.create(user=user, restaurant=restaurant)
 

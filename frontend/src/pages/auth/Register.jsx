@@ -9,6 +9,7 @@ export default function Register() {
     const [role, setRole] = useState("cliente");
     const [restaurantName, setRestaurantName] = useState("");
     const [restaurantAddress, setRestaurantAddress] = useState("");
+    const [restaurantLogo, setRestaurantLogo] = useState(null); 
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
@@ -94,6 +95,10 @@ export default function Register() {
             
             data.restaurant_name = restaurantName.trim();
             data.restaurant_address = restaurantAddress.trim() || "";
+            
+            if (restaurantLogo) {
+                data.restaurant_logo = restaurantLogo;
+            }
         }
         
         // ========== ENVIAR AL BACKEND ==========
@@ -199,30 +204,37 @@ export default function Register() {
                                 borderRadius: '12px'
                             }}>
                             <div className="mb-3">
-                                <label className="small fw-bold text-white-50 mb-1" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
-                                    NOMBRE DEL NEGOCIO
-                                </label>
+                                <label className="small fw-bold text-white-50 mb-1">NOMBRE DEL NEGOCIO</label>
                                 <input 
                                     type="text"
                                     className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white"
-                                    style={{ borderRadius: '10px' }}
                                     placeholder="Ej: La Cabaña Restaurante"
                                     value={restaurantName}
                                     onChange={e => setRestaurantName(e.target.value)} 
                                 />
                             </div>
-                            <div className="mb-0">
-                                <label className="small fw-bold text-white-50 mb-1" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
-                                    DIRECCIÓN
-                                </label>
+                            <div className="mb-3">
+                                <label className="small fw-bold text-white-50 mb-1">DIRECCIÓN</label>
                                 <input 
                                     type="text"
                                     className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white"
-                                    style={{ borderRadius: '10px' }}
                                     placeholder="Dirección del local (opcional)"
                                     value={restaurantAddress}
                                     onChange={e => setRestaurantAddress(e.target.value)} 
                                 />
+                            </div>
+                            <div className="mb-0">
+                                <label className="small fw-bold text-white-50 mb-1">LOGO DEL NEGOCIO</label>
+                                <input 
+                                    type="file"
+                                    className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white"
+                                    style={{ borderRadius: '10px', padding: '8px' }}
+                                    accept="image/*"
+                                    onChange={e => setRestaurantLogo(e.target.files[0])}
+                                />
+                                <small className="text-white-50 opacity-50" style={{ fontSize: '0.65rem' }}>
+                                    Sube el logo de tu restaurante (JPG, PNG, WEBP - máximo 2MB)
+                                </small>
                             </div>
                         </div>
                     )}

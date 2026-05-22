@@ -20,9 +20,9 @@ import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import Menu from "./pages/cliente/Menu";
 import Carrito from "./pages/cliente/Carrito";
 import MisPedidos from "./pages/cliente/MisPedidos";
+import RestauranteMenuPage from "./pages/cliente/RestauranteMenuPage"; // ✅ NUEVA IMPORTACIÓN
 
 // Shared
-
 import Home from "./pages/shared/Home";
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -46,76 +46,73 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 function App() {
     return (
-      
-            <Routes>
-                {/* Ruta pública - Home */}
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
+        <Routes>
+            {/* Ruta pública - Home */}
+            <Route path="/" element={<Home />} />
 
-                {/* Auth - Rutas públicas */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                
-                {/* Cliente */}
-                <Route path="/cliente/dashboard" element={
-                    <ProtectedRoute allowedRoles={['cliente']}>
-                        <ClienteDashboard />
-                    </ProtectedRoute>
-                } />
-                <Route path="/menu" element={
-                    <ProtectedRoute allowedRoles={['cliente']}>
-                        <Menu />
-                    </ProtectedRoute>
-                } />
-                <Route path="/carrito" element={
-                    <ProtectedRoute allowedRoles={['cliente']}>
-                        <Carrito />
-                    </ProtectedRoute>
-                } />
-                <Route path="/mis-pedidos" element={
-                    <ProtectedRoute allowedRoles={['cliente']}>
-                        <MisPedidos />
-                    </ProtectedRoute>
-                } />
-                
-                {/* Admin */}
-                <Route path="/admin/dashboard" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                        <AdminDashboard />
-                    </ProtectedRoute>
-                } />
-                <Route path="/admin/restaurantes" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                        <AdminRestaurantes />
-                    </ProtectedRoute>
-                } />
-                <Route path="/admin/usuarios" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                        <AdminUsuarios />
-                    </ProtectedRoute>
-                } />
-         
-                
-                {/* Restaurante */}
-                <Route path="/restaurante/dashboard" element={
-                    <ProtectedRoute allowedRoles={['restaurante']}>
-                        <RestauranteDashboard />
-                    </ProtectedRoute>
-                } />
-                <Route path="/restaurante/menu" element={
-                    <ProtectedRoute allowedRoles={['restaurante']}>
-                        <RestauranteMenu />
-                    </ProtectedRoute>
-                } />
-                <Route path="/restaurante/pedidos" element={
-                    <ProtectedRoute allowedRoles={['restaurante']}>
-                        <RestaurantePedidos />
-                    </ProtectedRoute>
-                } />
-                
-                {/* Redirección por defecto */}
-                <Route path="/" element="Home" />
-            </Routes>
+            {/* Auth - Rutas públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            
+            {/* Página pública de restaurante (sin autenticación) */}
+            <Route path="/restaurante/:id/menu" element={<RestauranteMenuPage />} />
+            
+            {/* Cliente */}
+            <Route path="/cliente/dashboard" element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                    <ClienteDashboard />
+                </ProtectedRoute>
+            } />
+            <Route path="/menu" element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                    <Menu />
+                </ProtectedRoute>
+            } />
+            <Route path="/carrito" element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                    <Carrito />
+                </ProtectedRoute>
+            } />
+            <Route path="/mis-pedidos" element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                    <MisPedidos />
+                </ProtectedRoute>
+            } />
+            
+            {/* Admin */}
+            <Route path="/admin/dashboard" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminDashboard />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin/restaurantes" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminRestaurantes />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin/usuarios" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminUsuarios />
+                </ProtectedRoute>
+            } />
+            
+            {/* Restaurante */}
+            <Route path="/restaurante/dashboard" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <RestauranteDashboard />
+                </ProtectedRoute>
+            } />
+            <Route path="/restaurante/menu" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <RestauranteMenu />
+                </ProtectedRoute>
+            } />
+            <Route path="/restaurante/pedidos" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <RestaurantePedidos />
+                </ProtectedRoute>
+            } />
+        </Routes>
     );
 }
 

@@ -1,7 +1,26 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { getPublicRestaurantes } from "../../services/api";
 
 export default function Home() {
+    const [restaurantes, setRestaurantes] = useState([]);
+    const [loadingRestaurantes, setLoadingRestaurantes] = useState(true);
+
+    useEffect(() => {
+        const loadRestaurantes = async () => {
+            try {
+                const data = await getPublicRestaurantes();
+                setRestaurantes(data);
+            } catch (error) {
+                console.error("Error loading restaurantes:", error);
+            } finally {
+                setLoadingRestaurantes(false);
+            }
+        };
+        loadRestaurantes();
+    }, []);
+
     return (
         <div className="min-vh-100 d-flex flex-column text-white" 
              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
@@ -17,7 +36,70 @@ export default function Home() {
                     </h1>
                 </div>
 
-                {/* Features Grid */}
+                {/* ========== SECCIÓN: RESTAURANTES ========== */}
+                <div className="mb-5">
+                    <div className="text-center mb-4">
+                        <h2 className="fw-bold">Restaurantes Destacados</h2>
+                        <p className="text-white-50">Elige tu favorito y disfruta</p>
+                    </div>
+                    
+                    {loadingRestaurantes ? (
+                        <div className="text-center py-4">
+                            <div className="spinner-border text-light" role="status"></div>
+                        </div>
+                    ) : restaurantes.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p className="text-white-50">No hay restaurantes disponibles</p>
+                        </div>
+                    ) : (
+                        <div className="row g-4">
+                            {restaurantes.map(rest => (
+                                <div key={rest.id} className="col-12 col-sm-6 col-lg-4">
+                                    <div className="card h-100 bg-white bg-opacity-10 border-white border-opacity-25 transition-hover" 
+                                         style={{ backdropFilter: 'blur(10px)', borderRadius: '15px', overflow: 'hidden' }}>
+                                        <div className="card-body text-center p-4">
+                                            {/* LOGO DEL RESTAURANTE */}
+                                            <div className="mb-3">
+                                                {rest.logo ? (
+                                                    <img 
+                                                        src={`http://localhost:8000${rest.logo}`} 
+                                                        alt={`Logo de ${rest.name}`}
+                                                        className="rounded-circle"
+                                                        style={{ 
+                                                            width: '80px', 
+                                                            height: '80px', 
+                                                            objectFit: 'cover',
+                                                            border: '2px solid rgba(255,255,255,0.3)'
+                                                        }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.parentElement.innerHTML = '<span style="font-size: 3rem">🏪</span>';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <span style={{ fontSize: '3rem' }}></span>
+                                                )}
+                                            </div>
+                                            <h3 className="h5 fw-bold mb-2">{rest.name}</h3>
+                                            <p className="text-white-50 small mb-3">
+                                                {rest.address || "Ubicación no especificada"}
+                                            </p>
+                                            <Link 
+                                                to={`/restaurante/${rest.id}/menu`} 
+                                                className="btn btn-outline-light rounded-pill px-4"
+                                                style={{ fontSize: '0.85rem' }}
+                                            >
+                                                Ver Menú →
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Features Grid (original, sin cambios) */}
                 <div className="row g-4 justify-content-center">
                     {/* Feature 1 */}
                     <div className="col-12 col-md-4">
