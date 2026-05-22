@@ -1,0 +1,186 @@
+services:
+  db-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-menu:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: menu_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_menu_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d menu_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-orders:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d orders_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  auth:
+    image: python:3.11
+    ports:
+      - "8000:8000" # Cambiado de 8001 a 8000
+    volumes:
+      - ./auth_service:/app
+      - ./shared:/shared # Agregar shared
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-auth
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=auth_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - PYTHONPATH=/app:/shared # Agregar shared al path
+    command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      db-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+    #nuevo para reducir memoria
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  menu:
+    image: python:3.11
+    ports:
+      - "8001:8000" # Cambiado de 8002 a 8001
+    volumes:
+      - ./menu_service:/app
+      - ./shared:/shared # Agregar shared
+      - menu_media:/app/media
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-menu
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=menu_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - PYTHONPATH=/app:/shared # Agregar shared al path
+    command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      db-menu:
+        condition: service_healthy
+    restart: always
+
+  celery:
+    image: python:3.11
+    volumes:
+      - ./auth_service:/app
+      - ./shared:/shared
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-auth
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=auth_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - PYTHONPATH=/app:/shared
+    command: sh -c "pip install -r requirements.txt && celery -A auth_project worker -l info"
+    depends_on:
+      db-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+    restart: always
+    # para reducir memoria
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  orders:
+    image: eclipse-temurin:21
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./orders_services/msvc-orders_services:/app
+    working_dir: /app
+    environment:
+      - DATABASE_HOST=db-orders
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=orders_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
+    command: sh -c "chmod +x ./mvnw && ./mvnw spring-boot:run"
+    depends_on:
+      db-orders:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+
+volumes:
+  postgres_auth_data:
+  postgres_menu_data:
+  postgres_orders_data:
+  rabbitmq_data:
+  redis_data:
+  menu_media:

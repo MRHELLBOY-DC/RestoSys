@@ -1,0 +1,134 @@
+# ============================================
+# GITIGNORE - Menú Digital
+# ============================================
+
+# --- Python (IMPORTANTE: evitar .pyc y __pycache__) ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Base de datos local (NUNCA SUBIR)
+*.sqlite3
+*.db
+db.sqlite3
+
+# Entorno
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# --- Node/Frontend ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Docker ---
+docker-compose.override.yml
+.containers/
+volumes/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Celery ---
+celerybeat-schedule
+celerybeat.pid
+
+# --- Archivos temporales ---
+*.tmp
+*.bak
+*.cache
+*.temp
+
+# --- Media / Uploads ---
+media/
+uploads/
+staticfiles/
+
+# --- Testing ---
+.coverage
+htmlcov/
+.pytest_cache/
+
+# --- Archivos de migración (opcional, descomenta si quieres excluirlos) ---
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# --- Windows ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Mac ---
+.DS_Store
+.AppleDouble
+.LSOverride
+
+
+# =========================
+# FRONTEND
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# =========================
+# DJANGO / PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+.env
+venv/
+.env.*
+
+# =========================
+# DOCKER
+# =========================
+*.pid
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# COVERAGE
+# =========================
+coverage/
+
+# =========================
+# CACHE
+# =========================
+.cache/

@@ -1,0 +1,113 @@
+package com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api;
+
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.change_status.ChangeOrderStatusCommand;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.change_status.ChangeOrderStatusCommandHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.confirm_payment.ConfirmOrderPaymentCommand;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.confirm_payment.ConfirmOrderPaymentCommandHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.create.CreateOrderCommand;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.create.CreateOrderCommandHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.GetOrderQueryHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListActiveOrdersQueryHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListOrderHistoryQueryHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.ChangeOrderStatusRequest;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.CreateOrderRequest;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.OrderResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrdersController {
+    private final CreateOrderCommandHandler createOrderHandler;
+    private final ChangeOrderStatusCommandHandler changeOrderStatusHandler;
+    private final ConfirmOrderPaymentCommandHandler confirmOrderPaymentHandler;
+    private final GetOrderQueryHandler getOrderQueryHandler;
+    private final ListActiveOrdersQueryHandler listActiveOrdersQueryHandler;
+    private final ListOrderHistoryQueryHandler listOrderHistoryQueryHandler;
+
+    public OrdersController(CreateOrderCommandHandler createOrderHandler,
+                            ChangeOrderStatusCommandHandler changeOrderStatusHandler,
+                            ConfirmOrderPaymentCommandHandler confirmOrderPaymentHandler,
+                            GetOrderQueryHandler getOrderQueryHandler,
+                            ListActiveOrdersQueryHandler listActiveOrdersQueryHandler,
+                            ListOrderHistoryQueryHandler listOrderHistoryQueryHandler) {
+        this.createOrderHandler = createOrderHandler;
+        this.changeOrderStatusHandler = changeOrderStatusHandler;
+        this.confirmOrderPaymentHandler = confirmOrderPaymentHandler;
+        this.getOrderQueryHandler = getOrderQueryHandler;
+        this.listActiveOrdersQueryHandler = listActiveOrdersQueryHandler;
+        this.listOrderHistoryQueryHandler = listOrderHistoryQueryHandler;
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrderResponse create(@RequestBody CreateOrderRequest request) {
+        return OrderResponse.fromDomain(createOrderHandler.handle(toCommand(request)));
+    }
+
+    @GetMapping("/{orderId}")
+    public OrderResponse getById(@PathVariable UUID orderId) {
+        return OrderResponse.fromDomain(getOrderQueryHandler.handle(orderId));
+    }
+
+    @GetMapping("/code/{orderCode}")
+    public OrderResponse getByCode(@PathVariable String orderCode) {
+        return OrderResponse.fromDomain(getOrderQueryHandler.handleByCode(orderCode));
+    }
+
+    @GetMapping("/active")
+    public List<OrderResponse> listActive(@RequestParam UUID restaurantId) {
+        return listActiveOrdersQueryHandler.handle(restaurantId)
+                .stream()
+                .map(OrderResponse::fromDomain)
+                .toList();
+    }
+
+    @GetMapping("/history")
+    public List<OrderResponse> listHistory(@RequestParam UUID restaurantId) {
+        return listOrderHistoryQueryHandler.handle(restaurantId)
+                .stream()
+                .map(OrderResponse::fromDomain)
+                .toList();
+    }
+
+    @PatchMapping("/{orderId}/status")
+    public OrderResponse changeStatus(@PathVariable UUID orderId, @RequestBody ChangeOrderStatusRequest request) {
+        return OrderResponse.fromDomain(changeOrderStatusHandler.handle(new ChangeOrderStatusCommand(orderId, request.status())));
+    }
+
+    @PatchMapping("/{orderId}/confirm-payment")
+    public OrderResponse confirmPayment(@PathVariable UUID orderId) {
+        return OrderResponse.fromDomain(confirmOrderPaymentHandler.handle(new ConfirmOrderPaymentCommand(orderId)));
+    }
+
+    private CreateOrderCommand toCommand(CreateOrderRequest request) {
+        List<CreateOrderCommand.CreateOrderItemCommand> items = (request.items() == null ? List.<CreateOrderRequest.CreateOrderItemRequest>of() : request.items()).stream()
+                .map(item -> new CreateOrderCommand.CreateOrderItemCommand(
+                        item.productId(),
+                        item.productName(),
+                        item.quantity(),
+                        item.unitPrice(),
+                        item.options() == null ? List.of() : item.options().stream()
+                                .map(option -> new CreateOrderCommand.CreateOrderItemOptionCommand(
+                                        option.optionId(),
+                                        option.name(),
+                                        option.extraPrice()
+                                ))
+                                .toList()
+                ))
+                .toList();
+        return new CreateOrderCommand(request.restaurantId(), request.type(), request.tableNumber(), items);
+    }
+}
