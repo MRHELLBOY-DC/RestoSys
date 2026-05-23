@@ -4,6 +4,11 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.conf import settings
+import os
+from datetime import datetime
 
 # IMPORTACIONES CORREGIDAS
 from users.domain.entities import User, UserRestaurant, Restaurant
@@ -27,9 +32,49 @@ from users.application.queries import (
 )
 
 
+# ============================================
+# REGISTER VIEW - ÚNICA (eliminada la duplicada)
+# ============================================
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Verificar si viene un archivo (logo)
+        if 'restaurant_logo' in request.FILES:
+            logo_file = request.FILES['restaurant_logo']
+            
+            # Validar tipo de archivo
+            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+            if logo_file.content_type not in allowed_types:
+                return Response(
+                    {'error': 'Formato de imagen no válido. Use JPG, PNG o WEBP'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validar tamaño (máximo 2MB)
+            if logo_file.size > 2 * 1024 * 1024:
+                return Response(
+                    {'error': 'La imagen no puede superar los 2MB'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Generar nombre único para el archivo
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            extension = os.path.splitext(logo_file.name)[1]
+            filename = f"restaurantes_logos/logo_{timestamp}_{logo_file.name}"
+            
+            # Guardar el archivo
+            saved_path = default_storage.save(filename, ContentFile(logo_file.read()))
+            logo_url = f"{settings.MEDIA_URL}{saved_path}"
+            
+            # Agregar la URL al request data
+            request.data._mutable = True
+            request.data['restaurant_logo'] = logo_url
+            request.data._mutable = False
+        
+        # Continuar con el proceso normal
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -164,6 +209,19 @@ def login(request):
             },
         })
     return Response({'success': False, 'message': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+# ============================================
+# PUBLIC ENDPOINTS (para la landing page)
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_restaurantes(request):
+    """Endpoint público para obtener todos los restaurantes (para la landing page)"""
+    restaurantes = Restaurant.objects.all()
+    serializer = RestaurantSerializer(restaurantes, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['GET', 'POST'])

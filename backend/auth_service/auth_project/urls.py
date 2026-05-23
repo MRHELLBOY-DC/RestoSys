@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.conf import settings
 from django.urls import path
-from users.interfaces.api.views import (  # ✅ CAMBIADO: de users.views a users.interfaces.api.views
+from users.interfaces.api.views import (
     RegisterView,
     UpdateUserView,
     DeleteUserView,
@@ -14,8 +15,10 @@ from users.interfaces.api.views import (  # ✅ CAMBIADO: de users.views a users
     admin_usuarios,
     admin_usuario_detail,
     admin_asignar_restaurante,
+    public_restaurantes,  
 )
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,6 +45,11 @@ urlpatterns = [
     path('api/events/', event_history, name='event_history'),
 
     # ============================================
+    # PUBLIC ENDPOINTS (para la landing page)
+    # ============================================
+    path('api/public/restaurantes/', public_restaurantes, name='public_restaurantes'),
+
+    # ============================================
     # ADMIN - CRUD RESTAURANTES
     # ============================================
     path('api/admin/restaurantes/', admin_restaurantes, name='admin_restaurantes'),
@@ -58,3 +66,6 @@ urlpatterns = [
     # ============================================
     path('api/admin/usuarios/<int:usuario_id>/asignar-restaurante/', admin_asignar_restaurante, name='admin_asignar_restaurante'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

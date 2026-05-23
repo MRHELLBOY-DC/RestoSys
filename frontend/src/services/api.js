@@ -1,4 +1,6 @@
 const AUTH_API = "http://localhost:8000";
+//const AUTH_API = "http://restosys-main-auth-1:8000";
+//const MENU_API = "http://host.docker.internal:8001";
 const MENU_API = "http://localhost:8001";
 
 // ============================================
@@ -26,14 +28,44 @@ export const loginUser = async (data) => {
     return result;
 };
 
-// REGISTER
+// REGISTER (modificado para soportar imágenes)
 export const registerUser = async (data) => {
+    // Verificar si tenemos que enviar una imagen (logo)
+    const hasImage = data.restaurant_logo && data.restaurant_logo instanceof File;
+    
+    let body;
+    let headers = {};
+    
+    if (hasImage) {
+        // Enviar como FormData para la imagen
+        const formData = new FormData();
+        formData.append('full_name', data.full_name);
+        formData.append('email', data.email);
+        formData.append('password', data.password);
+        formData.append('role', data.role);
+        
+        if (data.restaurant_name) {
+            formData.append('restaurant_name', data.restaurant_name);
+        }
+        if (data.restaurant_address) {
+            formData.append('restaurant_address', data.restaurant_address);
+        }
+        if (data.restaurant_logo) {
+            formData.append('restaurant_logo', data.restaurant_logo);
+        }
+        
+        body = formData;
+        // No establecer Content-Type, el navegador lo hará automáticamente con el boundary
+    } else {
+        // Enviar como JSON
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify(data);
+    }
+    
     const res = await fetch(`${AUTH_API}/api/register/`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
+        headers: headers,
+        body: body
     });
 
     return res.json();
@@ -213,6 +245,16 @@ export const asignarRestaurante = async (usuarioId, restauranteId) => {
         body: JSON.stringify({ restaurante_id: restauranteId })
     });
     
+    return res.json();
+};
+
+// ============================================
+// PUBLIC ENDPOINTS (para la landing page)
+// ============================================
+
+// Obtener lista de restaurantes públicos (para la landing page)
+export const getPublicRestaurantes = async () => {
+    const res = await fetch(`${AUTH_API}/api/public/restaurantes/`);
     return res.json();
 };
 

@@ -18,6 +18,7 @@ export default function AdminUsuarios() {
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({
         username: "",
+        email: "",
         password: "",
         role: "cliente",
         restaurante_id: ""
@@ -50,19 +51,20 @@ export default function AdminUsuarios() {
         try {
             const isCliente = form.role === 'cliente';
             if (editing) {
-                const updateData = { username: form.username, role: form.role };
+                const updateData = { username: form.username, email: form.email, role: form.role };
                 if (!isCliente) updateData.restaurante_id = form.restaurante_id;
                 await updateAdminUsuario(editing, updateData);
             } else {
                 const createData = {
                     username: form.username,
+                    email: form.email,
                     password: form.password,
                     role: form.role,
                 };
                 if (!isCliente) createData.restaurante_id = form.restaurante_id;
                 await createAdminUsuario(createData);
             }
-            setForm({ username: "", password: "", role: "cliente", restaurante_id: "" });
+            setForm({ username: "", email: "", password: "", role: "cliente", restaurante_id: "" });
             setEditing(null);
             loadData();
         } catch (error) {
@@ -134,6 +136,17 @@ export default function AdminUsuarios() {
                                         />
                                     </div>
 
+                                    <div className="mb-3">
+                                        <label className="form-label small fw-semibold text-white-50">Email</label>
+                                        <input
+                                            type="email"
+                                            className="form-control bg-dark bg-opacity-25 border-secondary text-white"
+                                            value={form.email}
+                                            onChange={e => setForm({...form, email: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+
                                     {!editing && (
                                         <div className="mb-3">
                                             <label className="form-label small fw-semibold text-white-50">Contraseña</label>
@@ -183,7 +196,7 @@ export default function AdminUsuarios() {
                                         {editing && (
                                             <button type="button" className="btn btn-outline-light btn-sm border-0" onClick={() => {
                                                 setEditing(null);
-                                                setForm({ username: "", password: "", role: "cliente", restaurante_id: "" });
+                                                setForm({ username: "", email: "", password: "", role: "cliente", restaurante_id: "" });
                                             }}>Cancelar</button>
                                         )}
                                     </div>
@@ -246,6 +259,7 @@ export default function AdminUsuarios() {
                                                             setEditing(u.id);
                                                             setForm({
                                                                 username: u.username,
+                                                                email: u.email || "",
                                                                 password: "",
                                                                 role: u.role,
                                                                 restaurante_id: u.restaurant?.id || ""

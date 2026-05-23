@@ -73,6 +73,7 @@ services:
     volumes:
       - ./backend/auth_service:/app
       - ./backend/shared:/shared
+      - auth_media:/app/media
     environment:
       - DATABASE_HOST=db-auth
       - DATABASE_PORT=5432
@@ -169,6 +170,8 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - auth
       - menu
@@ -181,6 +184,7 @@ volumes:
   postgres_orders_data:
   rabbitmq_data:
   redis_data:
+  auth_media:
   menu_media:
   maven_cache:
   frontend_node_modules:
