@@ -17,12 +17,27 @@ export default function AdminUsuarios() {
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({
-        username: "",
+        full_name: "",
         email: "",
         password: "",
         role: "cliente",
         restaurante_id: ""
     });
+
+    const sanitizeUsername = (value) => {
+        if (!value) return "";
+        const trimmed = value.trim().toLowerCase();
+        const safe = trimmed
+            .replace(/\s+/g, "_")
+            .replace(/[^a-z0-9@.+_-]/g, "");
+        return safe || "user";
+    };
+
+    const usernameFromName = (name, email) => {
+        const base = sanitizeUsername(name);
+        if (base && base !== "user") return base;
+        return sanitizeUsername(email);
+    };
 
     useEffect(() => {
         if (!authLoading) {
@@ -51,12 +66,18 @@ export default function AdminUsuarios() {
         try {
             const isCliente = form.role === 'cliente';
             if (editing) {
-                const updateData = { username: form.username, email: form.email, role: form.role };
+                const updateData = {
+                    username: usernameFromName(form.full_name, form.email),
+                    full_name: form.full_name,
+                    email: form.email,
+                    role: form.role
+                };
                 if (!isCliente) updateData.restaurante_id = form.restaurante_id;
                 await updateAdminUsuario(editing, updateData);
             } else {
                 const createData = {
-                    username: form.username,
+                    username: usernameFromName(form.full_name, form.email),
+                    full_name: form.full_name,
                     email: form.email,
                     password: form.password,
                     role: form.role,
@@ -64,11 +85,17 @@ export default function AdminUsuarios() {
                 if (!isCliente) createData.restaurante_id = form.restaurante_id;
                 await createAdminUsuario(createData);
             }
-            setForm({ username: "", email: "", password: "", role: "cliente", restaurante_id: "" });
+            setForm({ full_name: "", email: "", password: "", role: "cliente", restaurante_id: "" });
             setEditing(null);
             loadData();
         } catch (error) {
-            alert("Error al guardar: " + error.message);
+            const message = error?.message
+                || error?.detail
+                || error?.email?.[0]
+                || error?.username?.[0]
+                || error?.restaurant_name?.[0]
+                || "Error al guardar";
+            alert("Error al guardar: " + message);
         }
     };
 
@@ -126,12 +153,12 @@ export default function AdminUsuarios() {
                                 <h3 className="h5 fw-bold mb-4">{editing ? "Editar" : "Nuevo"} Usuario</h3>
                                 <form onSubmit={handleSubmit}>
                                     <div className="mb-3">
-                                        <label className="form-label small fw-semibold text-white-50">Username</label>
+                                        <label className="form-label small fw-semibold text-white-50">Nombre completo</label>
                                         <input
                                             type="text"
                                             className="form-control bg-dark bg-opacity-25 border-secondary text-white"
-                                            value={form.username}
-                                            onChange={e => setForm({...form, username: e.target.value})}
+                                            value={form.full_name}
+                                            onChange={e => setForm({...form, full_name: e.target.value})}
                                             required
                                         />
                                     </div>
@@ -196,7 +223,7 @@ export default function AdminUsuarios() {
                                         {editing && (
                                             <button type="button" className="btn btn-outline-light btn-sm border-0" onClick={() => {
                                                 setEditing(null);
-                                                setForm({ username: "", email: "", password: "", role: "cliente", restaurante_id: "" });
+                                                setForm({ full_name: "", email: "", password: "", role: "cliente", restaurante_id: "" });
                                             }}>Cancelar</button>
                                         )}
                                     </div>
@@ -224,9 +251,9 @@ export default function AdminUsuarios() {
                                                 <td className="px-4 py-3">
                                                     <div className="d-flex align-items-center gap-3">
                                                         <div className="rounded-circle bg-primary bg-opacity-25 p-2 text-primary fw-bold" style={{ width: '40px', height: '40px', display: 'grid', placeContent: 'center' }}>
-                                                            {u.username.charAt(0).toUpperCase()}
+                                                            {(u.full_name || u.username || "U").charAt(0).toUpperCase()}
                                                         </div>
-                                                        <span className="fw-semibold">{u.username}</span>
+                                                        <span className="fw-semibold">{u.full_name || u.username}</span>
                                                     </div>
                                                 </td>
                                                 <td className="py-3">
@@ -258,7 +285,7 @@ export default function AdminUsuarios() {
                                                         <button className="btn btn-sm btn-outline-light border-opacity-25" onClick={() => {
                                                             setEditing(u.id);
                                                             setForm({
-                                                                username: u.username,
+                                                                full_name: u.full_name || "",
                                                                 email: u.email || "",
                                                                 password: "",
                                                                 role: u.role,

@@ -2,12 +2,26 @@
 Command: Create Product
 CQRS - Command para crear un producto
 """
-from datetime import datetime
 from decimal import Decimal
 from ...infrastructure.repositories import ProductRepository, CategoryRepository
 from ...infrastructure.event_store import event_store
 from ...domain.entities import Product
 from shared import publish_event
+
+
+def _persist_and_publish(event, routing_key):
+    event_data = {
+        **event.data,
+        'timestamp': event.occurred_at,
+    }
+    event_store.append_event(
+        aggregate_id=event.aggregate_id,
+        event_type=event.event_type,
+        data=event_data,
+        aggregate_type=event.aggregate_type
+    )
+    publish_event(routing_key, event_data)
+    return event_data
 
 
 def create_product_command(
@@ -65,25 +79,8 @@ def create_product_command(
             description=description
         )
     
-    # Guardar evento en Event Store
-    event_data = {
-        'product_id': product.id,
-        'name': product.name,
-        'price': str(product.price),
-        'category_id': category_id,
-        'restaurant_id': restaurant_id,
-        'image': product.image,
-        'description': description,
-        'timestamp': datetime.utcnow().isoformat()
-    }
-    event_store.append_event(
-        aggregate_id=product.id,
-        event_type='ProductCreated',
-        data=event_data,
-        aggregate_type='Product'
-    )
-    
-    # Publicar evento a RabbitMQ
-    publish_event('product.created', event_data)
+    product.record_created()
+    event = product.pull_domain_events()[-1]
+    _persist_and_publish(event, 'product.created')
     
     return product

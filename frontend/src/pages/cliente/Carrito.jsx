@@ -1,22 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../components/DashboardNavbar";
+import { getCurrentUser } from "../../services/api";
 
 export default function Carrito() {
     const { user, loading } = useAuth(['cliente']);
     const navigate = useNavigate();
 
-    // 1. SOLUCIÓN AL ERROR: Cargamos el localStorage directamente en la inicialización
+    const getCartKey = (currentUser) => currentUser?.id ? `carrito_${currentUser.id}` : "carrito_guest";
+
     const [carrito, setCarrito] = useState(() => {
-        const storedCart = localStorage.getItem("carrito");
+        const currentUser = getCurrentUser();
+        const storedCart = localStorage.getItem(getCartKey(currentUser));
         return storedCart ? JSON.parse(storedCart) : [];
     });
+
+    useEffect(() => {
+        if (!user) return;
+        const storedCart = localStorage.getItem(getCartKey(user));
+        setCarrito(storedCart ? JSON.parse(storedCart) : []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]);
 
     const handleRemoveFromCart = (productId) => {
         const updatedCart = carrito.filter(item => item.id !== productId);
         setCarrito(updatedCart);
-        localStorage.setItem("carrito", JSON.stringify(updatedCart));
+        localStorage.setItem(getCartKey(user), JSON.stringify(updatedCart));
     };
 
     const handleUpdateQuantity = (productId, newQuantity) => {
@@ -28,7 +38,7 @@ export default function Carrito() {
             item.id === productId ? { ...item, quantity: newQuantity } : item
         );
         setCarrito(updatedCart);
-        localStorage.setItem("carrito", JSON.stringify(updatedCart));
+        localStorage.setItem(getCartKey(user), JSON.stringify(updatedCart));
     };
 
     const getTotal = () => {

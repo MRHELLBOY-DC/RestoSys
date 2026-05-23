@@ -3,6 +3,14 @@ const AUTH_API = "http://localhost:8000";
 //const MENU_API = "http://host.docker.internal:8001";
 const MENU_API = "http://localhost:8001";
 
+const handleAuthResponse = async (res) => {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        throw data;
+    }
+    return data;
+};
+
 // ============================================
 // AUTH ENDPOINTS (puerto 8000)
 // ============================================
@@ -169,7 +177,7 @@ export const createAdminUsuario = async (data) => {
         body: JSON.stringify(data)
     });
     
-    return res.json();
+    return handleAuthResponse(res);
 };
 
 // Actualizar usuario
@@ -185,7 +193,7 @@ export const updateAdminUsuario = async (usuarioId, data) => {
         body: JSON.stringify(data)
     });
     
-    return res.json();
+    return handleAuthResponse(res);
 };
 
 // Eliminar usuario

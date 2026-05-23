@@ -1,28 +1,23 @@
-"""
-Command: Create User
-CQRS - Command para crear usuario
-"""
-from datetime import datetime
 from users.infrastructure.event_store import event_store
 from shared import publish_event, USER_CREATED
 
 
-def create_user_event(user):
-    """
-    Crea un evento de tipo UserCreated
-    Lo guarda en el Event Store y lo publica a RabbitMQ
-    """
+def _persist_and_publish(event, routing_key):
     event_data = {
-        'user_id': user.id,
-        'username': user.username,
-        'role': user.role,
-        'email': user.email,
-        'timestamp': datetime.utcnow().isoformat()
+        **event.data,
+        'timestamp': event.occurred_at,
     }
     event_store.append_event(
-        aggregate_id=user.id,
-        event_type='UserCreated',
-        data=event_data
+        aggregate_id=event.aggregate_id,
+        event_type=event.event_type,
+        data=event_data,
+        aggregate_type=event.aggregate_type,
     )
-    publish_event(USER_CREATED, event_data)
+    publish_event(routing_key, event_data)
     return event_data
+
+
+def create_user_event(user):
+    user.record_created()
+    events = user.pull_domain_events()
+    return _persist_and_publish(events[-1], USER_CREATED)

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { loginUser } from "../../services/api";
 import { useNavigate, Link } from "react-router-dom";
+import Navbar from "../../components/Navbar";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -13,84 +14,90 @@ export default function Login() {
         const result = await loginUser({ email, password });
 
         if (result.success) {
-            if (result.user.role === 'admin') {
-                navigate("/admin/dashboard");
-            } else if (result.user.role === 'restaurante') {
-                navigate("/restaurante/dashboard");
-            } else {
-                navigate("/cliente/dashboard");
-            }
+            if (result.user.role === 'admin') navigate("/admin/dashboard");
+            else if (result.user.role === 'restaurante') navigate("/restaurante/dashboard");
+            else navigate("/cliente/dashboard");
         } else {
             setError(result.message || "Error en login");
         }
     };
 
     return (
-        /* Contenedor principal que ocupa toda la pantalla con el degradado */
-        <div className="min-vh-100 w-100 d-flex align-items-center justify-content-center p-3"
-             style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-            
-            {/* Tarjeta de Login (Glassmorphism) */}
-            <div className="card shadow-lg border-white border-opacity-25 text-white" 
-                 style={{ 
-                     maxWidth: '400px', 
-                     width: '100%', 
-                     background: 'rgba(255, 255, 255, 0.1)', 
-                     backdropFilter: 'blur(15px)',
-                     borderRadius: '20px'
-                 }}>
-                
-                <div className="card-body p-5 text-center">
-                    <h2 className="fw-bold mb-4">Iniciar Sesión</h2>
-                    
-                    {error && (
-                        <div className="alert alert-danger py-2 small border-0 bg-danger bg-opacity-25 text-white" role="alert">
-                            {error}
+        <div className="min-vh-100 d-flex flex-column"
+             style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.35) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
+            <Navbar />
+
+            <div className="flex-grow-1 d-flex align-items-center justify-content-center p-3">
+                <div className="card shadow-lg text-white"
+                     style={{
+                         maxWidth: '420px',
+                         width: '100%',
+                         background: 'rgba(255,255,255,0.05)',
+                         backdropFilter: 'blur(16px)',
+                         border: '1px solid rgba(240,85,77,0.25)',
+                         borderRadius: '24px',
+                     }}>
+
+                    <div className="card-body p-4 p-sm-5">
+                        <div className="text-center mb-4">
+                            <img src="/restosyslogo.png" alt="RestoSys" style={{ width: '140px', mixBlendMode: 'screen' }} className="mb-3" />
+                            <h2 className="fw-bold">Iniciar sesión</h2>
+                            <p className="text-white-50 small">Bienvenido de vuelta</p>
                         </div>
-                    )}
 
-                    <div className="mb-3">
-                        <input 
-                            type="email"
-                            className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
-                            placeholder="Correo electrónico" 
-                            style={{ borderRadius: '10px' }}
-                            value={email}
-                            onChange={e => setEmail(e.target.value)} 
-                        />
-                    </div>
+                        {error && (
+                            <div className="alert py-2 small border-0 text-white mb-3"
+                                 style={{ background: 'rgba(240,85,77,0.2)', borderRadius: '10px' }}>
+                                {error}
+                            </div>
+                        )}
 
-                    <div className="mb-4">
-                        <input 
-                            type="password" 
-                            className="form-control bg-white bg-opacity-10 border-white border-opacity-25 text-white placeholder-white-50"
-                            placeholder="Contraseña" 
-                            style={{ borderRadius: '10px' }}
-                            value={password}
-                            onChange={e => setPassword(e.target.value)} 
-                        />
-                    </div>
+                        <div className="mb-3">
+                            <label className="text-white-50 small fw-semibold mb-1 d-block">Correo Electrónico</label>
+                            <input
+                                type="email"
+                                className="form-control text-white"
+                                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '12px 16px' }}
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                        </div>
 
-                    <button 
-                        className="btn btn-primary w-100 fw-bold mb-4 py-2 shadow-sm"
-                        style={{ 
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                            border: 'none',
-                            borderRadius: '10px'
-                        }}
-                        onClick={handleLogin}
-                    >
-                        Ingresar
-                    </button>
+                        <div className="mb-4">
+                            <label className="text-white-50 small fw-semibold mb-1 d-block">Contraseña</label>
+                            <input
+                                type="password"
+                                className="form-control text-white"
+                                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '12px 16px' }}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                            />
+                        </div>
 
-                    <div className="small">
-                        <p className="mb-1 text-white-50">¿No tienes cuenta?</p>
-                        <Link to="/register" className="text-white fw-bold text-decoration-none">
-                            Registrarse
-                        </Link>
+                        <button
+                            className="btn w-100 fw-bold py-2 mb-4 text-white"
+                            style={{ background: 'linear-gradient(135deg, #f0554d 0%, #d73a35 100%)', border: 'none', borderRadius: '12px', fontSize: '1rem' }}
+                            onClick={handleLogin}
+                        >
+                            Ingresar →
+                        </button>
+
+                        <div className="text-center small">
+                            <span className="text-white-50">¿No tienes cuenta? </span>
+                            <Link to="/register" className="fw-bold text-decoration-none" style={{ color: '#f0554d' }}>
+                                Registrarse
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <footer style={{ background: 'linear-gradient(135deg, rgba(30,8,8,0.95) 0%, rgba(15,5,5,0.98) 100%)', borderTop: '1px solid rgba(240,85,77,0.2)', padding: '20px 0', textAlign: 'center' }}>
+                <p className="text-white-50 mb-1 small">© 2026 RestoSys - Todos los derechos reservados</p>
+                <div className="small text-white-50">
+                    <span>Luis Alfredo Vargas Pizarro</span> | <span>Eduardo Durana</span>
+                </div>
+            </footer>
         </div>
     );
 }

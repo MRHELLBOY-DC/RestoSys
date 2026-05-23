@@ -35,13 +35,12 @@ export default function DashboardNavbar() {
     if (!user) return null;
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-black bg-opacity-25 border-bottom border-white border-opacity-10 shadow-sm sticky-top"
+        <nav className="navbar navbar-expand-lg navbar-dark bg-black bg-opacity-25 border-bottom border-white border-opacity-10 shadow-sm py-0"
              style={{ backdropFilter: 'blur(10px)' }}>
             <div className="container">
                 {/* Logo */}
-                <Link className="navbar-brand fw-bold d-flex align-items-center gap-2" to="/">
-                    <span className="fs-4"></span>
-                    <span>MenuDigital</span>
+                <Link className="navbar-brand d-flex align-items-center" to="/">
+                    <img src="/restosyslogo.png" alt="RestoSys" style={{ width: '160px', objectFit: 'contain', mixBlendMode: 'screen' }} />
                 </Link>
 
                 {/* Menú de Usuario */}

@@ -46,8 +46,8 @@ export default function RestauranteMenuPage() {
             navigate("/login");
             return;
         }
-        
-        const cart = JSON.parse(localStorage.getItem("carrito") || "[]");
+        const cartKey = user?.id ? `carrito_${user.id}` : "carrito_guest";
+        const cart = JSON.parse(localStorage.getItem(cartKey) || "[]");
         const existingItem = cart.find(item => item.id === product.id);
         
         if (existingItem) {
@@ -61,7 +61,7 @@ export default function RestauranteMenuPage() {
             });
         }
         
-        localStorage.setItem("carrito", JSON.stringify(cart));
+        localStorage.setItem(cartKey, JSON.stringify(cart));
         alert(`${product.name} agregado al carrito`);
     };
 
@@ -72,7 +72,7 @@ export default function RestauranteMenuPage() {
     if (loading) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center" 
-                 style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                 style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
                 <div className="spinner-border text-light" role="status"></div>
             </div>
         );
@@ -81,7 +81,7 @@ export default function RestauranteMenuPage() {
     if (!restaurante) {
         return (
             <div className="min-vh-100 d-flex align-items-center justify-content-center" 
-                 style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                 style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
                 <div className="text-center text-white">
                     <h3>Restaurante no encontrado</h3>
                     <Link to="/" className="btn btn-outline-light mt-3">Volver al inicio</Link>
@@ -91,7 +91,7 @@ export default function RestauranteMenuPage() {
     }
 
     return (
-        <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <div className="min-vh-100" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
             <DashboardNavbar />
             
             <div className="container py-4">
@@ -104,7 +104,7 @@ export default function RestauranteMenuPage() {
                 
                 {/* Header del restaurante */}
                 <div className="card border-0 shadow-lg mb-4" style={{ borderRadius: '20px', overflow: 'hidden' }}>
-                    <div className="text-center p-5" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                    <div className="text-center p-5" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
                         {/* LOGO DEL RESTAURANTE */}
                         {restaurante.logo ? (
                             <img 

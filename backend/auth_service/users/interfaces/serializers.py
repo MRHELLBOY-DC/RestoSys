@@ -102,20 +102,21 @@ class UserSerializer(serializers.ModelSerializer):
         """Validaciones que dependen de múltiples campos"""
         role = data.get('role')
         restaurant_name = data.get('restaurant_name')
+        restaurante_id = (self.initial_data or {}).get('restaurante_id')
         
         # Si es restaurante, requiere nombre del restaurante
         if role == 'restaurante':
-            if not restaurant_name:
+            if not restaurant_name and not restaurante_id:
                 raise serializers.ValidationError({
                     "restaurant_name": "El nombre del restaurante es requerido para usuarios con rol restaurante"
                 })
             
-            if len(restaurant_name) < 3:
+            if restaurant_name and len(restaurant_name) < 3:
                 raise serializers.ValidationError({
                     "restaurant_name": "El nombre del restaurante debe tener al menos 3 caracteres"
                 })
             
-            if len(restaurant_name) > 100:
+            if restaurant_name and len(restaurant_name) > 100:
                 raise serializers.ValidationError({
                     "restaurant_name": "El nombre del restaurante no puede tener más de 100 caracteres"
                 })
@@ -133,7 +134,8 @@ class UserSerializer(serializers.ModelSerializer):
         if not email:
             raise serializers.ValidationError({"email": "El email es requerido"})
 
-        username = validated_data.get('username') or email
+        full_name = validated_data.get('full_name') or ''
+        username = validated_data.get('username') or self._generate_username_from_name(full_name) or email
 
         user = User.objects.create_user(
             username=username,
@@ -152,6 +154,20 @@ class UserSerializer(serializers.ModelSerializer):
             UserRestaurant.objects.create(user=user, restaurant=restaurant)
 
         return user
+
+    def _generate_username_from_name(self, full_name):
+        base_username = (full_name or '').strip().lower().replace(' ', '_')
+        base_username = ''.join(ch for ch in base_username if ch.isalnum() or ch in ['_', '.', '-', '+', '@'])
+        base_username = base_username[:30] or ''
+        if not base_username:
+            return ''
+        username = base_username
+        counter = 1
+        while User.objects.filter(username__iexact=username).exists():
+            suffix = str(counter)
+            username = f"{base_username[:30 - len(suffix)]}{suffix}"
+            counter += 1
+        return username
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):

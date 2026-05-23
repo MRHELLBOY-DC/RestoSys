@@ -1,28 +1,23 @@
-"""
-Command: Update User
-CQRS - Command para actualizar usuario
-"""
-from datetime import datetime
 from users.infrastructure.event_store import event_store
 from shared import publish_event, USER_UPDATED
 
 
-def update_user_event(user, old_data, new_data):
-    """
-    Crea un evento de tipo UserUpdated
-    Guarda el estado anterior y el nuevo para trazabilidad
-    """
+def _persist_and_publish(event, routing_key):
     event_data = {
-        'user_id': user.id,
-        'username': user.username,
-        'old_data': old_data,
-        'new_data': new_data,
-        'timestamp': datetime.utcnow().isoformat()
+        **event.data,
+        'timestamp': event.occurred_at,
     }
     event_store.append_event(
-        aggregate_id=user.id,
-        event_type='UserUpdated',
-        data=event_data
+        aggregate_id=event.aggregate_id,
+        event_type=event.event_type,
+        data=event_data,
+        aggregate_type=event.aggregate_type,
     )
-    publish_event(USER_UPDATED, event_data)
+    publish_event(routing_key, event_data)
     return event_data
+
+
+def update_user_event(user, old_data, new_data):
+    user.record_updated(old_data, new_data)
+    events = user.pull_domain_events()
+    return _persist_and_publish(events[-1], USER_UPDATED)

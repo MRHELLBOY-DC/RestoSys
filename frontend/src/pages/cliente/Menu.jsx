@@ -16,6 +16,7 @@ export default function Menu() {
     const restaurantId = searchParams.get("restaurant_id");
     const { user } = useAuth();
     const [cartCount, setCartCount] = useState(0);
+    const cartKey = user?.id ? `carrito_${user.id}` : "carrito_guest";
 
     useEffect(() => {
         if (restaurantId) {
@@ -24,10 +25,10 @@ export default function Menu() {
             setLoading(false);
         }
         
-        const initialCart = JSON.parse(localStorage.getItem("carrito") || "[]");
+        const initialCart = JSON.parse(localStorage.getItem(cartKey) || "[]");
         const count = initialCart.reduce((sum, item) => sum + (item.quantity || 1), 0);
         setCartCount(count);
-    }, [restaurantId]);
+    }, [restaurantId, cartKey]);
 
     const loadData = async (id) => {
         try {
@@ -52,7 +53,7 @@ export default function Menu() {
             return;
         }
 
-        const cart = JSON.parse(localStorage.getItem("carrito") || "[]");
+        const cart = JSON.parse(localStorage.getItem(cartKey) || "[]");
         
         // Crear un identificador único que incluya las opciones seleccionadas
         const optionsKey = selectedOptions.map(opt => opt.id).sort().join(',');
@@ -76,7 +77,7 @@ export default function Menu() {
             });
         }
         
-        localStorage.setItem("carrito", JSON.stringify(cart));
+        localStorage.setItem(cartKey, JSON.stringify(cart));
         
         const newCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
         setCartCount(newCount);
@@ -103,7 +104,7 @@ export default function Menu() {
 
     if (loading) {
         return (
-            <div className="min-vh-100 d-flex flex-column" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+            <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
                 <DashboardNavbar />
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
                     <div className="spinner-border text-light" role="status"></div>
@@ -114,7 +115,7 @@ export default function Menu() {
 
     if (!restaurantId) {
         return (
-            <div className="min-vh-100 d-flex flex-column" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+            <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
                 <DashboardNavbar />
                 <div className="container flex-grow-1 d-flex align-items-center justify-content-center">
                     <div className="card border-0 shadow-lg p-5 text-center bg-white bg-opacity-10 text-white" style={{ backdropFilter: 'blur(10px)', borderRadius: '20px' }}>
@@ -128,7 +129,7 @@ export default function Menu() {
     }
 
     return (
-        <div className="min-vh-100 d-flex flex-column" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
             <DashboardNavbar />
             
             <div className="container py-5">
@@ -214,7 +215,7 @@ export default function Menu() {
                                             <button 
                                                 onClick={() => addToCart(product, productExtras)}
                                                 className="btn btn-primary w-100 rounded-pill fw-bold mt-2"
-                                                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: 'none' }}
+                                                style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)', border: 'none' }}
                                             >
                                                 + Agregar al Carrito
                                             </button>
@@ -237,7 +238,7 @@ export default function Menu() {
                         height: '65px', 
                         fontSize: '24px',
                         background: '#fff',
-                        color: '#764ba2',
+                        color: '#f0554d',
                         border: 'none'
                     }}
                 >

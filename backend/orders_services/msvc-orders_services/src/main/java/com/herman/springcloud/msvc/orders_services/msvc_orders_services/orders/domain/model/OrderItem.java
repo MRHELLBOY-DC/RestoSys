@@ -8,8 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class OrderItem {
-    private final UUID id;
+public class OrderItem extends Entity {
     private final UUID productId;
     private final String productName;
     private final int quantity;
@@ -17,6 +16,7 @@ public class OrderItem {
     private final List<OrderItemOption> options;
 
     public OrderItem(UUID id, UUID productId, String productName, int quantity, BigDecimal unitPrice, List<OrderItemOption> options) {
+        super(id);
         if (productId == null) {
             throw new DomainException("El producto es obligatorio");
         }
@@ -29,7 +29,6 @@ public class OrderItem {
         if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
             throw new DomainException("El precio unitario debe ser mayor a cero");
         }
-        this.id = id == null ? UUID.randomUUID() : id;
         this.productId = productId;
         this.productName = productName;
         this.quantity = quantity;
@@ -42,10 +41,6 @@ public class OrderItem {
                 .map(OrderItemOption::getExtraPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return unitPrice.add(optionsTotal).multiply(BigDecimal.valueOf(quantity));
-    }
-
-    public UUID getId() {
-        return id;
     }
 
     public UUID getProductId() {
