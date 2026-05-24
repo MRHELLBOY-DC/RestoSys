@@ -15,6 +15,7 @@ import java.util.UUID;
 public record OrderResponse(
         UUID id,
         UUID restaurantId,
+        UUID clientId,
         String orderCode,
         OrderType type,
         String tableNumber,
@@ -29,6 +30,7 @@ public record OrderResponse(
         return new OrderResponse(
                 order.getId(),
                 order.getRestaurantId(),
+                order.getClientId(),
                 order.getOrderCode(),
                 order.getType(),
                 order.getTableNumber(),

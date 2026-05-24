@@ -52,4 +52,12 @@ public class PostgresOrderRepository implements OrderRepository {
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Order> findByClientId(UUID clientId) {
+        return springDataOrderRepository.findByClientIdOrderByCreatedAtDesc(clientId)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
 }

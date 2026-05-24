@@ -1,179 +1,98 @@
-const API = "http://localhost:8001";
+import createApiClient, { getEnv } from "./apiClient";
 
-// Helper para manejar errores
-const handleResponse = async (res) => {
-    if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Error desconocido' }));
-        throw error;
-    }
-    return res.json();
-};
-
-// Obtener token para autenticación
-const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return {
-        "Authorization": `Bearer ${token}`
-    };
-};
+const API = getEnv("VITE_MENU_API", "http://localhost:8001");
+const client = createApiClient(API);
 
 // ========== PRODUCTOS (requieren auth) ==========
-export const getProducts = async () => {
-    const res = await fetch(`${API}/api/products/`, {
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+export const getProducts = async (restaurantId) => {
+    const res = await client.get(`/api/products/`, { params: restaurantId ? { restaurant_id: restaurantId } : {} });
+    return res.data;
 };
 
 // Crear producto (con o sin imagen) - UNIFICADA
 export const createProduct = async (data) => {
-    const isFormData = data instanceof FormData;
-    
-    const headers = {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-    };
-    
-    if (!isFormData) {
-        headers["Content-Type"] = "application/json";
-    }
-    
-    const res = await fetch(`${API}/api/products/`, {
-        method: "POST",
-        headers: headers,
-        body: isFormData ? data : JSON.stringify(data)
-    });
-    
-    return handleResponse(res);
+    // axios handles FormData automatically in the browser
+    const res = await client.post(`/api/products/`, data);
+    return res.data;
 };
 
 // Actualizar producto (con o sin imagen) - UNIFICADA
 export const updateProduct = async (id, data) => {
-    const isFormData = data instanceof FormData;
-    
-    const headers = {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-    };
-    
-    if (!isFormData) {
-        headers["Content-Type"] = "application/json";
-    }
-    
-    const res = await fetch(`${API}/api/products/${id}/`, {
-        method: "PUT",
-        headers: headers,
-        body: isFormData ? data : JSON.stringify(data)
-    });
-    
-    return handleResponse(res);
+    const res = await client.put(`/api/products/${id}/`, data);
+    return res.data;
 };
 
 export const deleteProduct = async (id) => {
-    const res = await fetch(`${API}/api/products/${id}/`, {
-        method: "DELETE",
-        headers: getAuthHeaders()
-    });
+    const res = await client.delete(`/api/products/${id}/`);
     if (res.status === 204) return null;
-    return handleResponse(res);
+    return res.data;
 };
 
 // ========== CATEGORÍAS (requieren auth) ==========
-export const getCategories = async () => {
-    const res = await fetch(`${API}/api/categories/`, {
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+export const getCategories = async (restaurantId) => {
+    const res = await client.get(`/api/categories/`, { params: restaurantId ? { restaurant_id: restaurantId } : {} });
+    return res.data;
 };
 
 export const createCategory = async (data) => {
-    const res = await fetch(`${API}/api/categories/`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
+    const res = await client.post(`/api/categories/`, data);
+    return res.data;
 };
 
 export const updateCategory = async (id, data) => {
-    const res = await fetch(`${API}/api/categories/${id}/`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
+    const res = await client.put(`/api/categories/${id}/`, data);
+    return res.data;
 };
 
 export const deleteCategory = async (id) => {
-    const res = await fetch(`${API}/api/categories/${id}/`, {
-        method: "DELETE",
-        headers: getAuthHeaders()
-    });
+    const res = await client.delete(`/api/categories/${id}/`);
     if (res.status === 204) return null;
-    return handleResponse(res);
+    return res.data;
 };
 
 // ========== OPCIONES (requieren auth y product_id) ==========
 export const getOptions = async (productId) => {
     if (!productId) return [];
-    const res = await fetch(`${API}/api/options/?product_id=${productId}`, {
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+    const res = await client.get(`/api/options/`, { params: { product_id: productId } });
+    return res.data;
 };
 
 export const createOption = async (data) => {
-    const res = await fetch(`${API}/api/options/`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
+    const res = await client.post(`/api/options/`, data);
+    return res.data;
 };
 
 export const updateOption = async (id, data) => {
-    const res = await fetch(`${API}/api/options/${id}/`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify(data)
-    });
-    return handleResponse(res);
+    const res = await client.put(`/api/options/${id}/`, data);
+    return res.data;
 };
 
 export const deleteOption = async (id) => {
-    const res = await fetch(`${API}/api/options/${id}/`, {
-        method: "DELETE",
-        headers: getAuthHeaders()
-    });
+    const res = await client.delete(`/api/options/${id}/`);
     if (res.status === 204) return null;
-    return handleResponse(res);
+    return res.data;
 };
 
 // ========== ENDPOINTS PÚBLICOS (sin autenticación) ==========
 export const getPublicProducts = async (restaurantId = null) => {
-    let url = `${API}/api/public/products/`;
-    if (restaurantId) {
-        url += `?restaurant_id=${restaurantId}`;
+    // Call public menu endpoints without auth header to avoid 401 if token is invalid
+    const url = new URL(`/api/public/products/`, window.location.origin);
+    url.hostname = (new URL(API)).hostname || url.hostname;
+    url.port = (new URL(API)).port || url.port;
+    if (restaurantId) url.searchParams.set('restaurant_id', restaurantId);
+    const res = await fetch(`${API}/api/public/products/${restaurantId ? `?restaurant_id=${restaurantId}` : ''}`);
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
+        throw err;
     }
-    const res = await fetch(url);
-    return handleResponse(res);
+    return res.json();
 };
 
 export const getPublicCategories = async (restaurantId = null) => {
-    let url = `${API}/api/public/categories/`;
-    if (restaurantId) {
-        url += `?restaurant_id=${restaurantId}`;
+    const res = await fetch(`${API}/api/public/categories/${restaurantId ? `?restaurant_id=${restaurantId}` : ''}`);
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
+        throw err;
     }
-    const res = await fetch(url);
-    return handleResponse(res);
+    return res.json();
 };

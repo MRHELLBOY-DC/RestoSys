@@ -11,6 +11,7 @@ public class OrderMapper {
         JpaOrderEntity entity = new JpaOrderEntity();
         entity.setId(order.getId());
         entity.setRestaurantId(order.getRestaurantId());
+        entity.setClientId(order.getClientId());
         entity.setOrderCode(order.getOrderCode());
         entity.setType(order.getType());
         entity.setTableNumber(order.getTableNumber());
@@ -35,6 +36,7 @@ public class OrderMapper {
         return Order.restore(
                 entity.getId(),
                 entity.getRestaurantId(),
+                entity.getClientId(),
                 entity.getOrderCode(),
                 entity.getType(),
                 entity.getTableNumber(),

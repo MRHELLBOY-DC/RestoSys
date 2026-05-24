@@ -1,67 +1,39 @@
-const ORDERS_API = "http://localhost:8002";
+import createApiClient, { getEnv } from "./apiClient";
 
-const handleResponse = async (res) => {
-    if (!res.ok) {
-        const error = await res.json().catch(() => ({ message: "Error desconocido" }));
-        throw error;
-    }
-    return res.json();
-};
-
-const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { "Authorization": `Bearer ${token}` } : {};
-};
+const ORDERS_API = getEnv("VITE_ORDERS_API", "http://localhost:8002");
+const client = createApiClient(ORDERS_API);
 
 export const createOrder = async (payload) => {
-    const res = await fetch(`${ORDERS_API}/api/orders`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders()
-        },
-        body: JSON.stringify(payload)
-    });
-    return handleResponse(res);
+    const res = await client.post("/api/orders", payload);
+    return res.data;
 };
 
 export const getOrderByCode = async (orderCode) => {
-    const res = await fetch(`${ORDERS_API}/api/orders/code/${orderCode}`, {
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+    const res = await client.get(`/api/orders/code/${orderCode}`);
+    return res.data;
 };
 
 export const listActiveOrders = async (restaurantId) => {
-    const res = await fetch(`${ORDERS_API}/api/orders/active?restaurantId=${restaurantId}`, {
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+    const res = await client.get(`/api/orders/active`, { params: { restaurantId } });
+    return res.data;
 };
 
 export const listOrderHistory = async (restaurantId) => {
-    const res = await fetch(`${ORDERS_API}/api/orders/history?restaurantId=${restaurantId}`, {
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+    const res = await client.get(`/api/orders/history`, { params: { restaurantId } });
+    return res.data;
 };
 
 export const changeOrderStatus = async (orderId, status) => {
-    const res = await fetch(`${ORDERS_API}/api/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders()
-        },
-        body: JSON.stringify({ status })
-    });
-    return handleResponse(res);
+    const res = await client.patch(`/api/orders/${orderId}/status`, { status });
+    return res.data;
 };
 
 export const confirmOrderPayment = async (orderId) => {
-    const res = await fetch(`${ORDERS_API}/api/orders/${orderId}/confirm-payment`, {
-        method: "PATCH",
-        headers: getAuthHeaders()
-    });
-    return handleResponse(res);
+    const res = await client.patch(`/api/orders/${orderId}/confirm-payment`);
+    return res.data;
+};
+
+export const getOrdersByClient = async (clientId) => {
+    const res = await client.get(`/api/orders/client/${clientId}`);
+    return res.data;
 };

@@ -13,4 +13,6 @@ public interface SpringDataOrderRepository extends JpaRepository<JpaOrderEntity,
     List<JpaOrderEntity> findByRestaurantIdAndStatusInOrderByCreatedAtDesc(UUID restaurantId, List<OrderStatus> statuses);
 
     List<JpaOrderEntity> findByRestaurantIdOrderByCreatedAtDesc(UUID restaurantId);
+
+    List<JpaOrderEntity> findByClientIdOrderByCreatedAtDesc(UUID clientId);
 }

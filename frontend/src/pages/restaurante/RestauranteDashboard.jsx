@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import DashboardNavbar from "../../components/DashboardNavbar";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -37,6 +38,25 @@ export default function RestauranteDashboard() {
                         <span className="fs-5">{user.restaurant?.name || 'Establecimiento No Asignado'}</span>
                     </div>
                 </div>
+
+                {/* QR de mesa */}
+                {user.restaurant?.id && (
+                    <div className="card border-0 shadow-lg text-white mb-5"
+                         style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(12px)', borderRadius: '20px' }}>
+                        <div className="card-body p-4 d-flex flex-column align-items-center gap-3">
+                            <h2 className="fw-bold h5 mb-0">Menú Digital</h2>
+                            <div className="p-3 rounded-3 bg-white">
+                                <QRCodeSVG
+                                    value={`${window.location.origin}/restaurante/${user.restaurant.id}/menu`}
+                                    size={160}
+                                    bgColor="#ffffff"
+                                    fgColor="#111111"
+                                    level="M"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Acciones Principales en Grid */}
                 <div className="row g-4">
@@ -102,7 +122,7 @@ export default function RestauranteDashboard() {
                         </div>
                     </div>
 
-                    {/* Historial de Ventas */}
+                    {/* Pagos y Facturacion */}
                     <div className="col-12 col-md-6">
                         <div 
                             className="card border-0 shadow-lg h-100 text-white p-4"
@@ -113,7 +133,7 @@ export default function RestauranteDashboard() {
                                 cursor: 'pointer', 
                                 transition: 'all 0.3s ease' 
                             }}
-                            onClick={() => navigate("/restaurante/historial")}
+                            onClick={() => navigate("/restaurante/pagos")}
                             onMouseOver={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-10px)';
                                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
@@ -126,8 +146,8 @@ export default function RestauranteDashboard() {
                             <div className="card-body d-flex align-items-center">
                                 <div className="display-3 me-4 shadow-sm"></div>
                                 <div>
-                                    <h3 className="fw-bold mb-1">Historial de Ventas</h3>
-                                    <p className="mb-0 opacity-75">Consulta el registro histórico de todas tus operaciones.</p>
+                                    <h3 className="fw-bold mb-1">Pagos y Facturacion</h3>
+                                    <p className="mb-0 opacity-75">Prueba pagos en caja, QR simulado y comprobantes.</p>
                                 </div>
                             </div>
                         </div>

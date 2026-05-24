@@ -47,6 +47,38 @@ services:
       timeout: 5s
       retries: 10
 
+  db-payments:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: payments_billing_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_payments_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d payments_billing_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-reports:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: reports_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_reports_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d reports_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:3-management
     environment:
@@ -162,6 +194,60 @@ services:
         condition: service_started
     restart: always
 
+  payments-billing:
+    build:
+      context: ./backend/payments_billing_service/msvc-payments-billing-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./backend/payments_billing_service/msvc-payments-billing-service:/app
+      - maven_cache:/root/.m2
+    environment:
+      - DATABASE_HOST=db-payments
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=payments_billing_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
+      - RABBITMQ_PAYMENT_CONFIRMED_QUEUE=orders.payment-confirmed
+    depends_on:
+      db-payments:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+
+  reports:
+    build:
+      context: ./backend/reports_service/msvc-reports_service
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./backend/reports_service/msvc-reports_service:/app
+      - maven_cache:/root/.m2
+    environment:
+      - DATABASE_HOST=db-reports
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=reports_db
+      - DATABASE_USER=admin
+      - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
+      - RABBITMQ_REPORTS_PAYMENT_CONFIRMED_QUEUE=reports.payment-confirmed
+    depends_on:
+      db-reports:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    restart: always
+
   frontend:
     build:
       context: ./frontend
@@ -176,12 +262,16 @@ services:
       - auth
       - menu
       - orders
+      - payments-billing
+      - reports
     restart: always
 
 volumes:
   postgres_auth_data:
   postgres_menu_data:
   postgres_orders_data:
+  postgres_payments_data:
+  postgres_reports_data:
   rabbitmq_data:
   redis_data:
   auth_media:

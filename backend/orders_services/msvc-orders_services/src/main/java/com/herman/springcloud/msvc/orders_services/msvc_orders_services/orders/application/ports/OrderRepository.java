@@ -17,4 +17,6 @@ public interface OrderRepository {
     List<Order> findByRestaurantIdAndStatusIn(UUID restaurantId, List<OrderStatus> statuses);
 
     List<Order> findByRestaurantId(UUID restaurantId);
+
+    List<Order> findByClientId(UUID clientId);
 }

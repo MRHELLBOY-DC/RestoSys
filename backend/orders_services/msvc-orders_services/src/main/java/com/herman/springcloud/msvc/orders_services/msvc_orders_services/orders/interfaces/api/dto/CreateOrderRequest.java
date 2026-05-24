@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record CreateOrderRequest(
         UUID restaurantId,
+        UUID clientId,
         OrderType type,
         String tableNumber,
         List<CreateOrderItemRequest> items

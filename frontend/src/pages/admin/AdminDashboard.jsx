@@ -84,7 +84,7 @@ export default function AdminDashboard() {
                                         <p className="small text-white-50 flex-grow-1">Visualiza estadísticas y rendimiento global.</p>
                                         <button 
                                             className="btn btn-light w-100 mt-3 fw-bold"
-                                            onClick={() => navigate("")}
+                                            onClick={() => navigate("/admin/reportes")}
                                         >
                                             Ver Reportes
                                         </button>

@@ -14,6 +14,7 @@ import java.util.UUID;
 
 public class Order extends AggregateRoot {
     private final UUID restaurantId;
+    private final UUID clientId;
     private final String orderCode;
     private final OrderType type;
     private final String tableNumber;
@@ -23,7 +24,7 @@ public class Order extends AggregateRoot {
     private PaymentStatus paymentStatus;
     private Instant updatedAt;
 
-    private Order(UUID id, UUID restaurantId, String orderCode, OrderType type, String tableNumber, List<OrderItem> items,
+    private Order(UUID id, UUID restaurantId, UUID clientId, String orderCode, OrderType type, String tableNumber, List<OrderItem> items,
                   OrderStatus status, PaymentStatus paymentStatus, Instant createdAt, Instant updatedAt) {
         super(id);
         if (restaurantId == null) {
@@ -42,6 +43,7 @@ public class Order extends AggregateRoot {
             throw new DomainException("El pedido debe tener al menos un producto");
         }
         this.restaurantId = restaurantId;
+        this.clientId = clientId;
         this.orderCode = orderCode;
         this.type = type;
         this.tableNumber = tableNumber;
@@ -52,16 +54,16 @@ public class Order extends AggregateRoot {
         this.updatedAt = updatedAt == null ? this.createdAt : updatedAt;
     }
 
-    public static Order create(UUID restaurantId, OrderType type, String tableNumber, List<OrderItem> items) {
-        Order order = new Order(UUID.randomUUID(), restaurantId, generateOrderCode(), type, tableNumber, items,
+    public static Order create(UUID restaurantId, UUID clientId, OrderType type, String tableNumber, List<OrderItem> items) {
+        Order order = new Order(UUID.randomUUID(), restaurantId, clientId, generateOrderCode(), type, tableNumber, items,
                 OrderStatus.RECIBIDO, PaymentStatus.PENDIENTE, Instant.now(), Instant.now());
         order.addDomainEvent(new OrderCreatedEvent(order.getId(), order.restaurantId, order.orderCode, order.totalAmount(), Instant.now()));
         return order;
     }
 
-    public static Order restore(UUID id, UUID restaurantId, String orderCode, OrderType type, String tableNumber, List<OrderItem> items,
+    public static Order restore(UUID id, UUID restaurantId, UUID clientId, String orderCode, OrderType type, String tableNumber, List<OrderItem> items,
                                 OrderStatus status, PaymentStatus paymentStatus, Instant createdAt, Instant updatedAt) {
-        return new Order(id, restaurantId, orderCode, type, tableNumber, items, status, paymentStatus, createdAt, updatedAt);
+        return new Order(id, restaurantId, clientId, orderCode, type, tableNumber, items, status, paymentStatus, createdAt, updatedAt);
     }
 
     public void changeStatus(OrderStatus newStatus) {
@@ -110,6 +112,10 @@ public class Order extends AggregateRoot {
 
     public UUID getRestaurantId() {
         return restaurantId;
+    }
+
+    public UUID getClientId() {
+        return clientId;
     }
 
     public String getOrderCode() {

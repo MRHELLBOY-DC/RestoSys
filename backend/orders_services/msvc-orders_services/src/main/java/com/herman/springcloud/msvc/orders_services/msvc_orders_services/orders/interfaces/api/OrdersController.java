@@ -8,11 +8,13 @@ import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.a
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.create.CreateOrderCommandHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.GetOrderQueryHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListActiveOrdersQueryHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListClientOrdersQueryHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListOrderHistoryQueryHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.ChangeOrderStatusRequest;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.CreateOrderRequest;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.OrderResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/orders")
 public class OrdersController {
     private final CreateOrderCommandHandler createOrderHandler;
@@ -35,19 +38,22 @@ public class OrdersController {
     private final GetOrderQueryHandler getOrderQueryHandler;
     private final ListActiveOrdersQueryHandler listActiveOrdersQueryHandler;
     private final ListOrderHistoryQueryHandler listOrderHistoryQueryHandler;
+    private final ListClientOrdersQueryHandler listClientOrdersQueryHandler;
 
     public OrdersController(CreateOrderCommandHandler createOrderHandler,
                             ChangeOrderStatusCommandHandler changeOrderStatusHandler,
                             ConfirmOrderPaymentCommandHandler confirmOrderPaymentHandler,
                             GetOrderQueryHandler getOrderQueryHandler,
                             ListActiveOrdersQueryHandler listActiveOrdersQueryHandler,
-                            ListOrderHistoryQueryHandler listOrderHistoryQueryHandler) {
+                            ListOrderHistoryQueryHandler listOrderHistoryQueryHandler,
+                            ListClientOrdersQueryHandler listClientOrdersQueryHandler) {
         this.createOrderHandler = createOrderHandler;
         this.changeOrderStatusHandler = changeOrderStatusHandler;
         this.confirmOrderPaymentHandler = confirmOrderPaymentHandler;
         this.getOrderQueryHandler = getOrderQueryHandler;
         this.listActiveOrdersQueryHandler = listActiveOrdersQueryHandler;
         this.listOrderHistoryQueryHandler = listOrderHistoryQueryHandler;
+        this.listClientOrdersQueryHandler = listClientOrdersQueryHandler;
     }
 
     @PostMapping
@@ -82,6 +88,14 @@ public class OrdersController {
                 .toList();
     }
 
+    @GetMapping("/client/{clientId}")
+    public List<OrderResponse> listByClient(@PathVariable UUID clientId) {
+        return listClientOrdersQueryHandler.handle(clientId)
+                .stream()
+                .map(OrderResponse::fromDomain)
+                .toList();
+    }
+
     @PatchMapping("/{orderId}/status")
     public OrderResponse changeStatus(@PathVariable UUID orderId, @RequestBody ChangeOrderStatusRequest request) {
         return OrderResponse.fromDomain(changeOrderStatusHandler.handle(new ChangeOrderStatusCommand(orderId, request.status())));
@@ -108,6 +122,6 @@ public class OrdersController {
                                 .toList()
                 ))
                 .toList();
-        return new CreateOrderCommand(request.restaurantId(), request.type(), request.tableNumber(), items);
+        return new CreateOrderCommand(request.restaurantId(), request.clientId(), request.type(), request.tableNumber(), items);
     }
 }

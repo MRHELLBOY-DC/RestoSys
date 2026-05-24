@@ -9,11 +9,14 @@ import Register from "./pages/auth/Register";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRestaurantes from "./pages/admin/AdminRestaurantes";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminReportes from "./pages/admin/AdminReportes";
 
 // Restaurante
 import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
 import RestauranteMenu from "./pages/restaurante/RestauranteMenu";
 import RestaurantePedidos from "./pages/restaurante/RestaurantePedidos";
+import RestaurantePagos from "./pages/restaurante/RestaurantePagos";
+import RestauranteReportes from "./pages/restaurante/RestauranteReportes";
 
 // Cliente
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
@@ -95,6 +98,11 @@ function App() {
                     <AdminUsuarios />
                 </ProtectedRoute>
             } />
+            <Route path="/admin/reportes" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminReportes />
+                </ProtectedRoute>
+            } />
             
             {/* Restaurante */}
             <Route path="/restaurante/dashboard" element={
@@ -110,6 +118,16 @@ function App() {
             <Route path="/restaurante/pedidos" element={
                 <ProtectedRoute allowedRoles={['restaurante']}>
                     <RestaurantePedidos />
+                </ProtectedRoute>
+            } />
+            <Route path="/restaurante/pagos" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <RestaurantePagos />
+                </ProtectedRoute>
+            } />
+            <Route path="/restaurante/reportes" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <RestauranteReportes />
                 </ProtectedRoute>
             } />
         </Routes>

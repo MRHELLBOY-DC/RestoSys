@@ -27,6 +27,9 @@ public class JpaOrderEntity {
     @Column(name = "restaurant_id", nullable = false)
     private UUID restaurantId;
 
+    @Column(name = "client_id")
+    private UUID clientId;
+
     @Column(name = "order_code", nullable = false, unique = true)
     private String orderCode;
 
@@ -71,6 +74,14 @@ public class JpaOrderEntity {
 
     public void setRestaurantId(UUID restaurantId) {
         this.restaurantId = restaurantId;
+    }
+
+    public UUID getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(UUID clientId) {
+        this.clientId = clientId;
     }
 
     public String getOrderCode() {
