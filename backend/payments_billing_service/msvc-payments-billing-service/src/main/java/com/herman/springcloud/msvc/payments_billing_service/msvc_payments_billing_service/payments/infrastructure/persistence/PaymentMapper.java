@@ -9,6 +9,7 @@ public class PaymentMapper {
         entity.setId(payment.getId());
         entity.setOrderId(payment.getOrderId());
         entity.setRestaurantId(payment.getRestaurantId());
+        entity.setClientId(payment.getClientId());
         entity.setAmount(payment.getAmount());
         entity.setMethod(payment.getMethod());
         entity.setStatus(payment.getStatus());
@@ -24,7 +25,7 @@ public class PaymentMapper {
 
     public Payment toDomain(JpaPaymentEntity entity) {
         Receipt receipt = entity.getReceipt() == null ? null : toReceiptDomain(entity.getReceipt());
-        return Payment.restore(entity.getId(), entity.getOrderId(), entity.getRestaurantId(), entity.getAmount(),
+        return Payment.restore(entity.getId(), entity.getOrderId(), entity.getRestaurantId(), entity.getClientId(), entity.getAmount(),
                 entity.getMethod(), entity.getStatus(), entity.getQrPayload(), receipt, entity.getCreatedAt(), entity.getPaidAt());
     }
 

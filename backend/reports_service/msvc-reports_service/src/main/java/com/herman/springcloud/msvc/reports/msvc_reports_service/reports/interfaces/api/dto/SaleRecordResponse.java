@@ -8,13 +8,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record SaleRecordResponse(UUID id, UUID restaurantId, UUID orderId, UUID paymentId, BigDecimal totalAmount, Instant soldAt, List<SaleItemResponse> items) {
+public record SaleRecordResponse(UUID id, UUID restaurantId, UUID orderId, UUID paymentId, UUID clientId, BigDecimal totalAmount, Instant soldAt, List<SaleItemResponse> items) {
     public static SaleRecordResponse fromDomain(SaleRecord saleRecord) {
         return new SaleRecordResponse(
                 saleRecord.getId(),
                 saleRecord.getRestaurantId(),
                 saleRecord.getOrderId(),
                 saleRecord.getPaymentId(),
+                saleRecord.getClientId(),
                 saleRecord.getTotalAmount(),
                 saleRecord.getSoldAt(),
                 saleRecord.getItems().stream().map(SaleItemResponse::fromDomain).toList()

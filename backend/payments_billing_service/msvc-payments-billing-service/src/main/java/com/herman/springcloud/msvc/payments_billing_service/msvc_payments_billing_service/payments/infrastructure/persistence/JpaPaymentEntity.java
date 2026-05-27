@@ -17,6 +17,8 @@ public class JpaPaymentEntity {
     private UUID orderId;
     @Column(name = "restaurant_id", nullable = false)
     private UUID restaurantId;
+    @Column(name = "client_id")
+    private UUID clientId;
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
     @Enumerated(EnumType.STRING)
@@ -40,6 +42,8 @@ public class JpaPaymentEntity {
     public void setOrderId(UUID orderId) { this.orderId = orderId; }
     public UUID getRestaurantId() { return restaurantId; }
     public void setRestaurantId(UUID restaurantId) { this.restaurantId = restaurantId; }
+    public UUID getClientId() { return clientId; }
+    public void setClientId(UUID clientId) { this.clientId = clientId; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public PaymentMethod getMethod() { return method; }

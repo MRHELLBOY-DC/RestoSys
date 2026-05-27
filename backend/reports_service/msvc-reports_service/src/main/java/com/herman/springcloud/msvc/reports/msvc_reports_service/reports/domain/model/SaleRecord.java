@@ -14,11 +14,12 @@ public class SaleRecord extends AggregateRoot {
     private final UUID restaurantId;
     private final UUID orderId;
     private final UUID paymentId;
+    private final UUID clientId;
     private final BigDecimal totalAmount;
     private final Instant soldAt;
     private final List<SaleItem> items;
 
-    private SaleRecord(UUID id, UUID restaurantId, UUID orderId, UUID paymentId, BigDecimal totalAmount, Instant soldAt, List<SaleItem> items) {
+    private SaleRecord(UUID id, UUID restaurantId, UUID orderId, UUID paymentId, UUID clientId, BigDecimal totalAmount, Instant soldAt, List<SaleItem> items) {
         super(id);
         if (restaurantId == null) throw new DomainException("El restaurante es obligatorio");
         if (orderId == null) throw new DomainException("El pedido es obligatorio");
@@ -26,24 +27,26 @@ public class SaleRecord extends AggregateRoot {
         this.restaurantId = restaurantId;
         this.orderId = orderId;
         this.paymentId = paymentId;
+        this.clientId = clientId;
         this.totalAmount = totalAmount;
         this.soldAt = soldAt == null ? Instant.now() : soldAt;
         this.items = new ArrayList<>(items == null ? List.of() : items);
     }
 
-    public static SaleRecord create(UUID restaurantId, UUID orderId, UUID paymentId, BigDecimal totalAmount, Instant soldAt, List<SaleItem> items) {
-        SaleRecord saleRecord = new SaleRecord(UUID.randomUUID(), restaurantId, orderId, paymentId, totalAmount, soldAt, items);
+    public static SaleRecord create(UUID restaurantId, UUID orderId, UUID paymentId, UUID clientId, BigDecimal totalAmount, Instant soldAt, List<SaleItem> items) {
+        SaleRecord saleRecord = new SaleRecord(UUID.randomUUID(), restaurantId, orderId, paymentId, clientId, totalAmount, soldAt, items);
         saleRecord.addDomainEvent(new SaleRecordedEvent(saleRecord.getId(), restaurantId, orderId, totalAmount, saleRecord.soldAt));
         return saleRecord;
     }
 
-    public static SaleRecord restore(UUID id, UUID restaurantId, UUID orderId, UUID paymentId, BigDecimal totalAmount, Instant soldAt, List<SaleItem> items) {
-        return new SaleRecord(id, restaurantId, orderId, paymentId, totalAmount, soldAt, items);
+    public static SaleRecord restore(UUID id, UUID restaurantId, UUID orderId, UUID paymentId, UUID clientId, BigDecimal totalAmount, Instant soldAt, List<SaleItem> items) {
+        return new SaleRecord(id, restaurantId, orderId, paymentId, clientId, totalAmount, soldAt, items);
     }
 
     public UUID getRestaurantId() { return restaurantId; }
     public UUID getOrderId() { return orderId; }
     public UUID getPaymentId() { return paymentId; }
+    public UUID getClientId() { return clientId; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public Instant getSoldAt() { return soldAt; }
     public List<SaleItem> getItems() { return Collections.unmodifiableList(items); }

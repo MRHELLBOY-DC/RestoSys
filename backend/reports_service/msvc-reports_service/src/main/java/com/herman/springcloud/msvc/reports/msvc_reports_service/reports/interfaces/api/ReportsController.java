@@ -5,13 +5,16 @@ import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.applicat
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.application.commands.RecordSaleCommand;
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.application.commands.RecordSaleCommandHandler;
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.application.queries.ReportQueriesHandler;
+import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.infrastructure.security.JwtAuthenticationFilter.AuthenticatedUserPrincipal;
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.interfaces.api.dto.AuditLogResponse;
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.interfaces.api.dto.RecordAuditLogRequest;
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.interfaces.api.dto.RecordSaleRequest;
 import com.herman.springcloud.msvc.reports.msvc_reports_service.reports.interfaces.api.dto.SaleRecordResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -39,7 +42,7 @@ public class ReportsController {
                 .map(item -> new RecordSaleCommand.RecordSaleItemCommand(item.productId(), item.productName(), item.quantity(), item.unitPrice()))
                 .toList();
         return SaleRecordResponse.fromDomain(recordSaleHandler.handle(new RecordSaleCommand(
-                request.restaurantId(), request.orderId(), request.paymentId(), request.totalAmount(), request.soldAt(), items
+                request.restaurantId(), request.orderId(), request.paymentId(), request.clientId(), request.totalAmount(), request.soldAt(), items
         )));
     }
 
@@ -54,7 +57,9 @@ public class ReportsController {
     @GetMapping("/restaurants/{restaurantId}/sales-by-day")
     public List<ReportQueriesHandler.DailySalesReport> salesByDay(@PathVariable UUID restaurantId,
                                                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-                                                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+                                                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+                                                                  Authentication authentication) {
+        authorizeRestaurantAccess(restaurantId, authentication);
         return reportQueriesHandler.salesByDay(restaurantId, from, to);
     }
 
@@ -62,7 +67,9 @@ public class ReportsController {
     public List<ReportQueriesHandler.TopProductReport> topProducts(@PathVariable UUID restaurantId,
                                                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
                                                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
-                                                                   @RequestParam(defaultValue = "5") int limit) {
+                                                                   @RequestParam(defaultValue = "5") int limit,
+                                                                   Authentication authentication) {
+        authorizeRestaurantAccess(restaurantId, authentication);
         return reportQueriesHandler.topProducts(restaurantId, from, to, limit);
     }
 
@@ -82,5 +89,22 @@ public class ReportsController {
     @GetMapping("/audit-logs")
     public List<AuditLogResponse> auditLogs(@RequestParam(required = false) UUID restaurantId) {
         return reportQueriesHandler.auditLogs(restaurantId).stream().map(AuditLogResponse::fromDomain).toList();
+    }
+
+    private void authorizeRestaurantAccess(UUID restaurantId, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUserPrincipal user)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token requerido");
+        }
+        if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_admin"))) {
+            return;
+        }
+        Long restaurantNumericId = user.restaurantId();
+        if (restaurantNumericId == null || !numericIdToUuid(restaurantNumericId).equals(restaurantId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes acceder a reportes de otro restaurante");
+        }
+    }
+
+    private UUID numericIdToUuid(Long id) {
+        return UUID.fromString("00000000-0000-0000-0000-" + String.format("%012d", id));
     }
 }

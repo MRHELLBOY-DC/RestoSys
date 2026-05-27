@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record RecordSaleCommand(UUID restaurantId, UUID orderId, UUID paymentId, BigDecimal totalAmount, Instant soldAt, List<RecordSaleItemCommand> items) {
+public record RecordSaleCommand(UUID restaurantId, UUID orderId, UUID paymentId, UUID clientId, BigDecimal totalAmount, Instant soldAt, List<RecordSaleItemCommand> items) {
     public record RecordSaleItemCommand(UUID productId, String productName, int quantity, BigDecimal unitPrice) {
     }
 }

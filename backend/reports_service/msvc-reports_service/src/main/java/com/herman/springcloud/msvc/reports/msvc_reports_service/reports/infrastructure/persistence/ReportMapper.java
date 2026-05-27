@@ -17,6 +17,7 @@ public class ReportMapper {
         entity.setRestaurantId(saleRecord.getRestaurantId());
         entity.setOrderId(saleRecord.getOrderId());
         entity.setPaymentId(saleRecord.getPaymentId());
+        entity.setClientId(saleRecord.getClientId());
         entity.setTotalAmount(saleRecord.getTotalAmount());
         entity.setSoldAt(saleRecord.getSoldAt());
         List<JpaSaleItemEntity> items = new ArrayList<>();
@@ -39,7 +40,7 @@ public class ReportMapper {
                 .map(item -> SaleItem.restore(item.getId(), item.getProductId(), item.getProductName(), item.getQuantity(), item.getUnitPrice()))
                 .toList();
         return SaleRecord.restore(entity.getId(), entity.getRestaurantId(), entity.getOrderId(), entity.getPaymentId(),
-                entity.getTotalAmount(), entity.getSoldAt(), items);
+                entity.getClientId(), entity.getTotalAmount(), entity.getSoldAt(), items);
     }
 
     public static JpaAuditLogEntity toJpa(AuditLog auditLog) {

@@ -43,13 +43,14 @@ public class RabbitMqDomainEventPublisher implements DomainEventPublisher {
     private String toJson(DomainEvent event) {
         if (event instanceof PaymentConfirmedEvent paymentConfirmedEvent) {
             return """
-                    {"event_type":"%s","aggregate_id":"%s","timestamp":"%s","order_id":"%s","restaurant_id":"%s","payment_method":"%s","amount":%s,"data":"%s"}
+                    {"event_type":"%s","aggregate_id":"%s","timestamp":"%s","order_id":"%s","restaurant_id":"%s","client_id":"%s","payment_method":"%s","amount":%s,"data":"%s"}
                     """.formatted(
                     escape(event.eventType()),
                     event.aggregateId(),
                     event.occurredAt(),
                     paymentConfirmedEvent.orderId(),
                     paymentConfirmedEvent.restaurantId(),
+                    paymentConfirmedEvent.clientId(),
                     paymentConfirmedEvent.method(),
                     paymentConfirmedEvent.amount(),
                     escape(event.toString())

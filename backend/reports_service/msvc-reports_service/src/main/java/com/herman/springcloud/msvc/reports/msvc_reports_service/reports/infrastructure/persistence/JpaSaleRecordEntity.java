@@ -23,6 +23,9 @@ public class JpaSaleRecordEntity {
     @Column(name = "payment_id")
     private UUID paymentId;
 
+    @Column(name = "client_id")
+    private UUID clientId;
+
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
@@ -40,6 +43,8 @@ public class JpaSaleRecordEntity {
     public void setOrderId(UUID orderId) { this.orderId = orderId; }
     public UUID getPaymentId() { return paymentId; }
     public void setPaymentId(UUID paymentId) { this.paymentId = paymentId; }
+    public UUID getClientId() { return clientId; }
+    public void setClientId(UUID clientId) { this.clientId = clientId; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public Instant getSoldAt() { return soldAt; }

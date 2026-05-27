@@ -97,6 +97,7 @@ export default function Carrito() {
             const payment = await createPayment({
                 orderId: order.id,
                 restaurantId,
+                clientId: toUUID(currentUser.id),
                 amount: total,
                 method: paymentMethod === 'QR' ? 'QR_ONLINE' : 'CASH',
             });

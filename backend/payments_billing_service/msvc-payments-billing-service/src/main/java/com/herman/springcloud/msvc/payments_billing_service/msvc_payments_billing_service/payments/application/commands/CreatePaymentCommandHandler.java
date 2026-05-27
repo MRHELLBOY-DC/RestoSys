@@ -21,7 +21,7 @@ public class CreatePaymentCommandHandler {
 
     @Transactional
     public Payment handle(CreatePaymentCommand command) {
-        Payment payment = Payment.createPending(command.orderId(), command.restaurantId(), command.amount(), command.method());
+        Payment payment = Payment.createPending(command.orderId(), command.restaurantId(), command.clientId(), command.amount(), command.method());
         List<DomainEvent> events = payment.pullDomainEvents();
         Payment savedPayment = paymentRepository.save(payment);
         events.forEach(eventPublisher::publish);

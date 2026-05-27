@@ -30,7 +30,7 @@ public class RecordSaleCommandHandler {
         List<SaleItem> items = command.items() == null ? List.of() : command.items().stream()
                 .map(item -> SaleItem.create(item.productId(), item.productName(), item.quantity(), item.unitPrice()))
                 .toList();
-        SaleRecord saleRecord = SaleRecord.create(command.restaurantId(), command.orderId(), command.paymentId(), command.totalAmount(), command.soldAt(), items);
+        SaleRecord saleRecord = SaleRecord.create(command.restaurantId(), command.orderId(), command.paymentId(), command.clientId(), command.totalAmount(), command.soldAt(), items);
         List<DomainEvent> events = saleRecord.pullDomainEvents();
         SaleRecord savedSaleRecord = saleRecordRepository.save(saleRecord);
         events.forEach(eventPublisher::publish);

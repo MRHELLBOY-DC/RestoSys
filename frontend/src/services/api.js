@@ -129,17 +129,12 @@ export const asignarRestaurante = async (usuarioId, restauranteId) => {
 
 export const getPublicRestaurantes = async () => {
     // Public endpoint should be called without attaching Authorization header
-    try {
-        const res = await fetch(`${AUTH_API}/api/public/restaurantes/`);
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
-            throw err;
-        }
-        return res.json();
-    } catch (err) {
-        // rethrow to be handled by caller
+    const res = await fetch(`${AUTH_API}/api/public/restaurantes/`);
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Error desconocido' }));
         throw err;
     }
+    return res.json();
 };
 
 // ============================================

@@ -202,6 +202,7 @@ services:
       - RABBITMQ_PASS=guest
       - RABBITMQ_EXCHANGE=events
       - RABBITMQ_PAYMENT_CONFIRMED_QUEUE=orders.payment-confirmed
+      - JWT_SECRET=django-insecure-xgp=59ff8*(y8*@k-wpr@lpsh(pxt)h9fxsew5)pa3cke0@e)z
     command: sh -c "chmod +x ./mvnw && ./mvnw spring-boot:run"
     depends_on:
       db-orders:
@@ -229,6 +230,7 @@ services:
       - RABBITMQ_USER=guest
       - RABBITMQ_PASS=guest
       - RABBITMQ_EXCHANGE=events
+      - JWT_SECRET=django-insecure-xgp=59ff8*(y8*@k-wpr@lpsh(pxt)h9fxsew5)pa3cke0@e)z
     command: sh -c "chmod +x ./mvnw && ./mvnw spring-boot:run"
     depends_on:
       db-payments:

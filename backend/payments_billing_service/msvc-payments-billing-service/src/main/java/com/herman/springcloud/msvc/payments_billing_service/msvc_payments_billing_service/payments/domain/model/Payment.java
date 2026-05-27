@@ -12,6 +12,7 @@ import java.util.UUID;
 public class Payment extends AggregateRoot {
     private final UUID orderId;
     private final UUID restaurantId;
+    private final UUID clientId;
     private final BigDecimal amount;
     private PaymentMethod method;
     private PaymentStatus status;
@@ -20,13 +21,14 @@ public class Payment extends AggregateRoot {
     private final Instant createdAt;
     private Instant paidAt;
 
-    private Payment(UUID id, UUID orderId, UUID restaurantId, BigDecimal amount, PaymentMethod method, PaymentStatus status,
+    private Payment(UUID id, UUID orderId, UUID restaurantId, UUID clientId, BigDecimal amount, PaymentMethod method, PaymentStatus status,
                     String qrPayload, Receipt receipt, Instant createdAt, Instant paidAt) {
         super(id);
         if (orderId == null || restaurantId == null) throw new DomainException("Pago requiere pedido y restaurante");
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) throw new DomainException("El monto debe ser mayor a cero");
         this.orderId = orderId;
         this.restaurantId = restaurantId;
+        this.clientId = clientId;
         this.amount = amount;
         this.method = method;
         this.status = status == null ? PaymentStatus.PENDING : status;
@@ -36,8 +38,8 @@ public class Payment extends AggregateRoot {
         this.paidAt = paidAt;
     }
 
-    public static Payment createPending(UUID orderId, UUID restaurantId, BigDecimal amount, PaymentMethod method) {
-        Payment payment = new Payment(UUID.randomUUID(), orderId, restaurantId, amount, method, PaymentStatus.PENDING, null, null, Instant.now(), null);
+    public static Payment createPending(UUID orderId, UUID restaurantId, UUID clientId, BigDecimal amount, PaymentMethod method) {
+        Payment payment = new Payment(UUID.randomUUID(), orderId, restaurantId, clientId, amount, method, PaymentStatus.PENDING, null, null, Instant.now(), null);
         payment.addDomainEvent(new PaymentCreatedEvent(payment.getId(), orderId, restaurantId, amount, Instant.now()));
         if (method == PaymentMethod.QR_ONLINE) {
             payment.qrPayload = "RESTOSYS://pay/" + payment.getId();
@@ -45,9 +47,9 @@ public class Payment extends AggregateRoot {
         return payment;
     }
 
-    public static Payment restore(UUID id, UUID orderId, UUID restaurantId, BigDecimal amount, PaymentMethod method, PaymentStatus status,
+    public static Payment restore(UUID id, UUID orderId, UUID restaurantId, UUID clientId, BigDecimal amount, PaymentMethod method, PaymentStatus status,
                                   String qrPayload, Receipt receipt, Instant createdAt, Instant paidAt) {
-        return new Payment(id, orderId, restaurantId, amount, method, status, qrPayload, receipt, createdAt, paidAt);
+        return new Payment(id, orderId, restaurantId, clientId, amount, method, status, qrPayload, receipt, createdAt, paidAt);
     }
 
     public Receipt confirm(ReceiptType receiptType) {
@@ -56,13 +58,14 @@ public class Payment extends AggregateRoot {
         status = PaymentStatus.PAID;
         paidAt = Instant.now();
         receipt = Receipt.issue(getId(), orderId, restaurantId, receiptType, amount);
-        addDomainEvent(new PaymentConfirmedEvent(getId(), orderId, restaurantId, method, amount, paidAt));
+        addDomainEvent(new PaymentConfirmedEvent(getId(), orderId, restaurantId, clientId, method, amount, paidAt));
         addDomainEvent(new ReceiptGeneratedEvent(receipt.getId(), getId(), orderId, receipt.getReceiptNumber(), paidAt));
         return receipt;
     }
 
     public UUID getOrderId() { return orderId; }
     public UUID getRestaurantId() { return restaurantId; }
+    public UUID getClientId() { return clientId; }
     public BigDecimal getAmount() { return amount; }
     public PaymentMethod getMethod() { return method; }
     public PaymentStatus getStatus() { return status; }

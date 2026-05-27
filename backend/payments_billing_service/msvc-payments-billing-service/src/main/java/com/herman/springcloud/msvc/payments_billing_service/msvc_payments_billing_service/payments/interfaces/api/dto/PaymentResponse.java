@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-public record PaymentResponse(UUID id, UUID orderId, UUID restaurantId, BigDecimal amount, PaymentMethod method,
+public record PaymentResponse(UUID id, UUID orderId, UUID restaurantId, UUID clientId, BigDecimal amount, PaymentMethod method,
                               PaymentStatus status, String qrPayload, Instant createdAt, Instant paidAt,
                               ReceiptResponse receipt) {
     public static PaymentResponse fromDomain(Payment payment) {

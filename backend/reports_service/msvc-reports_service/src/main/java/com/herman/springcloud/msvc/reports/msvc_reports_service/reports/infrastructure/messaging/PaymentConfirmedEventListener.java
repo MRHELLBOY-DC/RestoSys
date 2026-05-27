@@ -19,6 +19,7 @@ public class PaymentConfirmedEventListener {
     private static final Pattern PAYMENT_ID_PATTERN = Pattern.compile("\"aggregate_id\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern ORDER_ID_PATTERN = Pattern.compile("\"order_id\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern RESTAURANT_ID_PATTERN = Pattern.compile("\"restaurant_id\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern CLIENT_ID_PATTERN = Pattern.compile("\"client_id\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern AMOUNT_PATTERN = Pattern.compile("\"amount\"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)");
     private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("\"timestamp\"\\s*:\\s*\"([^\"]+)\"");
 
@@ -35,12 +36,13 @@ public class PaymentConfirmedEventListener {
         UUID paymentId = extractUuid(PAYMENT_ID_PATTERN, payload);
         UUID orderId = extractUuid(ORDER_ID_PATTERN, payload);
         UUID restaurantId = extractUuid(RESTAURANT_ID_PATTERN, payload);
+        UUID clientId = extractUuid(CLIENT_ID_PATTERN, payload);
         BigDecimal amount = extractAmount(payload);
         Instant occurredAt = extractInstant(payload);
         if (orderId == null || restaurantId == null || amount == null) {
             return;
         }
-        recordSaleHandler.handle(new RecordSaleCommand(restaurantId, orderId, paymentId, amount, occurredAt, List.of()));
+        recordSaleHandler.handle(new RecordSaleCommand(restaurantId, orderId, paymentId, clientId, amount, occurredAt, List.of()));
         recordAuditLogHandler.handle(new RecordAuditLogCommand(restaurantId, "payments-billing", "PAYMENT_CONFIRMED", payload, occurredAt));
     }
 
