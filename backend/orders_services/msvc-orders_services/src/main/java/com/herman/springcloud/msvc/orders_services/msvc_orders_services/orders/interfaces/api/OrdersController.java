@@ -2,8 +2,6 @@ package com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.
 
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.change_status.ChangeOrderStatusCommand;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.change_status.ChangeOrderStatusCommandHandler;
-import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.confirm_payment.ConfirmOrderPaymentCommand;
-import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.confirm_payment.ConfirmOrderPaymentCommandHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.create.CreateOrderCommand;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.commands.create.CreateOrderCommandHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.GetOrderQueryHandler;
@@ -34,7 +32,6 @@ import java.util.UUID;
 public class OrdersController {
     private final CreateOrderCommandHandler createOrderHandler;
     private final ChangeOrderStatusCommandHandler changeOrderStatusHandler;
-    private final ConfirmOrderPaymentCommandHandler confirmOrderPaymentHandler;
     private final GetOrderQueryHandler getOrderQueryHandler;
     private final ListActiveOrdersQueryHandler listActiveOrdersQueryHandler;
     private final ListOrderHistoryQueryHandler listOrderHistoryQueryHandler;
@@ -42,14 +39,12 @@ public class OrdersController {
 
     public OrdersController(CreateOrderCommandHandler createOrderHandler,
                             ChangeOrderStatusCommandHandler changeOrderStatusHandler,
-                            ConfirmOrderPaymentCommandHandler confirmOrderPaymentHandler,
                             GetOrderQueryHandler getOrderQueryHandler,
                             ListActiveOrdersQueryHandler listActiveOrdersQueryHandler,
                             ListOrderHistoryQueryHandler listOrderHistoryQueryHandler,
                             ListClientOrdersQueryHandler listClientOrdersQueryHandler) {
         this.createOrderHandler = createOrderHandler;
         this.changeOrderStatusHandler = changeOrderStatusHandler;
-        this.confirmOrderPaymentHandler = confirmOrderPaymentHandler;
         this.getOrderQueryHandler = getOrderQueryHandler;
         this.listActiveOrdersQueryHandler = listActiveOrdersQueryHandler;
         this.listOrderHistoryQueryHandler = listOrderHistoryQueryHandler;
@@ -99,11 +94,6 @@ public class OrdersController {
     @PatchMapping("/{orderId}/status")
     public OrderResponse changeStatus(@PathVariable UUID orderId, @RequestBody ChangeOrderStatusRequest request) {
         return OrderResponse.fromDomain(changeOrderStatusHandler.handle(new ChangeOrderStatusCommand(orderId, request.status())));
-    }
-
-    @PatchMapping("/{orderId}/confirm-payment")
-    public OrderResponse confirmPayment(@PathVariable UUID orderId) {
-        return OrderResponse.fromDomain(confirmOrderPaymentHandler.handle(new ConfirmOrderPaymentCommand(orderId)));
     }
 
     private CreateOrderCommand toCommand(CreateOrderRequest request) {

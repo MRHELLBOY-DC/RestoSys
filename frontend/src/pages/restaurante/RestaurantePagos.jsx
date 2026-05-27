@@ -204,13 +204,7 @@ export default function RestaurantePagos() {
                                                             <span className="badge bg-light text-dark">{payment.method}</span>
                                                             <span className="badge bg-warning text-dark">{payment.status}</span>
                                                             {payment.status === "PENDING" && (
-                                                                <button
-                                                                    className="btn btn-outline-warning btn-sm"
-                                                                    onClick={() => handleConfirmPayment(payment)}
-                                                                    disabled={busy}
-                                                                >
-                                                                    {payment.method === "QR_ONLINE" ? "Simular pago QR" : "Confirmar pago en caja"}
-                                                                </button>
+                                                                <span className="small opacity-75">Pago creado; confirma desde el panel de pagos generados.</span>
                                                             )}
                                                         </div>
                                                     )}
