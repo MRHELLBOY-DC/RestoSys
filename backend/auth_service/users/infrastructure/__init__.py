@@ -5,18 +5,13 @@ Contiene implementaciones concretas de persistencia y mensajería
 """
 
 from .event_store import EventStore, event_store
-from .event_publisher import EventPublisher, event_publisher, publish_event
 from .repositories import UserRepository, RestaurantRepository, EventRepository
+from shared import publish_event
 
 __all__ = [
-    # Event Store
     'EventStore',
     'event_store',
-    # Event Publisher
-    'EventPublisher',
-    'event_publisher',
-    'publish_event',
-    # Repositories
+    'publish_event', 
     'UserRepository',
     'RestaurantRepository',
     'EventRepository',

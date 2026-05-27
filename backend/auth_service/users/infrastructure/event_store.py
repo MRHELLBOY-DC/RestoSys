@@ -76,58 +76,6 @@ class EventStore:
         ).order_by('-created_at')[:limit]
         
         return list(events)
-    
-    @staticmethod
-    def replay_events(aggregate_id):
-        """
-        Reconstruye el estado de un agregado replayando todos sus eventos
-        """
-        events = EventStore.get_events_for_aggregate(aggregate_id)
-        
-        state = {}
-        for event in events:
-            state = EventStore._apply_event(state, event)
-        
-        return state
-    
-    @staticmethod
-    def _apply_event(state, event):
-        """
-        Aplica un evento al estado (reducer)
-        """
-        event_type = event.type
-        data = event.data.get('data', {})
-        
-        if event_type == 'UserCreated':
-            state = {
-                'id': data.get('user_id'),
-                'username': data.get('username'),
-                'role': data.get('role'),
-                'email': data.get('email'),
-                'created': True,
-                'version': event.version
-            }
-        elif event_type == 'UserUpdated':
-            # Actualiza solo los campos que cambian
-            for key, value in data.get('new_data', {}).items():
-                state[key] = value
-            state['updated'] = True
-            state['version'] = event.version
-        elif event_type == 'UserDeleted':
-            state['is_active'] = False
-            state['deleted'] = True
-            state['version'] = event.version
-        
-        return state
-    
-    @staticmethod
-    def get_snapshot(aggregate_id):
-        """
-        Obtiene el último snapshot de un agregado (optimización)
-        """
-        # Por ahora retorna None (no hay snapshot implementado)
-        # En una implementación completa, guardarías snapshots periódicos
-        return None
 
 
 # Instancia global del Event Store

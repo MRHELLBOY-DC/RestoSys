@@ -33,19 +33,3 @@ def get_user_details(user_id):
         'last_login': user.last_login.isoformat() if user.last_login else None,
         'restaurants': restaurants
     }
-
-
-def get_user_by_username(username):
-    """
-    Retorna usuario por nombre de usuario (sin datos sensibles)
-    """
-    user = UserRepository.get_user_by_username(username)
-    if user is None:
-        return None
-    
-    return {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'role': user.role
-    }
