@@ -30,10 +30,15 @@ from users.application.queries import (
     get_user_events,
     get_all_events,
 )
+from users.application.queries.get_restaurant_queries import (
+    list_all_restaurants,
+    get_user_restaurant_data,
+)
+from users.infrastructure.event_utils import event_publisher
 
 
 # ============================================
-# REGISTER VIEW - ÚNICA (eliminada la duplicada)
+# REGISTER VIEW
 # ============================================
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -78,7 +83,7 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        create_user_event(user)
+        create_user_event(user, event_publisher)  # ← Inyectar dependencia
 
 
 class UpdateUserView(generics.UpdateAPIView):
@@ -99,7 +104,7 @@ class UpdateUserView(generics.UpdateAPIView):
             'email': updated_user.email,
             'role': updated_user.role,
         }
-        update_user_event(updated_user, old_data, new_data)
+        update_user_event(updated_user, old_data, new_data, event_publisher)  # ← Inyectar dependencia
 
 
 class DeleteUserView(generics.DestroyAPIView):
@@ -109,17 +114,14 @@ class DeleteUserView(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         instance.is_active = False
         instance.save()
-        delete_user_event(instance)
+        delete_user_event(instance, event_publisher)  # ← Inyectar dependencia
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile(request):
     user = request.user
-    restaurant_data = None
-    user_restaurant = UserRestaurant.objects.filter(user=user).first()
-    if user_restaurant:
-        restaurant_data = RestaurantSerializer(user_restaurant.restaurant).data
+    restaurant_data = get_user_restaurant_data(user)  # ← Usar Query, no ORM directo
     return Response({
         'id': user.id,
         'username': user.username,
@@ -224,18 +226,14 @@ def login(request):
 @permission_classes([AllowAny])
 def public_restaurantes(request):
     """Endpoint público para obtener todos los restaurantes (para la landing page)"""
-    restaurantes = Restaurant.objects.all()
-    serializer = RestaurantSerializer(restaurantes, many=True)
-    return Response(serializer.data)
+    return Response(list_all_restaurants())  # ← Usar Query, no ORM directo
 
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
 def admin_restaurantes(request):
     if request.method == 'GET':
-        restaurantes = Restaurant.objects.all()
-        serializer = RestaurantSerializer(restaurantes, many=True)
-        return Response(serializer.data)
+        return Response(list_all_restaurants())  # ← Usar Query, no ORM directo
     serializer = RestaurantSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()

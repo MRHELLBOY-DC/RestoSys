@@ -1,8 +1,7 @@
-from users.infrastructure.event_utils import persist_and_publish
-from shared import USER_DELETED
+from users.application.ports.event_publisher_port import EventPublisherPort
 
 
-def delete_user_event(user):
+def delete_user_event(user, event_publisher: EventPublisherPort):
     user.record_deleted()
     events = user.pull_domain_events()
-    return persist_and_publish(events[-1], USER_DELETED)
+    return event_publisher.persist_and_publish(events[-1], "UserDeleted")

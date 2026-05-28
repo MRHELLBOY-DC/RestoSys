@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .permissions import IsRestaurantOrAdmin
 from .serializers import CategorySerializer, ProductSerializer, ProductOptionSerializer
+from ...infrastructure.event_utils import event_publisher
 from ...application.commands import (
     create_category_command,
     update_category_command,
@@ -63,7 +64,7 @@ class CategoryListCreateView(APIView):
             )
         
         try:
-            category = create_category_command(name, restaurant_id)
+            category = create_category_command(name, restaurant_id, event_publisher)
             serializer = CategorySerializer(category)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValueError as e:
@@ -170,6 +171,7 @@ class ProductListCreateView(APIView):
                 price=request.data.get('price'),
                 category_id=request.data.get('category_id'),
                 restaurant_id=restaurant_id,
+                event_publisher=event_publisher,
                 image=request.FILES.get('image') or request.data.get('image'),
                 description=request.data.get('description')
             )
@@ -285,7 +287,8 @@ class OptionListCreateView(APIView):
                 name=request.data.get('name'),
                 extra_price=request.data.get('extra_price', 0),
                 product_id=request.data.get('product_id'),
-                restaurant_id=restaurant_id
+                restaurant_id=restaurant_id,
+                event_publisher=event_publisher
             )
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

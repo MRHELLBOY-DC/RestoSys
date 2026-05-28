@@ -4,8 +4,8 @@ CQRS - Command para crear un producto
 """
 from decimal import Decimal
 from ...infrastructure.repositories import ProductRepository, CategoryRepository
-from ...infrastructure.event_utils import persist_and_publish
 from ...domain.entities import Product
+from menu.application.ports.event_publisher_port import EventPublisherPort
 
 
 def create_product_command(
@@ -13,6 +13,7 @@ def create_product_command(
     price,
     category_id: int,
     restaurant_id: int,
+    event_publisher: EventPublisherPort,
     image=None,
     description: str = None
 ) -> Product:
@@ -65,6 +66,6 @@ def create_product_command(
     
     product.record_created()
     event = product.pull_domain_events()[-1]
-    persist_and_publish(event, 'product.created')
+    event_publisher.persist_and_publish(event, 'product.created')
     
     return product
