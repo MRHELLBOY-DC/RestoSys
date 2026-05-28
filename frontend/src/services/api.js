@@ -11,16 +11,19 @@ const menuClient = createApiClient(MENU_API);
 // ============================================
 
 export const loginUser = async (data) => {
-    const res = await authClient.post("/api/login/", data);
-    const result = res.data;
-
-    if (result.success) {
-        localStorage.setItem("token", result.access);
-        localStorage.setItem("refresh_token", result.refresh);
-        localStorage.setItem("user", JSON.stringify(result.user));
+    try {
+        const res = await authClient.post("/api/login/", data);
+        const result = res.data;
+        if (result.success) {
+            localStorage.setItem("token", result.access);
+            localStorage.setItem("refresh_token", result.refresh);
+            localStorage.setItem("user", JSON.stringify(result.user));
+        }
+        return result;
+    } catch (err) {
+        if (err?.status === 401 && err?.data) return err.data;
+        return { success: false, message: err?.message || "Error al conectar con el servidor" };
     }
-
-    return result;
 };
 
 export const registerUser = async (data) => {

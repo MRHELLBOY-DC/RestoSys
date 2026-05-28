@@ -170,7 +170,7 @@ class ProductListCreateView(APIView):
                 price=request.data.get('price'),
                 category_id=request.data.get('category_id'),
                 restaurant_id=restaurant_id,
-                image=request.data.get('image'),
+                image=request.FILES.get('image') or request.data.get('image'),
                 description=request.data.get('description')
             )
             serializer = ProductSerializer(product)
@@ -218,7 +218,7 @@ class ProductDetailView(APIView):
                 name=request.data.get('name'),
                 price=request.data.get('price'),
                 category_id=request.data.get('category_id'),
-                image=request.data.get('image'),
+                image=request.FILES.get('image') or request.data.get('image'),
                 description=request.data.get('description')
             )
             serializer = ProductSerializer(product)

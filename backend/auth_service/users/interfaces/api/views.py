@@ -195,9 +195,14 @@ def login(request):
         refresh.payload['username'] = user.username
         refresh.payload['role'] = user.role
         refresh.payload['restaurant_id'] = restaurant_id
+        access = refresh.access_token
+        access['user_id'] = str(user.id)
+        access['username'] = user.username
+        access['role'] = user.role
+        access['restaurant_id'] = restaurant_id
         return Response({
             'success': True,
-            'access': str(refresh.access_token),
+            'access': str(access),
             'refresh': str(refresh),
             'user': {
                 'id': user.id,

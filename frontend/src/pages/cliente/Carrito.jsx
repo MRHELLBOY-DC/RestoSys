@@ -159,16 +159,14 @@ export default function Carrito() {
                                 <p className="opacity-75 mb-1">Pedido <strong style={{ color: '#f0554d' }}>{qrOrder.orderCode}</strong></p>
                                 <p className="opacity-60 small mb-4">Tu pedido está siendo procesado por el restaurante.</p>
                                 <div className="d-flex flex-column gap-2">
-                                    <a
-                                        href={getReceiptUrl(qrOrder.paymentId)}
-                                        target="_blank"
-                                        rel="noreferrer"
+                                    <button
+                                        onClick={() => getReceiptUrl(qrOrder.paymentId)}
                                         className="btn fw-bold text-white px-5 py-2"
                                         style={{ background: 'linear-gradient(135deg, #28a745 0%, #1e7e34 100%)', borderRadius: '12px' }}
                                     >
                                         <i className="fa fa-file-invoice me-2" />
                                         Descargar Comprobante
-                                    </a>
+                                    </button>
                                     <button
                                         className="btn fw-bold text-white px-5 py-2"
                                         style={{ background: 'linear-gradient(135deg, #f0554d 0%, #d73a35 100%)', borderRadius: '12px' }}

@@ -10,9 +10,19 @@ public record PaymentResponse(UUID id, UUID orderId, UUID restaurantId, UUID cli
                               PaymentStatus status, String qrPayload, Instant createdAt, Instant paidAt,
                               ReceiptResponse receipt) {
     public static PaymentResponse fromDomain(Payment payment) {
-        return new PaymentResponse(payment.getId(), payment.getOrderId(), payment.getRestaurantId(), payment.getAmount(),
-                payment.getMethod(), payment.getStatus(), payment.getQrPayload(), payment.getCreatedAt(), payment.getPaidAt(),
-                payment.getReceipt() == null ? null : ReceiptResponse.fromDomain(payment.getReceipt()));
+        return new PaymentResponse(
+            payment.getId(),
+            payment.getOrderId(),
+            payment.getRestaurantId(),
+            payment.getClientId(),
+            payment.getAmount(),
+            payment.getMethod(),
+            payment.getStatus(),
+            payment.getQrPayload(),
+            payment.getCreatedAt(),
+            payment.getPaidAt(),
+            payment.getReceipt() == null ? null : ReceiptResponse.fromDomain(payment.getReceipt())
+        );
     }
 
     public record ReceiptResponse(UUID id, UUID paymentId, UUID orderId, UUID restaurantId, String receiptNumber,

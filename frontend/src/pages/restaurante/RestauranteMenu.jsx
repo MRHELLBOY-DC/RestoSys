@@ -18,7 +18,7 @@ import {
     deleteOption
 } from "../../services/menuApi";
 import { useNavigate } from "react-router-dom";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import RestauranteShell from "../../components/RestauranteShell";
 
 // Modal Category Component
 const CategoryModal = ({ show, onClose, onSubmit, editing, initialData, adminGradient }) => {
@@ -43,7 +43,7 @@ const CategoryModal = ({ show, onClose, onSubmit, editing, initialData, adminGra
     };
     
     return (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal modal-dark show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content" style={{ borderRadius: '20px' }}>
                     <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
@@ -124,7 +124,7 @@ const ProductModal = ({ show, onClose, onSubmit, editing, initialData, categorie
     };
     
     return (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal modal-dark show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered modal-lg">
                 <div className="modal-content" style={{ borderRadius: '20px' }}>
                     <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
@@ -195,9 +195,14 @@ const ProductModal = ({ show, onClose, onSubmit, editing, initialData, categorie
                                     onChange={handleFileChange}
                                 />
                                 {editing && initialData?.image && (
-                                    <small className="text-muted d-block mt-1">
-                                        Imagen actual: {initialData.image}
-                                    </small>
+                                    <div className="mt-2 d-flex align-items-center gap-2">
+                                        <img
+                                            src={`http://localhost:8001${initialData.image}`}
+                                            alt="Imagen actual"
+                                            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)' }}
+                                        />
+                                        <small className="text-muted">Dejar vacío para mantener la imagen actual</small>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -252,7 +257,7 @@ const OptionModal = ({ show, onClose, onSubmit, editing, initialData, products, 
     };
     
     return (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal modal-dark show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
             <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content" style={{ borderRadius: '20px' }}>
                     <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
@@ -313,6 +318,25 @@ const OptionModal = ({ show, onClose, onSubmit, editing, initialData, products, 
     );
 };
 
+const getFoodIcon = (name = '', category = '') => {
+    const t = `${name} ${category}`.toLowerCase();
+    if (/bebida|gaseosa|jugo|refresco|agua|licuado|smoothie|cerveza|vino|coctel/.test(t)) return 'fa-wine-glass';
+    if (/café|cafe|capuchino|latte|espresso/.test(t)) return 'fa-mug-hot';
+    if (/postre|torta|pastel|cake|helado|brownie|cheesecake|cookie|galleta|muffin/.test(t)) return 'fa-cake-candles';
+    if (/pizza/.test(t)) return 'fa-pizza-slice';
+    if (/hamburguesa|burger|sandwich|sándwich/.test(t)) return 'fa-burger';
+    if (/pasta|spaghetti|fideo|tallarín/.test(t)) return 'fa-bowl-food';
+    if (/ensalada|salad/.test(t)) return 'fa-leaf';
+    if (/pollo|chicken|alita|nugget/.test(t)) return 'fa-drumstick-bite';
+    if (/carne|res|lomo|steak|bife|churrasco|cerdo/.test(t)) return 'fa-cow';
+    if (/marisco|camarón|ceviche|pescado|atún|salmon|salmón/.test(t)) return 'fa-fish';
+    if (/sopa|caldo|crema/.test(t)) return 'fa-bowl-food';
+    if (/taco|burrito|quesadilla/.test(t)) return 'fa-pepper-hot';
+    if (/papas|fries|patata/.test(t)) return 'fa-fire';
+    if (/helado|ice cream/.test(t)) return 'fa-ice-cream';
+    return 'fa-utensils';
+};
+
 // Componente principal
 export default function RestauranteMenu() {
     const { user, loading } = useAuth(['restaurante']);
@@ -342,7 +366,7 @@ export default function RestauranteMenu() {
     const [optionData, setOptionData] = useState({ name: '', extra_price: '', product: '' });
 
     // Degradado personalizado
-    const adminGradient = 'linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d)';
+    const adminGradient = 'linear-gradient(135deg, #c0392b 0%, #7b1d1d 100%)';
 
     // Control de modales
     const openCategoryForm = () => {
@@ -615,159 +639,304 @@ const handleDeleteOption = async (id) => {
 
     if (loading || loadingData) {
         return (
-            <div className="min-vh-100 d-flex flex-column" style={{ background: adminGradient }}>
-                <DashboardNavbar />
-                <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
+            <RestauranteShell title="Gestion de menu" subtitle="Cargando gestion de menu...">
+                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
                     <div className="spinner-border text-light me-2" role="status"></div>
-                    <p className="mb-0 fw-bold">Cargando gestión de menú...</p>
+                    <p className="mb-0 fw-bold">Cargando gestion de menu...</p>
                 </div>
-            </div>
+            </RestauranteShell>
         );
     }
 
     if (!user) return null;
 
+    const categoriesMap = categories.reduce((map, cat) => {
+        map.set(cat.id, cat.name);
+        return map;
+    }, new Map());
+
+    const extrasCount = (productId) => options.filter((opt) => opt.product_id === productId).length;
+
     return (
-        <div className="min-vh-100 d-flex flex-column" style={{ background: adminGradient }}>
-            <DashboardNavbar />
-            
-            <div className="container py-5">
-                {/* Cabecera del Panel */}
-                <div className="text-white mb-5">
-                    <h1 className="display-4 fw-bold mb-1">Gestión de Menú</h1>
-                    <div className="d-inline-flex align-items-center bg-white bg-opacity-10 px-3 py-2 rounded-pill border border-white border-opacity-25">
-                        <span className="fs-5">{user.restaurant?.name || 'Establecimiento No Asignado'}</span>
-                    </div>
+        <RestauranteShell
+            title="Gestion de menu"
+            subtitle={`${products.length} productos · ${categories.length} categorias`}
+            actions={
+                <div className="resto-actions">
+                    <button className="resto-btn-ghost" type="button" onClick={openCategoryForm}>
+                        Nueva categoria
+                    </button>
+                    <button className="resto-btn-primary" type="button" onClick={openProductForm}>
+                        + Nuevo producto
+                    </button>
                 </div>
-
-                {/* Sección de Categorías */}
-                <div className="mb-5">
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h2 className="text-white mb-0 fw-bold">Categorías</h2>
-                        <button className="btn btn-light rounded-pill px-4 fw-bold" onClick={openCategoryForm}>
-                            + Agregar Categoría
-                        </button>
-                    </div>
-                    
-                    <div className="card border-0 shadow-lg" style={{ borderRadius: '20px', background: 'rgba(255, 255, 255, 0.95)' }}>
-                        <div className="card-body p-4">
-                            {categories.length === 0 ? (
-                                <p className="text-muted text-center mb-0">No hay categorías. ¡Crea la primera!</p>
-                            ) : (
-                                <div className="row g-3">
-                                    {categories.map(cat => (
-                                        <div key={cat.id} className="col-12 col-md-6 col-lg-4">
-                                            <div className="d-flex justify-content-between align-items-center p-3 bg-light rounded-3">
-                                                <span className="fw-bold fs-5">{cat.name}</span>
-                                                <div className="btn-group">
-                                                    <button className="btn btn-sm btn-outline-primary rounded-pill me-2" onClick={() => handleEditCategory(cat)}>
-                                                        Editar
-                                                    </button>
-                                                    <button className="btn btn-sm btn-outline-danger rounded-pill" onClick={() => handleDeleteCategory(cat.id)}>
-                                                        Eliminar
-                                                    </button>
-                                                </div>
-                                            </div>
+            }
+        >
+            <div className="resto-table">
+                <div className="resto-table-header">
+                    <span>Producto</span>
+                    <span>Categoria</span>
+                    <span>Precio</span>
+                    <span>Extras</span>
+                    <span></span>
+                </div>
+                {products.length === 0 ? (
+                    <div className="resto-empty">No hay productos cargados.</div>
+                ) : (
+                    products.map((prod) => (
+                        <div key={prod.id} className="resto-row">
+                            <div className="resto-product">
+                                <div className="resto-thumb">
+                                    {prod.image ? (
+                                        <img src={`http://localhost:8001${prod.image}`} alt={prod.name} />
+                                    ) : (
+                                        <div className="resto-thumb-fallback">
+                                            <i className={`fa ${getFoodIcon(prod.name, categoriesMap.get(prod.category_id))}`} />
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Sección de Productos con Opciones dentro */}
-                <div className="mb-5">
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h2 className="text-white mb-0 fw-bold">Productos</h2>
-                        <button className="btn btn-light rounded-pill px-4 fw-bold" onClick={openProductForm}>
-                            + Agregar Producto
-                        </button>
-                    </div>
-                    
-                    <div className="row g-4">
-                        {products.length === 0 ? (
-                            <div className="col-12">
-                                <div className="card border-0 shadow-lg text-center p-5" style={{ borderRadius: '20px', background: 'rgba(255, 255, 255, 0.95)' }}>
-                                    <p className="text-muted mb-0">No hay productos. ¡Crea el primero!</p>
+                                <div>
+                                    <div className="resto-name">{prod.name}</div>
+                                    <div className="resto-muted">{prod.description || "Sin descripcion"}</div>
                                 </div>
                             </div>
-                        ) : (
-                            products.map(prod => {
-                                const productOptions = options.filter(opt => opt.product_id === prod.id);
-                                return (
-                                    <div key={prod.id} className="col-12 col-md-6 col-lg-4">
-                                        <div className="card border-0 shadow-lg h-100" style={{ borderRadius: '20px', background: 'rgba(255, 255, 255, 0.95)' }}>
-                                            {prod.image && (
-                                                <img 
-                                                    src={`http://localhost:8001${prod.image}`} 
-                                                    alt={prod.name}
-                                                    className="card-img-top"
-                                                    style={{ height: '180px', objectFit: 'cover', borderRadius: '20px 20px 0 0' }}
-                                                />
-                                            )}
-                                            <div className="card-body">
-                                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 className="card-title fw-bold mb-0">{prod.name}</h5>
-                                                    <span className="badge fs-6 px-3 py-2" style={{ background: adminGradient }}>${prod.price}</span>
-                                                </div>
-                                                {prod.description && <p className="card-text text-muted small mb-2">{prod.description}</p>}
-                                                
-                                                {/* Opciones dentro del producto */}
-                                                <div className="mt-3">
-                                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                                        <small className="text-muted fw-bold">Extras:</small>
-                                                        <button 
-                                                            className="btn btn-sm btn-outline-primary rounded-pill"
-                                                            onClick={() => {
-                                                                setEditingOption(null);
-                                                                setOptionData({ 
-                                                                    name: '', 
-                                                                    extra_price: '', 
-                                                                    product: prod.id 
-                                                                });
-                                                                setShowOptionForm(true);
-                                                            }}
-                                                        >
-                                                            + Agregar Extra
-                                                        </button>
-                                                    </div>
-                                                    {productOptions.length === 0 ? (
-                                                        <small className="text-muted">Sin extras</small>
-                                                    ) : (
-                                                        productOptions.map(opt => (
-                                                            <div key={opt.id} className="d-flex justify-content-between align-items-center small bg-light p-2 rounded mb-1">
-                                                                <span>{opt.name}</span>
-                                                                <span className="text-primary">+${opt.extra_price}</span>
-                                                                <div className="btn-group btn-group-sm">
-                                                                    <button className="btn btn-sm btn-outline-primary" onClick={() => handleEditOption(opt)}>Edit</button>
-                                                                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteOption(opt.id)}>Delete</button>
-                                                                </div>
-                                                            </div>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="card-footer bg-transparent border-0 pb-3">
-                                                <div className="btn-group w-100">
-                                                    <button className="btn btn-outline-primary rounded-pill me-2" onClick={() => handleEditProduct(prod)}>
-                                                        Editar Producto
-                                                    </button>
-                                                    <button className="btn btn-outline-danger rounded-pill" onClick={() => handleDeleteProduct(prod.id)}>
-                                                        Eliminar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
+                            <div className="resto-muted">{categoriesMap.get(prod.category_id) || "-"}</div>
+                            <div className="resto-price">S/ {Number(prod.price).toFixed(2)}</div>
+                            <div className="resto-muted">{extrasCount(prod.id)}</div>
+                            <div className="resto-row-actions">
+                                <button className="resto-icon-btn" type="button" onClick={() => handleEditProduct(prod)}>Editar</button>
+                                <button className="resto-icon-btn danger" type="button" onClick={() => handleDeleteProduct(prod.id)}>Eliminar</button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
-            {/* Modales */}
+            <div className="resto-categories">
+                <div className="resto-section-title">Categorias</div>
+                {categories.length === 0 ? (
+                    <div className="resto-empty">No hay categorias. Crea la primera.</div>
+                ) : (
+                    <div className="resto-cat-grid">
+                        {categories.map((cat) => (
+                            <div key={cat.id} className="resto-cat-card">
+                                <span>{cat.name}</span>
+                                <div className="resto-row-actions">
+                                    <button className="resto-icon-btn" type="button" onClick={() => handleEditCategory(cat)}>Editar</button>
+                                    <button className="resto-icon-btn danger" type="button" onClick={() => handleDeleteCategory(cat.id)}>Eliminar</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <style>{`
+                .resto-actions {
+                    display: flex;
+                    gap: 10px;
+                }
+                .resto-btn-primary {
+                    background: #d44a42;
+                    color: #fff;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 8px 14px;
+                    font-weight: 700;
+                }
+                .resto-btn-ghost {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #fff;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 12px;
+                    padding: 8px 14px;
+                    font-weight: 600;
+                }
+                .resto-table {
+                    display: grid;
+                    gap: 8px;
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 16px;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    padding: 16px;
+                }
+                .resto-table-header,
+                .resto-row {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr 0.7fr 0.5fr 0.8fr;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .resto-table-header {
+                    color: rgba(255, 255, 255, 0.55);
+                    font-size: 0.75rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.6px;
+                    padding-bottom: 8px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                }
+                .resto-row {
+                    padding: 10px 0;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                }
+                .resto-row:last-child {
+                    border-bottom: none;
+                }
+                .resto-product {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                }
+                .resto-thumb {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    flex-shrink: 0;
+                    background: rgba(255, 255, 255, 0.08);
+                }
+                .resto-thumb img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                .resto-thumb-fallback {
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(212, 74, 66, 0.15);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #d44a42;
+                    font-size: 1.1rem;
+                }
+                .resto-name {
+                    font-weight: 600;
+                }
+                .resto-muted {
+                    color: rgba(255, 255, 255, 0.55);
+                    font-size: 0.8rem;
+                }
+                .resto-price {
+                    font-weight: 700;
+                    color: #d44a42;
+                }
+                .resto-row-actions {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: flex-end;
+                }
+                .resto-icon-btn {
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #fff;
+                    border: none;
+                    border-radius: 10px;
+                    padding: 6px 10px;
+                    font-size: 0.75rem;
+                }
+                .resto-icon-btn.danger {
+                    color: #f28f8a;
+                }
+                .resto-categories {
+                    background: rgba(255, 255, 255, 0.03);
+                    border-radius: 16px;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    padding: 16px;
+                }
+                .resto-section-title {
+                    font-weight: 700;
+                    margin-bottom: 12px;
+                }
+                .resto-cat-grid {
+                    display: grid;
+                    gap: 10px;
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                }
+                .resto-cat-card {
+                    background: rgba(0, 0, 0, 0.25);
+                    border-radius: 12px;
+                    padding: 12px 14px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .modal-dark .modal-content {
+                    background: #140808;
+                    border: 1px solid rgba(212,74,66,0.25);
+                    color: #fff;
+                    border-radius: 20px;
+                }
+                .modal-dark .modal-header {
+                    border-bottom: none;
+                    border-radius: 20px 20px 0 0;
+                }
+                .modal-dark .modal-body {
+                    background: #140808;
+                    padding: 1.5rem;
+                }
+                .modal-dark .modal-footer {
+                    background: #140808;
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 0 0 20px 20px;
+                    padding: 1rem 1.5rem;
+                }
+                .modal-dark .form-label {
+                    color: rgba(255,255,255,0.65);
+                    font-size: 0.8rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 6px;
+                }
+                .modal-dark .form-control,
+                .modal-dark .form-select {
+                    background: rgba(255,255,255,0.07);
+                    border: 1px solid rgba(255,255,255,0.15);
+                    color: #fff;
+                    border-radius: 10px;
+                }
+                .modal-dark .form-control:focus,
+                .modal-dark .form-select:focus {
+                    background: rgba(255,255,255,0.1);
+                    border-color: rgba(192,57,43,0.7);
+                    color: #fff;
+                    box-shadow: 0 0 0 3px rgba(192,57,43,0.15);
+                }
+                .modal-dark .form-control::placeholder {
+                    color: rgba(255,255,255,0.3);
+                }
+                .modal-dark .form-select option {
+                    background: #1a0a0a;
+                    color: #fff;
+                }
+                .modal-dark .text-muted {
+                    color: rgba(255,255,255,0.4) !important;
+                }
+                .modal-dark .btn-secondary {
+                    background: rgba(255,255,255,0.08);
+                    border: 1px solid rgba(255,255,255,0.15);
+                    color: #fff;
+                    border-radius: 10px;
+                    font-weight: 600;
+                }
+                .modal-dark .btn-secondary:hover {
+                    background: rgba(255,255,255,0.13);
+                    color: #fff;
+                }
+                .modal-dark .btn-close-white {
+                    filter: invert(1);
+                }
+                @media (max-width: 900px) {
+                    .resto-table-header,
+                    .resto-row {
+                        grid-template-columns: 1fr;
+                        gap: 6px;
+                    }
+                    .resto-row-actions {
+                        justify-content: flex-start;
+                    }
+                }
+            `}</style>
+
             <CategoryModal 
                 show={showCategoryForm}
                 onClose={closeCategoryForm}
@@ -796,6 +965,6 @@ const handleDeleteOption = async (id) => {
                 products={products}
                 adminGradient={adminGradient}
             />
-        </div>
+        </RestauranteShell>
     );
 }

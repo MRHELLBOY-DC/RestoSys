@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import RestauranteShell from "../../components/RestauranteShell";
 import { useAuth } from "../../hooks/useAuth";
 import { getSalesByDay, getTopProducts } from "../../services/reportsApi";
-
-const adminGradient = "linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d)";
 
 const toDateInput = (date) => date.toISOString().slice(0, 10);
 const startOfDayIso = (dateText) => `${dateText}T00:00:00.000Z`;
@@ -63,13 +61,12 @@ export default function RestauranteReportes() {
 
     if (loading) {
         return (
-            <div className="min-vh-100 d-flex flex-column" style={{ background: adminGradient }}>
-                <DashboardNavbar />
-                <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
+            <RestauranteShell title="Reportes" subtitle="Cargando reportes...">
+                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
                     <div className="spinner-border text-light me-2" role="status"></div>
                     <p className="mb-0 fw-bold">Cargando reportes...</p>
                 </div>
-            </div>
+            </RestauranteShell>
         );
     }
 
@@ -78,122 +75,227 @@ export default function RestauranteReportes() {
     const totalPeriod = salesByDay.reduce((sum, item) => sum + Number(item.totalSales || 0), 0);
     const totalOrders = salesByDay.reduce((sum, item) => sum + Number(item.ordersCount || 0), 0);
 
+    const ticketPromedio = totalOrders > 0 ? totalPeriod / totalOrders : 0;
+    const salesSummary = salesByDay.slice(-7);
+
     return (
-        <div className="min-vh-100 d-flex flex-column" style={{ background: adminGradient }}>
-            <DashboardNavbar />
-            <div className="container py-5">
-                <div className="text-white mb-4">
-                    <h1 className="display-5 fw-bold mb-2">Reportes del Restaurante</h1>
-                    <p className="mb-0 opacity-75">Ventas por dia, productos mas vendidos y auditoria basica.</p>
+        <RestauranteShell title="Reportes" subtitle={new Date().toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long" })}>
+            {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
+            {success && <div className="alert alert-success border-0 bg-success bg-opacity-25 text-white">{success}</div>}
+
+            <div className="resto-filter">
+                <div>
+                    <label className="resto-label">Desde</label>
+                    <input className="resto-input" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                 </div>
-
-                {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
-                {success && <div className="alert alert-success border-0 bg-success bg-opacity-25 text-white">{success}</div>}
-
-                <div className="card border-0 shadow-lg text-white mb-4"
-                     style={{ background: "rgba(255, 255, 255, 0.15)", backdropFilter: "blur(12px)", borderRadius: "20px" }}>
-                    <div className="card-body">
-                        <div className="row g-3 align-items-end">
-                            <div className="col-12 col-md-4">
-                                <label className="form-label small text-white-50">Desde</label>
-                                <input className="form-control" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                            </div>
-                            <div className="col-12 col-md-4">
-                                <label className="form-label small text-white-50">Hasta</label>
-                                <input className="form-control" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                            </div>
-                            <div className="col-12 col-md-4">
-                                <button className="btn btn-light w-100 fw-bold" onClick={loadReports} disabled={busy}>
-                                    Consultar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <div>
+                    <label className="resto-label">Hasta</label>
+                    <input className="resto-input" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                 </div>
+                <button className="resto-btn" onClick={loadReports} disabled={busy}>Consultar</button>
+            </div>
 
-                <div className="row g-4 mb-4">
-                    <div className="col-12 col-md-6">
-                        <div className="card border-0 shadow-lg text-white h-100"
-                             style={{ background: "rgba(255, 255, 255, 0.15)", backdropFilter: "blur(12px)", borderRadius: "20px" }}>
-                            <div className="card-body">
-                                <p className="small text-white-50 mb-1">Ventas del periodo</p>
-                                <h2 className="fw-bold mb-0">S/ {formatMoney(totalPeriod)}</h2>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <div className="card border-0 shadow-lg text-white h-100"
-                             style={{ background: "rgba(255, 255, 255, 0.15)", backdropFilter: "blur(12px)", borderRadius: "20px" }}>
-                            <div className="card-body">
-                                <p className="small text-white-50 mb-1">Pedidos vendidos</p>
-                                <h2 className="fw-bold mb-0">{totalOrders}</h2>
-                            </div>
-                        </div>
-                    </div>
+            <div className="resto-metrics">
+                <div className="resto-metric">
+                    <div className="resto-metric-label">Ventas hoy</div>
+                    <div className="resto-metric-value">S/ {formatMoney(totalPeriod)}</div>
+                    <div className="resto-metric-sub">Ultimos 7 dias</div>
                 </div>
-
-                <div className="row g-4">
-                    <div className="col-12 col-lg-6">
-                        <div className="card border-0 shadow-lg text-white h-100"
-                             style={{ background: "rgba(255, 255, 255, 0.15)", backdropFilter: "blur(12px)", borderRadius: "20px" }}>
-                            <div className="card-body">
-                                <h2 className="h5 fw-bold mb-3">Ventas por dia</h2>
-                                {salesByDay.length === 0 ? (
-                                    <p className="opacity-75">No hay ventas en el periodo.</p>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-sm table-dark table-borderless align-middle mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Fecha</th>
-                                                    <th>Pedidos</th>
-                                                    <th>Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {salesByDay.map((item) => (
-                                                    <tr key={item.date}>
-                                                        <td>{item.date}</td>
-                                                        <td>{item.ordersCount}</td>
-                                                        <td>S/ {formatMoney(item.totalSales)}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="col-12 col-lg-6">
-                        <div className="card border-0 shadow-lg text-white h-100"
-                             style={{ background: "rgba(255, 255, 255, 0.15)", backdropFilter: "blur(12px)", borderRadius: "20px" }}>
-                            <div className="card-body">
-                                <h2 className="h5 fw-bold mb-3">Productos mas vendidos</h2>
-                                {topProducts.length === 0 ? (
-                                    <p className="opacity-75">No hay productos registrados en ventas.</p>
-                                ) : (
-                                    <div className="d-flex flex-column gap-2">
-                                        {topProducts.map((item) => (
-                                            <div key={item.productId} className="p-3 rounded" style={{ background: "rgba(0,0,0,0.25)" }}>
-                                                <div className="d-flex justify-content-between">
-                                                    <div>
-                                                        <div className="fw-bold">{item.productName}</div>
-                                                        <small className="opacity-75">{item.quantitySold} unidades</small>
-                                                    </div>
-                                                    <div className="fw-bold">S/ {formatMoney(item.totalSales)}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
+                <div className="resto-metric">
+                    <div className="resto-metric-label">Pedidos hoy</div>
+                    <div className="resto-metric-value">{totalOrders}</div>
+                    <div className="resto-metric-sub">Ultimos 7 dias</div>
+                </div>
+                <div className="resto-metric">
+                    <div className="resto-metric-label">Ticket promedio</div>
+                    <div className="resto-metric-value">S/ {formatMoney(ticketPromedio)}</div>
+                    <div className="resto-metric-sub">Por pedido</div>
+                </div>
+                <div className="resto-metric">
+                    <div className="resto-metric-label">En preparacion</div>
+                    <div className="resto-metric-value">0</div>
+                    <div className="resto-metric-sub">Ahora</div>
                 </div>
             </div>
-        </div>
+
+            <div className="resto-reports-grid">
+                <div className="resto-chart">
+                    <div className="resto-chart-title">Ventas por dia</div>
+                    {salesSummary.length === 0 ? (
+                        <div className="resto-empty">No hay ventas en el periodo.</div>
+                    ) : (
+                        <div className="resto-chart-bars">
+                            {salesSummary.map((item) => (
+                                <div key={item.date} className="resto-bar">
+                                    <div className="resto-bar-value" style={{ height: `${Math.min(80, Number(item.totalSales || 0) / 20)}px` }}></div>
+                                    <div className="resto-bar-label">{item.date.slice(5)}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <div className="resto-top">
+                    <div className="resto-chart-title">Productos mas vendidos</div>
+                    {topProducts.length === 0 ? (
+                        <div className="resto-empty">No hay productos registrados en ventas.</div>
+                    ) : (
+                        <div className="resto-top-list">
+                            {topProducts.map((item, index) => (
+                                <div key={item.productId} className="resto-top-item">
+                                    <div className="resto-rank">{index + 1}</div>
+                                    <div>
+                                        <div className="resto-top-name">{item.productName}</div>
+                                        <div className="resto-muted">{item.quantitySold} vendidos · S/ {formatMoney(item.totalSales)}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <style>{`
+                .resto-filter {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+                    gap: 12px;
+                    align-items: end;
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 16px;
+                    padding: 16px;
+                }
+                .resto-label {
+                    font-size: 0.75rem;
+                    color: rgba(255, 255, 255, 0.6);
+                    display: block;
+                    margin-bottom: 6px;
+                }
+                .resto-input {
+                    width: 100%;
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 10px;
+                    color: #fff;
+                    padding: 8px 10px;
+                }
+                .resto-btn {
+                    background: #d44a42;
+                    color: #fff;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 10px 16px;
+                    font-weight: 700;
+                }
+                .resto-metrics {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(160px, 1fr));
+                    gap: 16px;
+                }
+                .resto-metric {
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 16px;
+                    padding: 16px;
+                }
+                .resto-metric-label {
+                    color: rgba(255, 255, 255, 0.6);
+                    font-size: 0.8rem;
+                }
+                .resto-metric-value {
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    margin-top: 6px;
+                }
+                .resto-metric-sub {
+                    color: rgba(255, 255, 255, 0.45);
+                    font-size: 0.75rem;
+                }
+                .resto-reports-grid {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    gap: 18px;
+                }
+                .resto-chart,
+                .resto-top {
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 16px;
+                    padding: 16px;
+                }
+                .resto-chart-title {
+                    font-weight: 700;
+                    margin-bottom: 12px;
+                }
+                .resto-chart-bars {
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 12px;
+                    height: 180px;
+                }
+                .resto-bar {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                    flex: 1;
+                }
+                .resto-bar-value {
+                    width: 100%;
+                    border-radius: 10px;
+                    background: rgba(212, 74, 66, 0.8);
+                    min-height: 16px;
+                }
+                .resto-bar-label {
+                    font-size: 0.7rem;
+                    color: rgba(255, 255, 255, 0.6);
+                }
+                .resto-top-list {
+                    display: grid;
+                    gap: 10px;
+                }
+                .resto-top-item {
+                    display: grid;
+                    grid-template-columns: 28px 1fr;
+                    gap: 10px;
+                    align-items: center;
+                    background: rgba(0, 0, 0, 0.25);
+                    padding: 10px;
+                    border-radius: 12px;
+                }
+                .resto-rank {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: rgba(212, 74, 66, 0.2);
+                    display: grid;
+                    place-items: center;
+                    color: #d44a42;
+                    font-weight: 700;
+                }
+                .resto-top-name {
+                    font-weight: 600;
+                }
+                .resto-empty {
+                    color: rgba(255, 255, 255, 0.6);
+                }
+                @media (max-width: 1024px) {
+                    .resto-metrics {
+                        grid-template-columns: repeat(2, minmax(160px, 1fr));
+                    }
+                    .resto-reports-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+                @media (max-width: 640px) {
+                    .resto-filter {
+                        grid-template-columns: 1fr;
+                    }
+                    .resto-metrics {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
+        </RestauranteShell>
     );
 }

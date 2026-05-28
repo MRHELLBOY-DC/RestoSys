@@ -177,16 +177,14 @@ export default function MisPedidos() {
                                         </div>
 
                                         {payments[pedido.id]?.receipt && (
-                                            <a
-                                                href={getReceiptUrl(payments[pedido.id].id)}
-                                                target="_blank"
-                                                rel="noreferrer"
+                                            <button
+                                                onClick={() => getReceiptUrl(payments[pedido.id].id)}
                                                 className="btn w-100 fw-semibold mt-3 small"
                                                 style={{ background: 'rgba(40,167,69,0.15)', border: '1px solid rgba(40,167,69,0.4)', color: '#5cb85c', borderRadius: '10px' }}
                                             >
                                                 <i className="fa fa-file-invoice me-2" />
                                                 Ver Comprobante
-                                            </a>
+                                            </button>
                                         )}
                                     </div>
                                 </div>
