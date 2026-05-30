@@ -137,10 +137,17 @@ services:
       - DATABASE_NAME=menu_db
       - DATABASE_USER=admin
       - DATABASE_PASSWORD=1234
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
       - PYTHONPATH=/app:/shared
     depends_on:
       db-menu:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
     restart: always
 
   celery:

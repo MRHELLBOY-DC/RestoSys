@@ -15,7 +15,8 @@ def create_product_command(
     restaurant_id: int,
     event_publisher: EventPublisherPort,
     image=None,
-    description: str = None
+    description: str = None,
+    actor_username: str = None
 ) -> Product:
     """
     Crea un nuevo producto
@@ -66,6 +67,8 @@ def create_product_command(
     
     product.record_created()
     event = product.pull_domain_events()[-1]
+    if actor_username:
+        event.data['actor_username'] = actor_username
     event_publisher.persist_and_publish(event, 'product.created')
     
     return product

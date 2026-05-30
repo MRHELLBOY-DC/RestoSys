@@ -13,7 +13,8 @@ def create_option_command(
     extra_price: Decimal,
     product_id: int,
     restaurant_id: int,
-    event_publisher: EventPublisherPort
+    event_publisher: EventPublisherPort,
+    actor_username: str = None
 ) -> ProductOption:
     """
     Crea una nueva opción para un producto
@@ -42,6 +43,8 @@ def create_option_command(
     
     option.record_created(product_name=product.name, restaurant_id=restaurant_id)
     event = option.pull_domain_events()[-1]
+    if actor_username:
+        event.data['actor_username'] = actor_username
     event_publisher.persist_and_publish(event, 'option.created')
     
     return option

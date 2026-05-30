@@ -7,6 +7,8 @@ import java.util.UUID;
 
 public record OrderStatusChangedEvent(
         UUID aggregateId,
+        UUID restaurantId,
+        String orderCode,
         OrderStatus previousStatus,
         OrderStatus newStatus,
         Instant occurredAt

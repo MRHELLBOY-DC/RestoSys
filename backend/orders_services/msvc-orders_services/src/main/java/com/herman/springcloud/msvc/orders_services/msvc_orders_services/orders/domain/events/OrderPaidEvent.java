@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record OrderPaidEvent(
         UUID aggregateId,
+        UUID restaurantId,
         Instant occurredAt
 ) implements DomainEvent {
     @Override

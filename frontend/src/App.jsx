@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRestaurantes from "./pages/admin/AdminRestaurantes";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminReportes from "./pages/admin/AdminReportes";
+import AdminAuditoria from "./pages/admin/AdminAuditoria";
 
 // Restaurante
 import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
@@ -101,6 +102,11 @@ function App() {
             <Route path="/admin/reportes" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                     <AdminReportes />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin/auditoria" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminAuditoria />
                 </ProtectedRoute>
             } />
             

@@ -17,7 +17,8 @@ def update_product_command(
     price = None,
     category_id: int = None,
     image = None,
-    description: str = None
+    description: str = None,
+    actor_username: str = None
 ) -> Product:
     """
     Actualiza un producto existente
@@ -94,11 +95,14 @@ def update_product_command(
         
         event_data = {
             'product_id': product.id,
+            'name': new_data.get('name', existing_product.name),
             'restaurant_id': restaurant_id,
             'old_data': old_data,
             'new_data': new_data,
             'timestamp': datetime.utcnow().isoformat()
         }
+        if actor_username:
+            event_data['actor_username'] = actor_username
         
         event_store.append_event(
             aggregate_id=product_id,

@@ -10,7 +10,7 @@ from ...domain.entities import ProductOption
 from shared import publish_event
 
 
-def update_option_command(option_id: int, restaurant_id: int, name: str = None, extra_price: Decimal = None) -> ProductOption:
+def update_option_command(option_id: int, restaurant_id: int, name: str = None, extra_price: Decimal = None, actor_username: str = None) -> ProductOption:
     """
     Actualiza una opción existente
     """
@@ -63,6 +63,9 @@ def update_option_command(option_id: int, restaurant_id: int, name: str = None, 
             aggregate_type='ProductOption'
         )
         
+        if actor_username:
+            event_data['actor_username'] = actor_username
+
         # Publicar evento a RabbitMQ
         publish_event('option.updated', event_data)
     

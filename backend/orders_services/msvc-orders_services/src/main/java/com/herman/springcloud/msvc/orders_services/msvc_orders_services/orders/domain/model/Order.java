@@ -57,7 +57,7 @@ public class Order extends AggregateRoot {
     public static Order create(UUID restaurantId, UUID clientId, OrderType type, String tableNumber, List<OrderItem> items) {
         Order order = new Order(UUID.randomUUID(), restaurantId, clientId, generateOrderCode(), type, tableNumber, items,
                 OrderStatus.RECIBIDO, PaymentStatus.PENDIENTE, Instant.now(), Instant.now());
-        order.addDomainEvent(new OrderCreatedEvent(order.getId(), order.restaurantId, order.orderCode, order.totalAmount(), Instant.now()));
+        order.addDomainEvent(new OrderCreatedEvent(order.getId(), order.restaurantId, order.clientId, order.orderCode, order.totalAmount(), Instant.now()));
         return order;
     }
 
@@ -79,7 +79,7 @@ public class Order extends AggregateRoot {
         OrderStatus previousStatus = status;
         status = newStatus;
         updatedAt = Instant.now();
-        addDomainEvent(new OrderStatusChangedEvent(getId(), previousStatus, newStatus, updatedAt));
+        addDomainEvent(new OrderStatusChangedEvent(getId(), restaurantId, orderCode, previousStatus, newStatus, updatedAt));
     }
 
     public void confirmPayment() {
@@ -88,7 +88,7 @@ public class Order extends AggregateRoot {
         }
         paymentStatus = PaymentStatus.PAGADO;
         updatedAt = Instant.now();
-        addDomainEvent(new OrderPaidEvent(getId(), updatedAt));
+        addDomainEvent(new OrderPaidEvent(getId(), restaurantId, updatedAt));
     }
 
     public BigDecimal totalAmount() {

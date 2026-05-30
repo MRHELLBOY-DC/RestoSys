@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import AdminShell from "../../components/AdminShell";
 import { useAuth } from "../../hooks/useAuth";
-import { getAuditLogs, getGlobalSales, getTopRestaurants } from "../../services/reportsApi";
-
-const gradient = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+import { getGlobalSales, getTopRestaurants } from "../../services/reportsApi";
+import { getAdminRestaurantes } from "../../services/api";
 
 const toDateInput = (date) => date.toISOString().slice(0, 10);
 const startOfDayIso = (dateText) => `${dateText}T00:00:00.000Z`;
@@ -25,7 +24,7 @@ export default function AdminReportes() {
     const [toDate, setToDate] = useState(today);
     const [globalSales, setGlobalSales] = useState(null);
     const [topRestaurants, setTopRestaurants] = useState([]);
-    const [auditLogs, setAuditLogs] = useState([]);
+    const [restaurantMap, setRestaurantMap] = useState(new Map());
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
 
@@ -35,14 +34,15 @@ export default function AdminReportes() {
         try {
             const from = startOfDayIso(fromDate);
             const to = endOfDayIso(toDate);
-            const [globalData, restaurantsData, logsData] = await Promise.all([
+            const [globalData, restaurantsData, allRestaurants] = await Promise.all([
                 getGlobalSales(from, to),
                 getTopRestaurants(from, to, 5),
-                getAuditLogs()
+                getAdminRestaurantes().catch(() => []),
             ]);
             setGlobalSales(globalData);
             setTopRestaurants(restaurantsData);
-            setAuditLogs(logsData);
+            const toUUID = (id) => `00000000-0000-0000-0000-${String(id).padStart(12, "0")}`;
+            setRestaurantMap(new Map((Array.isArray(allRestaurants) ? allRestaurants : []).map(r => [toUUID(r.id), r.name])));
         } catch (err) {
             setError(getErrorMessage(err, "No se pudieron cargar los reportes globales"));
         } finally {
@@ -57,9 +57,11 @@ export default function AdminReportes() {
 
     if (loading) {
         return (
-            <div className="min-vh-100 w-100 d-flex align-items-center justify-content-center text-white" style={{ background: gradient }}>
-                <div className="spinner-border me-2" role="status"></div>
-                <p className="mb-0 fw-bold">Cargando reportes globales...</p>
+            <div className="admin-loading">
+                <div className="d-flex align-items-center gap-2">
+                    <div className="spinner-border" role="status"></div>
+                    <p className="mb-0 fw-bold">Cargando reportes globales...</p>
+                </div>
             </div>
         );
     }
@@ -67,116 +69,67 @@ export default function AdminReportes() {
     if (!user) return null;
 
     return (
-        <div className="min-vh-100 w-100 d-flex flex-column" style={{ background: gradient }}>
-            <DashboardNavbar />
+        <AdminShell
+            title="Reportes globales"
+            subtitle="Ventas totales y restaurantes mas activos en el periodo."
+        >
+            {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
 
-            <main className="container py-5 flex-grow-1">
-                <div className="text-white mb-4">
-                    <h1 className="display-5 fw-bold mb-2">Reportes Globales</h1>
-                    <p className="mb-0 text-white-50">Ventas totales, restaurantes activos y auditoria de plataforma.</p>
-                </div>
-
-                {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
-
-                <div className="card border-0 shadow-lg text-white mb-4"
-                     style={{ background: "rgba(255, 255, 255, 0.12)", backdropFilter: "blur(12px)", borderRadius: "20px" }}>
-                    <div className="card-body">
-                        <div className="row g-3 align-items-end">
-                            <div className="col-12 col-md-4">
-                                <label className="form-label small text-white-50">Desde</label>
-                                <input className="form-control" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                            </div>
-                            <div className="col-12 col-md-4">
-                                <label className="form-label small text-white-50">Hasta</label>
-                                <input className="form-control" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                            </div>
-                            <div className="col-12 col-md-4">
-                                <button className="btn btn-light w-100 fw-bold" onClick={loadReports} disabled={busy}>
-                                    Consultar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="row g-4 mb-4">
+            <div className="admin-card admin-card--glass" style={{ marginBottom: "24px" }}>
+                <div className="row g-3 align-items-end">
                     <div className="col-12 col-md-4">
-                        <div className="card h-100 bg-white bg-opacity-10 border-white border-opacity-25 text-white shadow-sm"
-                             style={{ backdropFilter: "blur(10px)", borderRadius: "15px" }}>
-                            <div className="card-body">
-                                <p className="small text-white-50 mb-1">Ventas totales</p>
-                                <h2 className="fw-bold mb-0">S/ {formatMoney(globalSales?.totalSales)}</h2>
-                            </div>
-                        </div>
+                        <label className="form-label small text-white-50">Desde</label>
+                        <input className="form-control admin-input" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                     </div>
                     <div className="col-12 col-md-4">
-                        <div className="card h-100 bg-white bg-opacity-10 border-white border-opacity-25 text-white shadow-sm"
-                             style={{ backdropFilter: "blur(10px)", borderRadius: "15px" }}>
-                            <div className="card-body">
-                                <p className="small text-white-50 mb-1">Pedidos vendidos</p>
-                                <h2 className="fw-bold mb-0">{globalSales?.ordersCount || 0}</h2>
-                            </div>
-                        </div>
+                        <label className="form-label small text-white-50">Hasta</label>
+                        <input className="form-control admin-input" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                     </div>
                     <div className="col-12 col-md-4">
-                        <div className="card h-100 bg-white bg-opacity-10 border-white border-opacity-25 text-white shadow-sm"
-                             style={{ backdropFilter: "blur(10px)", borderRadius: "15px" }}>
-                            <div className="card-body">
-                                <p className="small text-white-50 mb-1">Restaurantes activos</p>
-                                <h2 className="fw-bold mb-0">{globalSales?.restaurantsCount || 0}</h2>
-                            </div>
-                        </div>
+                        <button className="admin-btn admin-btn-primary w-100" onClick={loadReports} disabled={busy}>
+                            Consultar
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                <div className="row g-4">
-                    <div className="col-12 col-lg-6">
-                        <div className="card h-100 bg-white bg-opacity-10 border-white border-opacity-25 text-white shadow-sm"
-                             style={{ backdropFilter: "blur(10px)", borderRadius: "15px" }}>
-                            <div className="card-body">
-                                <h2 className="h5 fw-bold mb-3">Restaurantes mas activos</h2>
-                                {topRestaurants.length === 0 ? (
-                                    <p className="text-white-50">No hay ventas en el periodo.</p>
-                                ) : (
-                                    <div className="d-flex flex-column gap-2">
-                                        {topRestaurants.map((restaurant) => (
-                                            <div key={restaurant.restaurantId} className="p-3 rounded" style={{ background: "rgba(0,0,0,0.25)" }}>
-                                                <div className="fw-bold text-break">{restaurant.restaurantId}</div>
-                                                <div className="d-flex justify-content-between text-white-50 small">
-                                                    <span>{restaurant.ordersCount} pedidos</span>
-                                                    <span>S/ {formatMoney(restaurant.totalSales)}</span>
-                                                </div>
-                                            </div>
-                                        ))}
+            <div className="admin-grid admin-grid-3" style={{ marginBottom: "24px" }}>
+                <div className="admin-card admin-card--glass">
+                    <p className="admin-stat-label">Ventas totales</p>
+                    <div className="admin-stat-value">S/ {formatMoney(globalSales?.totalSales)}</div>
+                </div>
+                <div className="admin-card admin-card--glass">
+                    <p className="admin-stat-label">Pedidos vendidos</p>
+                    <div className="admin-stat-value">{globalSales?.ordersCount || 0}</div>
+                </div>
+                <div className="admin-card admin-card--glass">
+                    <p className="admin-stat-label">Restaurantes activos</p>
+                    <div className="admin-stat-value">{globalSales?.restaurantsCount || 0}</div>
+                </div>
+            </div>
+
+            <div className="admin-card admin-card--glass">
+                <h2 className="h5 fw-bold mb-3">Restaurantes mas activos</h2>
+                {topRestaurants.length === 0 ? (
+                    <p className="text-white-50">No hay ventas en el periodo.</p>
+                ) : (
+                    <div className="admin-list">
+                        {topRestaurants.map((restaurant, index) => (
+                            <div key={restaurant.restaurantId} className="admin-list-item">
+                                <div className="admin-list-rank">{index + 1}</div>
+                                <div>
+                                    <div className="fw-bold text-break">{restaurantMap.get(restaurant.restaurantId) || restaurant.restaurantId}</div>
+                                    <small className="text-white-50">{restaurant.ordersCount} pedidos</small>
+                                    <div className="admin-list-bar">
+                                        <span style={{ width: `${Math.min(100, restaurant.ordersCount || 1)}%` }} />
                                     </div>
-                                )}
+                                </div>
+                                <div className="admin-list-value">S/ {formatMoney(restaurant.totalSales)}</div>
                             </div>
-                        </div>
+                        ))}
                     </div>
-
-                    <div className="col-12 col-lg-6">
-                        <div className="card h-100 bg-white bg-opacity-10 border-white border-opacity-25 text-white shadow-sm"
-                             style={{ backdropFilter: "blur(10px)", borderRadius: "15px" }}>
-                            <div className="card-body">
-                                <h2 className="h5 fw-bold mb-3">Auditoria global</h2>
-                                {auditLogs.length === 0 ? (
-                                    <p className="text-white-50">No hay eventos de auditoria.</p>
-                                ) : (
-                                    <div className="d-flex flex-column gap-2" style={{ maxHeight: "420px", overflowY: "auto" }}>
-                                        {auditLogs.slice(0, 15).map((log) => (
-                                            <div key={log.id} className="p-3 rounded" style={{ background: "rgba(0,0,0,0.25)" }}>
-                                                <div className="fw-bold">{log.action}</div>
-                                                <small className="text-white-50 d-block">{log.source} · {new Date(log.occurredAt).toLocaleString()}</small>
-                                                <small className="text-white-50 text-break">{log.restaurantId || "global"}</small>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
+                )}
+            </div>
+        </AdminShell>
     );
 }

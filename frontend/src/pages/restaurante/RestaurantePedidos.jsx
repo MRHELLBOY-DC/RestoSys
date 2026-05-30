@@ -109,22 +109,19 @@ export default function RestaurantePedidos() {
         }
     };
 
-    const combinedOrders = useMemo(() => {
-        const map = new Map();
-        [...activeOrders, ...historyOrders].forEach((order) => {
-            if (STATUS_FLOW.includes(order.status)) {
-                map.set(order.id, order);
-            }
-        });
-        return Array.from(map.values());
-    }, [activeOrders, historyOrders]);
+    const THIRTY_MIN = 30 * 60 * 1000;
 
     const ordersByStatus = useMemo(() => {
         return STATUS_FLOW.reduce((acc, status) => {
-            acc[status] = combinedOrders.filter((order) => order.status === status);
+            let orders = activeOrders.filter((order) => order.status === status);
+            if (status === "ENTREGADO") {
+                const cutoff = Date.now() - THIRTY_MIN;
+                orders = orders.filter((order) => new Date(order.updatedAt || order.createdAt).getTime() >= cutoff);
+            }
+            acc[status] = orders;
             return acc;
         }, {});
-    }, [combinedOrders]);
+    }, [activeOrders]);
 
 
     const formatItems = (order) => {
@@ -209,7 +206,7 @@ export default function RestaurantePedidos() {
                                             </button>
                                         )}
 
-                                        {nextStatus && (
+                                        {nextStatus && order.status !== "ENTREGADO" && (
                                             <button
                                                 className="resto-action"
                                                 onClick={() => handleAdvanceStatus(order.id, order.status)}
@@ -217,6 +214,9 @@ export default function RestaurantePedidos() {
                                             >
                                                 -&gt; {STATUS_LABEL[nextStatus].toUpperCase()}
                                             </button>
+                                        )}
+                                        {order.status === "ENTREGADO" && (
+                                            <div className="resto-done">Pedido completado</div>
                                         )}
                                     </div>
                                 );
@@ -336,6 +336,12 @@ export default function RestaurantePedidos() {
                 .resto-action.muted {
                     background: rgba(255, 255, 255, 0.08);
                     color: rgba(255, 255, 255, 0.8);
+                }
+                .resto-done {
+                    text-align: center;
+                    font-size: 0.78rem;
+                    color: #9ad7a0;
+                    padding: 6px 0 2px;
                 }
                 .resto-history {
                     background: rgba(255, 255, 255, 0.03);

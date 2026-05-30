@@ -64,7 +64,7 @@ class CategoryListCreateView(APIView):
             )
         
         try:
-            category = create_category_command(name, restaurant_id, event_publisher)
+            category = create_category_command(name, restaurant_id, event_publisher, actor_username=request.user.username)
             serializer = CategorySerializer(category)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValueError as e:
@@ -111,7 +111,7 @@ class CategoryDetailView(APIView):
             )
         
         try:
-            category = update_category_command(pk, name, restaurant_id)
+            category = update_category_command(pk, name, restaurant_id, actor_username=request.user.username)
             serializer = CategorySerializer(category)
             return Response(serializer.data)
         except ValueError as e:
@@ -127,7 +127,7 @@ class CategoryDetailView(APIView):
             )
         
         try:
-            delete_category_command(pk, restaurant_id)
+            delete_category_command(pk, restaurant_id, actor_username=request.user.username)
             return Response(
                 {'message': 'Categoría eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
@@ -173,7 +173,8 @@ class ProductListCreateView(APIView):
                 restaurant_id=restaurant_id,
                 event_publisher=event_publisher,
                 image=request.FILES.get('image') or request.data.get('image'),
-                description=request.data.get('description')
+                description=request.data.get('description'),
+                actor_username=request.user.username
             )
             serializer = ProductSerializer(product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -221,7 +222,8 @@ class ProductDetailView(APIView):
                 price=request.data.get('price'),
                 category_id=request.data.get('category_id'),
                 image=request.FILES.get('image') or request.data.get('image'),
-                description=request.data.get('description')
+                description=request.data.get('description'),
+                actor_username=request.user.username
             )
             serializer = ProductSerializer(product)
             return Response(serializer.data)
@@ -238,7 +240,7 @@ class ProductDetailView(APIView):
             )
         
         try:
-            delete_product_command(pk, restaurant_id)
+            delete_product_command(pk, restaurant_id, actor_username=request.user.username)
             return Response(
                 {'message': 'Producto eliminado correctamente'},
                 status=status.HTTP_204_NO_CONTENT
@@ -288,7 +290,8 @@ class OptionListCreateView(APIView):
                 extra_price=request.data.get('extra_price', 0),
                 product_id=request.data.get('product_id'),
                 restaurant_id=restaurant_id,
-                event_publisher=event_publisher
+                event_publisher=event_publisher,
+                actor_username=request.user.username
             )
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -333,7 +336,8 @@ class OptionDetailView(APIView):
                 option_id=pk,
                 restaurant_id=restaurant_id,
                 name=request.data.get('name'),
-                extra_price=request.data.get('extra_price')
+                extra_price=request.data.get('extra_price'),
+                actor_username=request.user.username
             )
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data)
@@ -350,7 +354,7 @@ class OptionDetailView(APIView):
             )
         
         try:
-            delete_option_command(pk, restaurant_id)
+            delete_option_command(pk, restaurant_id, actor_username=request.user.username)
             return Response(
                 {'message': 'Opción eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT

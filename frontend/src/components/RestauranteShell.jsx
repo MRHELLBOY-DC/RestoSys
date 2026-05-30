@@ -27,21 +27,21 @@ export default function RestauranteShell({ title, subtitle, actions, children })
 
                 <nav className="resto-nav">
                     <NavLink to="/restaurante/pedidos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                        Pedidos
+                        <i className="fa-solid fa-receipt"></i>Pedidos
                     </NavLink>
                     <NavLink to="/restaurante/menu" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                        Menu
+                        <i className="fa-solid fa-utensils"></i>Menu
                     </NavLink>
                     <NavLink to="/restaurante/reportes" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                        Reportes
+                        <i className="fa-solid fa-chart-bar"></i>Reportes
                     </NavLink>
                     <NavLink to="/restaurante/pagos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                        Pagos
+                        <i className="fa-solid fa-credit-card"></i>Pagos
                     </NavLink>
                 </nav>
 
                 <button type="button" className="resto-link resto-logout" onClick={handleLogout}>
-                    Salir
+                    <i className="fa-solid fa-door-open"></i>Salir
                 </button>
             </aside>
 
@@ -75,6 +75,10 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                     display: flex;
                     flex-direction: column;
                     gap: 24px;
+                    position: sticky;
+                    top: 0;
+                    height: 100vh;
+                    overflow-y: auto;
                 }
                 .resto-brand {
                     font-weight: 700;
@@ -98,6 +102,9 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                     background: transparent;
                     border: 1px solid transparent;
                     transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
                 }
                 .resto-link:hover {
                     background: rgba(255, 255, 255, 0.06);

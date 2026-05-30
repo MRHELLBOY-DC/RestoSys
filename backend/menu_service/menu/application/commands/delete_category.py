@@ -8,7 +8,7 @@ from ...infrastructure.event_store import event_store
 from shared import publish_event
 
 
-def delete_category_command(category_id: int, restaurant_id: int) -> bool:
+def delete_category_command(category_id: int, restaurant_id: int, actor_username: str = None) -> bool:
     """
     Elimina una categoría
     """
@@ -42,6 +42,9 @@ def delete_category_command(category_id: int, restaurant_id: int) -> bool:
             aggregate_type='Category'
         )
         
+        if actor_username:
+            event_data['actor_username'] = actor_username
+
         # Publicar evento a RabbitMQ
         publish_event('category.deleted', event_data)
     

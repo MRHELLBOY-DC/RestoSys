@@ -8,7 +8,7 @@ from ...infrastructure.event_store import event_store
 from shared import publish_event
 
 
-def delete_product_command(product_id: int, restaurant_id: int) -> bool:
+def delete_product_command(product_id: int, restaurant_id: int, actor_username: str = None) -> bool:
     """
     Elimina un producto
     """
@@ -35,6 +35,8 @@ def delete_product_command(product_id: int, restaurant_id: int) -> bool:
             'restaurant_id': restaurant_id,
             'timestamp': datetime.utcnow().isoformat()
         }
+        if actor_username:
+            event_data['actor_username'] = actor_username
         event_store.append_event(
             aggregate_id=product_id,
             event_type='ProductDeleted',

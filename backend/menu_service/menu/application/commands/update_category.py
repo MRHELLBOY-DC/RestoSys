@@ -9,7 +9,7 @@ from ...domain.entities import Category
 from shared import publish_event
 
 
-def update_category_command(category_id: int, name: str, restaurant_id: int) -> Category:
+def update_category_command(category_id: int, name: str, restaurant_id: int, actor_username: str = None) -> Category:
     """
     Actualiza una categoría existente
     """
@@ -55,6 +55,9 @@ def update_category_command(category_id: int, name: str, restaurant_id: int) -> 
         aggregate_type='Category'
     )
     
+    if actor_username:
+        event_data['actor_username'] = actor_username
+
     # Publicar evento a RabbitMQ
     publish_event('category.updated', event_data)
     

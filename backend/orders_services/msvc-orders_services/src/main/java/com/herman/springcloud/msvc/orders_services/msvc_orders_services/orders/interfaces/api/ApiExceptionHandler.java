@@ -24,4 +24,12 @@ public class ApiExceptionHandler {
         problemDetail.setDetail(exception.getMessage());
         return problemDetail;
     }
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleUnexpected(Exception exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        problemDetail.setTitle("Error interno");
+        problemDetail.setDetail(exception.getMessage() != null ? exception.getMessage() : exception.getClass().getSimpleName());
+        return problemDetail;
+    }
 }

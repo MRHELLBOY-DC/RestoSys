@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import RestauranteShell from "../../components/RestauranteShell";
 import { useAuth } from "../../hooks/useAuth";
 import { getSalesByDay, getTopProducts } from "../../services/reportsApi";
+import { listActiveOrders } from "../../services/ordersApi";
 
 const toDateInput = (date) => date.toISOString().slice(0, 10);
 const startOfDayIso = (dateText) => `${dateText}T00:00:00.000Z`;
@@ -24,6 +25,7 @@ export default function RestauranteReportes() {
     const [toDate, setToDate] = useState(today);
     const [salesByDay, setSalesByDay] = useState([]);
     const [topProducts, setTopProducts] = useState([]);
+    const [enPreparacion, setEnPreparacion] = useState(0);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -39,12 +41,16 @@ export default function RestauranteReportes() {
             const from = startOfDayIso(fromDate);
             const to = endOfDayIso(toDate);
             const restaurantUuid = toUUID(restaurantId);
-            const [salesData, productsData] = await Promise.all([
+            const [salesData, productsData, activeOrders] = await Promise.all([
                 getSalesByDay(restaurantUuid, from, to),
-                getTopProducts(restaurantUuid, from, to, 5)
+                getTopProducts(restaurantUuid, from, to, 5),
+                listActiveOrders(restaurantUuid).catch(() => []),
             ]);
             setSalesByDay(salesData);
             setTopProducts(productsData);
+            setEnPreparacion((activeOrders || []).filter(o =>
+                o.status === "PREPARANDO" || o.status === "RECIBIDO"
+            ).length);
         } catch (err) {
             setError(getErrorMessage(err, "No se pudieron cargar los reportes"));
         } finally {
@@ -113,7 +119,7 @@ export default function RestauranteReportes() {
                 </div>
                 <div className="resto-metric">
                     <div className="resto-metric-label">En preparacion</div>
-                    <div className="resto-metric-value">0</div>
+                    <div className="resto-metric-value">{enPreparacion}</div>
                     <div className="resto-metric-sub">Ahora</div>
                 </div>
             </div>

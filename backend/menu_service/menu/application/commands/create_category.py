@@ -7,7 +7,7 @@ from ...domain.entities import Category
 from menu.application.ports.event_publisher_port import EventPublisherPort
 
 
-def create_category_command(name: str, restaurant_id: int, event_publisher: EventPublisherPort) -> Category:
+def create_category_command(name: str, restaurant_id: int, event_publisher: EventPublisherPort, actor_username: str = None) -> Category:
     """
     Crea una nueva categoría
     """
@@ -24,6 +24,8 @@ def create_category_command(name: str, restaurant_id: int, event_publisher: Even
     
     category.record_created()
     event = category.pull_domain_events()[-1]
+    if actor_username:
+        event.data['actor_username'] = actor_username
     event_publisher.persist_and_publish(event, 'category.created')
     
     return category

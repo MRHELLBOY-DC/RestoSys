@@ -35,6 +35,7 @@ from users.application.queries.get_restaurant_queries import (
     get_user_restaurant_data,
 )
 from users.infrastructure.event_utils import event_publisher
+from shared import publish_event
 
 
 # ============================================
@@ -104,7 +105,7 @@ class UpdateUserView(generics.UpdateAPIView):
             'email': updated_user.email,
             'role': updated_user.role,
         }
-        update_user_event(updated_user, old_data, new_data, event_publisher)  # ← Inyectar dependencia
+        update_user_event(updated_user, old_data, new_data, event_publisher, actor_username=self.request.user.username)
 
 
 class DeleteUserView(generics.DestroyAPIView):
@@ -114,7 +115,7 @@ class DeleteUserView(generics.DestroyAPIView):
     def perform_destroy(self, instance):
         instance.is_active = False
         instance.save()
-        delete_user_event(instance, event_publisher)  # ← Inyectar dependencia
+        delete_user_event(instance, event_publisher, actor_username=self.request.user.username)
 
 
 @api_view(['GET'])
@@ -186,6 +187,12 @@ def login(request):
     if user_lookup:
         user = authenticate(username=user_lookup.username, password=password)
     if user:
+        publish_event('auth.login.success', {
+            'user_id': user.id,
+            'username': user.username,
+            'role': user.role,
+            'timestamp': datetime.utcnow().isoformat(),
+        })
         refresh = RefreshToken.for_user(user)
         restaurant_id = None
         restaurant_data = None
@@ -215,6 +222,10 @@ def login(request):
                 'restaurant_id': restaurant_id,
             },
         })
+    publish_event('auth.login.failed', {
+        'identifier': email or username or 'unknown',
+        'timestamp': datetime.utcnow().isoformat(),
+    })
     return Response({'success': False, 'message': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -236,7 +247,14 @@ def admin_restaurantes(request):
         return Response(list_all_restaurants())  # ← Usar Query, no ORM directo
     serializer = RestaurantSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        restaurante = serializer.save()
+        publish_event('restaurant.created', {
+            'restaurant_id': restaurante.id,
+            'name': restaurante.name,
+            'address': restaurante.address,
+            'actor_username': request.user.username,
+            'timestamp': datetime.utcnow().isoformat(),
+        })
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -252,11 +270,34 @@ def admin_restaurante_detail(request, restaurante_id):
         serializer = RestaurantSerializer(restaurante)
         return Response(serializer.data)
     if request.method == 'PUT':
+        old_data = {
+            'name': restaurante.name,
+            'address': restaurante.address,
+            'logo': restaurante.logo,
+        }
         serializer = RestaurantSerializer(restaurante, data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            restaurante = serializer.save()
+            publish_event('restaurant.updated', {
+                'restaurant_id': restaurante.id,
+                'name': restaurante.name,
+                'old_data': old_data,
+                'new_data': {
+                    'name': restaurante.name,
+                    'address': restaurante.address,
+                    'logo': restaurante.logo,
+                },
+                'actor_username': request.user.username,
+                'timestamp': datetime.utcnow().isoformat(),
+            })
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    publish_event('restaurant.deleted', {
+        'restaurant_id': restaurante.id,
+        'name': restaurante.name,
+        'actor_username': request.user.username,
+        'timestamp': datetime.utcnow().isoformat(),
+    })
     restaurante.delete()
     return Response({'message': 'Restaurante eliminado'}, status=status.HTTP_204_NO_CONTENT)
 
@@ -271,6 +312,7 @@ def admin_usuarios(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        create_user_event(user, event_publisher, actor_username=request.user.username)
         restaurante_id = request.data.get('restaurante_id')
         if restaurante_id:
             try:
@@ -293,9 +335,14 @@ def admin_usuario_detail(request, usuario_id):
         serializer = UserReadSerializer(usuario)
         return Response(serializer.data)
     if request.method == 'PUT':
+        old_data = {
+            'username': usuario.username,
+            'email': usuario.email,
+            'role': usuario.role,
+        }
         serializer = UserUpdateSerializer(usuario, data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            updated_user = serializer.save()
             restaurante_id = request.data.get('restaurante_id')
             if restaurante_id:
                 UserRestaurant.objects.update_or_create(
@@ -304,8 +351,15 @@ def admin_usuario_detail(request, usuario_id):
                 )
             elif restaurante_id is None:
                 UserRestaurant.objects.filter(user=usuario).delete()
+            new_data = {
+                'username': updated_user.username,
+                'email': updated_user.email,
+                'role': updated_user.role,
+            }
+            update_user_event(updated_user, old_data, new_data, event_publisher, actor_username=request.user.username)
             return Response(UserReadSerializer(usuario).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    delete_user_event(usuario, event_publisher, actor_username=request.user.username)
     usuario.delete()
     return Response({'message': 'Usuario eliminado'}, status=status.HTTP_204_NO_CONTENT)
 
