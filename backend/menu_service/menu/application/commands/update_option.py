@@ -1,72 +1,117 @@
 """
 Command: Update Option
-CQRS - Command para actualizar una opción de producto
+CQRS - Command para actualizar una opción de producto usando Command pattern
 """
-from datetime import datetime
+from dataclasses import dataclass
 from decimal import Decimal
-from ...infrastructure.repositories import ProductOptionRepository, ProductRepository
-from ...infrastructure.event_store import event_store
-from ...domain.entities import ProductOption
-from shared import publish_event
+from typing import Optional
+from datetime import datetime
+from .base_command import Command, CommandHandler
+from menu.application.ports.option_repository_port import OptionRepositoryPort
+from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.entities.product_option import ProductOption
+from menu.domain.exceptions import OptionNotFoundException, InvalidOptionDataException
+from menu.domain.shared.domain_event import DomainEvent
 
 
-def update_option_command(option_id: int, restaurant_id: int, name: str = None, extra_price: Decimal = None, actor_username: str = None) -> ProductOption:
-    """
-    Actualiza una opción existente
-    """
-    # Validaciones
-    if not option_id:
-        raise ValueError("Se requiere option_id")
+@dataclass
+class UpdateOptionCommand(Command):
+    """Command to update a product option"""
+    option_id: int
+    restaurant_id: int
+    name: Optional[str] = None
+    extra_price: Optional[Decimal] = None
+    actor_username: Optional[str] = None
+
+
+class UpdateOptionCommandHandler(CommandHandler):
+    """Handler for UpdateOptionCommand"""
     
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
+    def __init__(
+        self,
+        option_repo: OptionRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.option_repo = option_repo
+        self.event_publisher = event_publisher
     
-    # Verificar que la opción existe
-    existing_option = ProductOptionRepository.get_by_id(option_id, restaurant_id)
-    if not existing_option:
-        raise ValueError(f"Opción con id {option_id} no encontrada")
-    
-    # Obtener datos antiguos
-    old_data = {
-        'name': existing_option.name,
-        'extra_price': str(existing_option.extra_price),
-    }
-    
-    # Construir datos a actualizar
-    update_data = {}
-    if name is not None:
-        if not name.strip():
-            raise ValueError("El nombre de la opción no puede estar vacío")
-        update_data['name'] = name.strip()
-    if extra_price is not None:
-        if extra_price < 0:
-            raise ValueError("El precio extra no puede ser negativo")
-        update_data['extra_price'] = extra_price
-    
-    # Actualizar opción
-    option = ProductOptionRepository.update(option_id, restaurant_id, **update_data)
-    
-    # Guardar evento en Event Store
-    if option:
+    def handle(self, command: UpdateOptionCommand) -> ProductOption:
+        """Execute the command - updates a product option"""
+        
+        # Validaciones básicas
+        if not command.option_id:
+            raise ValueError("Se requiere option_id")
+        
+        if not command.restaurant_id:
+            raise ValueError("Se requiere restaurant_id")
+        
+        # Verificar que la opción existe
+        existing_option = self.option_repo.get_by_id(command.option_id, command.restaurant_id)
+        if not existing_option:
+            raise OptionNotFoundException(command.option_id)
+        
+        # Obtener datos antiguos
+        old_data = {
+            'name': existing_option.name,
+            'extra_price': str(existing_option.extra_price),
+        }
+        
+        # Validar usando la entidad
+        update_data = {}
+        
+        if command.name is not None:
+            try:
+                # Crear entidad temporal para validar el nombre
+                ProductOption(
+                    name=command.name.strip(),
+                    extra_price=existing_option.extra_price,
+                    product_id=existing_option.product_id
+                )
+                update_data['name'] = command.name.strip()
+            except InvalidOptionDataException as e:
+                raise e
+        
+        if command.extra_price is not None:
+            try:
+                # Crear entidad temporal para validar el precio
+                ProductOption(
+                    name=existing_option.name,
+                    extra_price=command.extra_price,
+                    product_id=existing_option.product_id
+                )
+                update_data['extra_price'] = command.extra_price
+            except InvalidOptionDataException as e:
+                raise e
+        
+        # Actualizar opción
+        option = self.option_repo.update(
+            command.option_id,
+            command.restaurant_id,
+            **update_data
+        )
+        
+        if not option:
+            raise OptionNotFoundException(command.option_id)
+        
+        # Publicar evento de dominio
         event_data = {
             'option_id': option.id,
-            'restaurant_id': restaurant_id,
+            'restaurant_id': command.restaurant_id,
             'product_id': option.product_id,
             'old_data': old_data,
             'new_data': update_data,
-            'timestamp': datetime.utcnow().isoformat()
         }
-        event_store.append_event(
-            aggregate_id=option_id,
+        if command.actor_username:
+            event_data['actor_username'] = command.actor_username
+        
+        event = DomainEvent(
             event_type='OptionUpdated',
+            aggregate_id=str(command.option_id),
+            aggregate_type='ProductOption',
             data=event_data,
-            aggregate_type='ProductOption'
+            occurred_at=datetime.utcnow().isoformat()
         )
         
-        if actor_username:
-            event_data['actor_username'] = actor_username
-
-        # Publicar evento a RabbitMQ
-        publish_event('option.updated', event_data)
-    
-    return option
+        self.event_publisher.persist_and_publish(event, 'option.updated')
+        
+        return option

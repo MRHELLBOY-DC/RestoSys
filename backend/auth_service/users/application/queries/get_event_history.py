@@ -1,27 +1,64 @@
-from users.infrastructure.repositories import EventRepository
+"""
+Queries para obtener historial de eventos
+"""
+from dataclasses import dataclass
+from typing import Optional, List
+from users.application.ports.event_store_port import EventStorePort
+from users.application.dtos import EventDTO
+from .base_query import Query, QueryHandler
 
 
-def get_user_events(user_id=None, event_type=None, limit=100):
-    events = EventRepository.list_events_by_user_id(user_id=user_id, event_type=event_type, limit=limit)
-    return [
-        {
-            'id': e.id,
-            'type': e.type,
-            'data': e.data,
-            'created_at': e.created_at.isoformat()
-        }
-        for e in events
-    ]
+@dataclass
+class GetUserEventsQuery(Query):
+    """Query to get events for a specific user"""
+    user_id: int
+    event_type: Optional[str] = None
+    limit: int = 100
 
 
-def get_all_events(limit=100):
-    events = EventRepository.list_events(limit=limit)
-    return [
-        {
-            'id': e.id,
-            'type': e.type,
-            'data': e.data,
-            'created_at': e.created_at.isoformat()
-        }
-        for e in events
-    ]
+@dataclass
+class GetAllEventsQuery(Query):
+    """Query to get all events"""
+    limit: int = 100
+
+
+class GetUserEventsQueryHandler(QueryHandler):
+    """Handler for GetUserEventsQuery"""
+    
+    def __init__(self, event_store: EventStorePort):
+        self.event_store = event_store
+    
+    def handle(self, query: GetUserEventsQuery) -> List[EventDTO]:
+        """Execute the query"""
+        events = self.event_store.get_events_by_user(str(query.user_id), query.event_type, query.limit)
+        
+        return [
+            EventDTO(
+                id=e.id,
+                type=e.type,
+                data=e.data,
+                created_at=e.created_at.isoformat() if hasattr(e.created_at, 'isoformat') else str(e.created_at),
+            )
+            for e in events
+        ]
+
+
+class GetAllEventsQueryHandler(QueryHandler):
+    """Handler for GetAllEventsQuery"""
+    
+    def __init__(self, event_store: EventStorePort):
+        self.event_store = event_store
+    
+    def handle(self, query: GetAllEventsQuery) -> List[EventDTO]:
+        """Execute the query"""
+        events = self.event_store.get_all_events(query.limit)
+        
+        return [
+            EventDTO(
+                id=e.id,
+                type=e.type,
+                data=e.data,
+                created_at=e.created_at.isoformat() if hasattr(e.created_at, 'isoformat') else str(e.created_at),
+            )
+            for e in events
+        ]

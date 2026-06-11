@@ -10,35 +10,43 @@ export default function Register() {
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
-    const handleRegister = async () => {
-        setError("");
+const handleRegister = async () => {
+    setError("");
 
-        if (!fullName.trim()) { setError("El nombre completo es requerido"); return; }
-        if (fullName.trim().length > 100) { setError("El nombre no puede tener más de 100 caracteres"); return; }
-        if (!email.trim()) { setError("El correo electrónico es requerido"); return; }
-        if (!email.includes('@') || !email.includes('.')) { setError("Ingresa un correo electrónico válido"); return; }
-        if (email.length > 100) { setError("El correo no puede tener más de 100 caracteres"); return; }
-        if (!password) { setError("La contraseña es requerida"); return; }
-        if (password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); return; }
-        if (password.length > 128) { setError("La contraseña no puede tener más de 128 caracteres"); return; }
+    if (!fullName.trim()) { setError("El nombre completo es requerido"); return; }
+    if (fullName.trim().length > 100) { setError("El nombre no puede tener más de 100 caracteres"); return; }
+    if (!email.trim()) { setError("El correo electrónico es requerido"); return; }
+    if (!email.includes('@') || !email.includes('.')) { setError("Ingresa un correo electrónico válido"); return; }
+    if (email.length > 100) { setError("El correo no puede tener más de 100 caracteres"); return; }
+    if (!password) { setError("La contraseña es requerida"); return; }
+    if (password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); return; }
+    if (password.length > 128) { setError("La contraseña no puede tener más de 128 caracteres"); return; }
 
-        const data = {
-            full_name: fullName.trim(),
-            email: email.trim().toLowerCase(),
-            password,
-            role: "cliente",
-        };
+    const data = {
+        full_name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        role: "cliente",
+    };
 
+    try {
         const result = await registerUser(data);
 
         if (result.id) {
             alert("Usuario creado exitosamente");
             navigate("/login");
         } else {
-            if (result.email) setError("Este correo electrónico ya está registrado");
-            else setError(result.message || "Error al registrar usuario");
+            setError(result.email || result.error || result.message || "Error al registrar usuario");
         }
-    };
+    } catch (err) {
+        const errorMsg = err.data?.email || 
+                     err.data?.username || 
+                     err.data?.error || 
+                     err.message || 
+                     "Error al registrar usuario";
+        setError(errorMsg);
+    }
+};
 
     return (
         <div className="min-vh-100 d-flex flex-column"

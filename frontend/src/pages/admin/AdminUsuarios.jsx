@@ -89,12 +89,18 @@ export default function AdminUsuarios() {
             setEditing(null);
             loadData();
         } catch (error) {
-            const message = error?.message
-                || error?.detail
-                || error?.email?.[0]
-                || error?.username?.[0]
-                || error?.restaurant_name?.[0]
+            console.log("=== ERROR COMPLETO ===");
+            console.log("error:", error);
+            
+            const errorData = error?.data || error?.response?.data || error;
+            
+            const message = errorData?.error
+                || (errorData?.email ? (Array.isArray(errorData.email) ? errorData.email[0] : errorData.email) : null)
+                || (errorData?.username ? (Array.isArray(errorData.username) ? errorData.username[0] : errorData.username) : null)
+                || errorData?.message
+                || errorData?.detail
                 || "Error al guardar";
+            
             alert("Error al guardar: " + message);
         }
     };
@@ -105,8 +111,10 @@ export default function AdminUsuarios() {
                 await deleteAdminUsuario(id);
                 loadData();
             } catch (error) {
-                console.error("Error al eliminar:", error); 
-                alert("Error al eliminar");
+                console.error("Error al eliminar:", error);
+                const errorData = error?.data || error?.response?.data || error;
+                const message = errorData?.error || errorData?.message || "Error al eliminar";
+                alert("Error al eliminar: " + message);
             }
         }
     };

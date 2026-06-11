@@ -1,50 +1,74 @@
 """
 Command: Delete Product
-CQRS - Command para eliminar un producto
+CQRS - Command para eliminar un producto usando Command pattern
 """
+from dataclasses import dataclass
+from typing import Optional
 from datetime import datetime
-from ...infrastructure.repositories import ProductRepository
-from ...infrastructure.event_store import event_store
-from shared import publish_event
+from .base_command import Command, CommandHandler
+from menu.application.ports.product_repository_port import ProductRepositoryPort
+from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.exceptions import ProductNotFoundException
+from menu.domain.shared.domain_event import DomainEvent
 
 
-def delete_product_command(product_id: int, restaurant_id: int, actor_username: str = None) -> bool:
-    """
-    Elimina un producto
-    """
-    # Validaciones
-    if not product_id:
-        raise ValueError("Se requiere product_id")
+@dataclass
+class DeleteProductCommand(Command):
+    """Command to delete a product"""
+    product_id: int
+    restaurant_id: int
+    actor_username: Optional[str] = None
+
+
+class DeleteProductCommandHandler(CommandHandler):
+    """Handler for DeleteProductCommand"""
     
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
+    def __init__(
+        self,
+        product_repo: ProductRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.product_repo = product_repo
+        self.event_publisher = event_publisher
     
-    # Verificar si existe
-    product = ProductRepository.get_by_id(product_id, restaurant_id)
-    if not product:
-        raise ValueError(f"Producto con id {product_id} no encontrado")
-    
-    # Eliminar
-    deleted = ProductRepository.delete(product_id, restaurant_id)
-    
-    # Guardar evento en Event Store
-    if deleted:
-        event_data = {
-            'product_id': product_id,
-            'name': product.name,
-            'restaurant_id': restaurant_id,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        if actor_username:
-            event_data['actor_username'] = actor_username
-        event_store.append_event(
-            aggregate_id=product_id,
-            event_type='ProductDeleted',
-            data=event_data,
-            aggregate_type='Product'
-        )
+    def handle(self, command: DeleteProductCommand) -> bool:
+        """Execute the command - deletes a product"""
         
-        # Publicar evento a RabbitMQ
-        publish_event('product.deleted', event_data)
-    
-    return deleted
+        # Validaciones
+        if not command.product_id:
+            raise ValueError("Se requiere product_id")
+        
+        if not command.restaurant_id:
+            raise ValueError("Se requiere restaurant_id")
+        
+        # Verificar si existe y obtener datos para el evento
+        product = self.product_repo.get_by_id(command.product_id, command.restaurant_id)
+        if not product:
+            raise ProductNotFoundException(command.product_id)
+        
+        product_name = product.name
+        
+        # Eliminar
+        deleted = self.product_repo.delete(command.product_id, command.restaurant_id)
+        
+        # Publicar evento de dominio
+        if deleted:
+            event_data = {
+                'product_id': command.product_id,
+                'name': product_name,
+                'restaurant_id': command.restaurant_id,
+            }
+            if command.actor_username:
+                event_data['actor_username'] = command.actor_username
+            
+            event = DomainEvent(
+                event_type='ProductDeleted',
+                aggregate_id=str(command.product_id),
+                aggregate_type='Product',
+                data=event_data,
+                occurred_at=datetime.utcnow().isoformat()
+            )
+            
+            self.event_publisher.persist_and_publish(event, 'product.deleted')
+        
+        return deleted

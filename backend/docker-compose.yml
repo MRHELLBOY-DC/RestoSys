@@ -103,7 +103,6 @@ services:
       - "8000:8000" # Cambiado de 8001 a 8000
     volumes:
       - ./auth_service:/app
-      - ./shared:/shared # Agregar shared
     working_dir: /app
     environment:
       - DATABASE_HOST=db-auth
@@ -113,7 +112,6 @@ services:
       - DATABASE_PASSWORD=1234
       - RABBITMQ_HOST=rabbitmq
       - REDIS_HOST=redis
-      - PYTHONPATH=/app:/shared # Agregar shared al path
     command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     depends_on:
       db-auth:
@@ -135,7 +133,6 @@ services:
       - "8001:8000" # Cambiado de 8002 a 8001
     volumes:
       - ./menu_service:/app
-      - ./shared:/shared # Agregar shared
       - menu_media:/app/media
     working_dir: /app
     environment:
@@ -144,11 +141,18 @@ services:
       - DATABASE_NAME=menu_db
       - DATABASE_USER=admin
       - DATABASE_PASSWORD=1234
-      - PYTHONPATH=/app:/shared # Agregar shared al path
+      # AGREGAR RABBITMQ
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - RABBITMQ_EXCHANGE=events
     command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     depends_on:
       db-menu:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
     restart: always
 
   celery:

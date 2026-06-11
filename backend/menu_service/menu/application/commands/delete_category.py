@@ -1,51 +1,75 @@
 """
 Command: Delete Category
-CQRS - Command para eliminar una categoría
+CQRS - Command para eliminar una categoría usando Command pattern
 """
-from datetime import datetime
-from ...infrastructure.repositories import CategoryRepository
-from ...infrastructure.event_store import event_store
-from shared import publish_event
+from dataclasses import dataclass
+from typing import Optional
+from .base_command import Command, CommandHandler
+from menu.application.ports.category_repository_port import CategoryRepositoryPort
+from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.exceptions import CategoryNotFoundException
 
 
-def delete_category_command(category_id: int, restaurant_id: int, actor_username: str = None) -> bool:
-    """
-    Elimina una categoría
-    """
-    # Validaciones
-    if not category_id:
-        raise ValueError("Se requiere category_id")
+@dataclass
+class DeleteCategoryCommand(Command):
+    """Command to delete a category"""
+    category_id: int
+    restaurant_id: int
+    actor_username: Optional[str] = None
+
+
+class DeleteCategoryCommandHandler(CommandHandler):
+    """Handler for DeleteCategoryCommand"""
     
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
+    def __init__(
+        self,
+        category_repo: CategoryRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.category_repo = category_repo
+        self.event_publisher = event_publisher
     
-    # Verificar si existe
-    category = CategoryRepository.get_by_id(category_id, restaurant_id)
-    if not category:
-        raise ValueError(f"Categoría con id {category_id} no encontrada")
-    
-    # Eliminar
-    deleted = CategoryRepository.delete(category_id, restaurant_id)
-    
-    # Guardar evento en Event Store
-    if deleted:
-        event_data = {
-            'category_id': category_id,
-            'name': category.name,
-            'restaurant_id': restaurant_id,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        event_store.append_event(
-            aggregate_id=category_id,
-            event_type='CategoryDeleted',
-            data=event_data,
-            aggregate_type='Category'
-        )
+    def handle(self, command: DeleteCategoryCommand) -> bool:
+        """Execute the command - deletes a category"""
         
-        if actor_username:
-            event_data['actor_username'] = actor_username
-
-        # Publicar evento a RabbitMQ
-        publish_event('category.deleted', event_data)
-    
-    return deleted
+        # Validaciones
+        if not command.category_id:
+            raise ValueError("Se requiere category_id")
+        
+        if not command.restaurant_id:
+            raise ValueError("Se requiere restaurant_id")
+        
+        # Verificar si existe y obtener datos para el evento
+        category = self.category_repo.get_by_id(command.category_id, command.restaurant_id)
+        if not category:
+            raise CategoryNotFoundException(command.category_id)
+        
+        category_name = category.name
+        
+        # Eliminar
+        deleted = self.category_repo.delete(command.category_id, command.restaurant_id)
+        
+        # Publicar evento de dominio
+        if deleted:
+            from menu.domain.shared.domain_event import DomainEvent
+            from datetime import datetime
+            
+            event_data = {
+                'category_id': command.category_id,
+                'name': category_name,
+                'restaurant_id': command.restaurant_id,
+            }
+            if command.actor_username:
+                event_data['actor_username'] = command.actor_username
+            
+            event = DomainEvent(
+                event_type='CategoryDeleted',
+                aggregate_id=str(command.category_id),
+                aggregate_type='Category',
+                data=event_data,
+                occurred_at=datetime.utcnow().isoformat()
+            )
+            
+            self.event_publisher.persist_and_publish(event, 'category.deleted')
+        
+        return deleted

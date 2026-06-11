@@ -1,13 +1,36 @@
-from .create_user import create_user_event
-from .update_user import update_user_event
-from .delete_user import delete_user_event
-
-# También exportamos el puerto para que las vistas lo usen
-from users.application.ports.event_publisher_port import EventPublisherPort
+# users/application/commands/__init__.py
+from .base_command import Command, CommandHandler, CommandBus
+from .create_user import CreateUserCommand, CreateUserCommandHandler
+from .update_user import UpdateUserCommand, UpdateUserCommandHandler
+from .delete_user import DeleteUserCommand, DeleteUserCommandHandler
+from .create_restaurant import CreateRestaurantCommand, CreateRestaurantCommandHandler
+from .update_restaurant import UpdateRestaurantCommand, UpdateRestaurantCommandHandler
+from .delete_restaurant import DeleteRestaurantCommand, DeleteRestaurantCommandHandler
+from .assign_restaurant import AssignRestaurantCommand, AssignRestaurantCommandHandler
+from .unassign_restaurant import UnassignRestaurantCommand, UnassignRestaurantCommandHandler
+from .login import LoginCommand, LoginCommandHandler
 
 __all__ = [
-    'create_user_event',
-    'update_user_event', 
-    'delete_user_event',
-    'EventPublisherPort',
+    # Base
+    'Command',
+    'CommandHandler',
+    'CommandBus',
+    'CreateUserCommand',
+    'CreateUserCommandHandler',
+    'UpdateUserCommand',
+    'UpdateUserCommandHandler',
+    'DeleteUserCommand',
+    'DeleteUserCommandHandler',
+    'CreateRestaurantCommand',
+    'CreateRestaurantCommandHandler',
+    'UpdateRestaurantCommand',
+    'UpdateRestaurantCommandHandler',
+    'DeleteRestaurantCommand',
+    'DeleteRestaurantCommandHandler',
+    'AssignRestaurantCommand',
+    'AssignRestaurantCommandHandler',
+    'UnassignRestaurantCommand',
+    'UnassignRestaurantCommandHandler',
+    'LoginCommand',
+    'LoginCommandHandler', 
 ]

@@ -21,7 +21,14 @@ export const loginUser = async (data) => {
         }
         return result;
     } catch (err) {
-        if (err?.status === 401 && err?.data) return err.data;
+        if (err?.status === 401 && err?.data) {
+            // Convertir error a message si existe
+            const errorData = err.data;
+            if (errorData.error) {
+                return { success: false, message: errorData.error };
+            }
+            return errorData;
+        }
         return { success: false, message: err?.message || "Error al conectar con el servidor" };
     }
 };
@@ -92,38 +99,87 @@ export const getAdminRestaurantes = async () => {
 };
 
 export const createRestaurante = async (data) => {
-    const res = await authClient.post('/api/admin/restaurantes/', data);
-    return res.data;
+    try {
+        const res = await authClient.post('/api/admin/restaurantes/', data);
+        return res.data;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 export const createAdminUsuario = async (data) => {
-    const res = await authClient.post('/api/admin/usuarios/', data);
-    return res.data;
+    try {
+        const res = await authClient.post('/api/admin/usuarios/', data);
+        return res.data;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 export const updateAdminUsuario = async (usuarioId, data) => {
-    const res = await authClient.put(`/api/admin/usuarios/${usuarioId}/`, data);
-    return res.data;
+    try {
+        const res = await authClient.put(`/api/admin/usuarios/${usuarioId}/`, data);
+        return res.data;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 export const deleteAdminUsuario = async (usuarioId) => {
-    const res = await authClient.delete(`/api/admin/usuarios/${usuarioId}/`);
-    return res;
+    try {
+        const res = await authClient.delete(`/api/admin/usuarios/${usuarioId}/`);
+        return res;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 export const updateRestaurante = async (restauranteId, data) => {
-    const res = await authClient.put(`/api/admin/restaurantes/${restauranteId}/`, data);
-    return res.data;
+    try {
+        const res = await authClient.put(`/api/admin/restaurantes/${restauranteId}/`, data);
+        return res.data;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 export const deleteRestaurante = async (restauranteId) => {
-    const res = await authClient.delete(`/api/admin/restaurantes/${restauranteId}/`);
-    return res;
+    try {
+        const res = await authClient.delete(`/api/admin/restaurantes/${restauranteId}/`);
+        return res;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 export const asignarRestaurante = async (usuarioId, restauranteId) => {
-    const res = await authClient.post(`/api/admin/usuarios/${usuarioId}/asignar-restaurante/`, { restaurante_id: restauranteId });
-    return res.data;
+    try {
+        const res = await authClient.post(`/api/admin/usuarios/${usuarioId}/asignar-restaurante/`, { restaurante_id: restauranteId });
+        return res.data;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
 };
 
 // ============================================
@@ -131,7 +187,6 @@ export const asignarRestaurante = async (usuarioId, restauranteId) => {
 // ============================================
 
 export const getPublicRestaurantes = async () => {
-    // Public endpoint should be called without attaching Authorization header
     const res = await fetch(`${AUTH_API}/api/public/restaurantes/`);
     if (!res.ok) {
         const err = await res.json().catch(() => ({ message: 'Error desconocido' }));

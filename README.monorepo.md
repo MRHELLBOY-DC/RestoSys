@@ -80,6 +80,8 @@ docker-compose logs -f reports
 
 ```powershell
 docker-compose logs --tail=30
+docker-compose logs auth --tail=50
+docker-compose logs menu --tail=50
 docker-compose logs -f auth
 docker-compose logs -f menu
 docker-compose logs -f orders
@@ -98,4 +100,16 @@ Para borrar también las bases de datos y volúmenes:
 
 ```powershell
 docker-compose down -v
+```
+
+## restablecer solo auth_service
+
+```
+docker-compose restart auth
+```
+
+## restablecer solo menu_service
+
+```
+docker-compose restart menu
 ```

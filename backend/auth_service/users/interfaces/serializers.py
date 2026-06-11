@@ -1,89 +1,92 @@
+"""
+Serializers - Capa de Interfaces
+SOLO validan formato de datos de entrada/salida.
+NO contienen lógica de negocio.
+"""
 from rest_framework import serializers
-from ..domain.entities import User, Restaurant, UserRestaurant
+from users.domain.entities.user import User as DomainUser
+from users.domain.entities.restaurant import Restaurant as DomainRestaurant
 
 
-class RestaurantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Restaurant
-        fields = ['id', 'name', 'address', 'logo'] 
+class RestaurantSerializer(serializers.Serializer):
+    """Serializer para Restaurant - solo valida formato"""
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=100)
+    address = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    logo = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
+
+    def create(self, validated_data):
+        """Crea un restaurante - solo valida, no guarda"""
+        return DomainRestaurant(
+            id=None,
+            name=validated_data['name'],
+            address=validated_data.get('address', ''),
+            logo=validated_data.get('logo'),
+        )
+
+    def update(self, instance, validated_data):
+        """Actualiza un restaurante - solo valida, no guarda"""
+        instance.name = validated_data.get('name', instance.name)
+        instance.address = validated_data.get('address', instance.address)
+        instance.logo = validated_data.get('logo', instance.logo)
+        return instance
 
 
-class UserSerializer(serializers.ModelSerializer):
-    restaurant_name = serializers.CharField(write_only=True, required=False)
-    restaurant_address = serializers.CharField(write_only=True, required=False)
-    restaurant_logo = serializers.CharField(write_only=True, required=False) 
+class UserSerializer(serializers.Serializer):
+    """Serializer para creación de usuarios - solo valida formato"""
+    
+    id = serializers.IntegerField(read_only=True)
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, min_length=6, max_length=128)
+    email = serializers.EmailField(required=True)
+    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante'], default='cliente')
+    full_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    
+    # Campos para creación de restaurante
+    restaurant_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    restaurant_address = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    restaurant_logo = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    restaurante_id = serializers.IntegerField(write_only=True, required=False)
 
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'password', 'email', 'role', 'full_name', 'restaurant_name', 'restaurant_address', 'restaurant_logo']
-        extra_kwargs = {
-            'username': {'required': False},
-            'password': {'write_only': True},
-            'email': {'required': True},
-            'full_name': {'required': False}
-        }
-
-    # ========== VALIDACIÓN DE USUARIO ==========
+    # ========== VALIDACIONES DE FORMATO SOLO ==========
+    
     def validate_username(self, value):
-        """Validar nombre de usuario"""
-        if not value or not value.strip():
+        """Validar formato de nombre de usuario (no verifica existencia)"""
+        if value and not value.strip():
             raise serializers.ValidationError("El nombre de usuario es requerido")
-        
-        if len(value) < 3:
+        if value and len(value) < 3:
             raise serializers.ValidationError("El nombre de usuario debe tener al menos 3 caracteres")
-        
-        if len(value) > 30:
-            raise serializers.ValidationError("El nombre de usuario no puede tener más de 30 caracteres")
-        
-        if ' ' in value:
+        if value and len(value) > 150:
+            raise serializers.ValidationError("El nombre de usuario no puede tener más de 150 caracteres")
+        if value and ' ' in value:
             raise serializers.ValidationError("El nombre de usuario no puede contener espacios")
-        
-        # Verificar si ya existe (case insensitive)
-        if User.objects.filter(username__iexact=value).exists():
-            raise serializers.ValidationError("Este nombre de usuario ya está registrado")
-        
-        return value.strip()
+        return value.strip() if value else None
 
-    # ========== VALIDACIÓN DE EMAIL ==========
     def validate_email(self, value):
-        """Validar email"""
+        """Validar formato de email (no verifica existencia)"""
         if not value or not value.strip():
             raise serializers.ValidationError("El correo electrónico es requerido")
-        
         if len(value) > 100:
             raise serializers.ValidationError("El correo electrónico no puede tener más de 100 caracteres")
-        
         if '@' not in value:
             raise serializers.ValidationError("Ingresa un correo electrónico válido (debe contener @)")
-        
         if '.' not in value:
             raise serializers.ValidationError("Ingresa un correo electrónico válido (debe contener .)")
-        
         parts = value.split('@')
         if len(parts) != 2 or not parts[0] or not parts[1]:
             raise serializers.ValidationError("Ingresa un correo electrónico válido")
-        
-        # Verificar si ya existe (case insensitive)
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("Este correo electrónico ya está registrado")
-        
         return value.strip().lower()
 
-    # ========== VALIDACIÓN DE CONTRASEÑA ==========
     def validate_password(self, value):
-        """Validar contraseña"""
+        """Validar formato de contraseña"""
         if not value:
             raise serializers.ValidationError("La contraseña es requerida")
-        
         if len(value) < 6:
             raise serializers.ValidationError("La contraseña debe tener al menos 6 caracteres")
-        
         if len(value) > 128:
             raise serializers.ValidationError("La contraseña no puede tener más de 128 caracteres")
-        
         return value
 
-    # ========== VALIDACIÓN DE ROL ==========
     def validate_role(self, value):
         """Validar rol"""
         valid_roles = ['cliente', 'restaurante', 'admin']
@@ -92,123 +95,128 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_full_name(self, value):
+        """Validar formato de nombre completo"""
         if value and len(value.strip()) > 100:
             raise serializers.ValidationError("El nombre completo no puede tener más de 100 caracteres")
         return value.strip() if value else ''
 
-    # ========== VALIDACIÓN GENERAL ==========
     def validate(self, data):
-        """Validaciones que dependen de múltiples campos"""
+        """Validaciones que dependen de múltiples campos (solo formato)"""
         role = data.get('role')
         restaurant_name = data.get('restaurant_name')
-        restaurante_id = (self.initial_data or {}).get('restaurante_id')
+        restaurante_id = data.get('restaurante_id')
         
-        # Si es restaurante, requiere nombre del restaurante
         if role == 'restaurante':
             if not restaurant_name and not restaurante_id:
                 raise serializers.ValidationError({
-                    "restaurant_name": "El nombre del restaurante es requerido para usuarios con rol restaurante"
+                    "restaurante_id": "Se requiere el nombre del restaurante o un ID de restaurante existente"
                 })
-            
             if restaurant_name and len(restaurant_name) < 3:
                 raise serializers.ValidationError({
                     "restaurant_name": "El nombre del restaurante debe tener al menos 3 caracteres"
                 })
-            
             if restaurant_name and len(restaurant_name) > 100:
                 raise serializers.ValidationError({
                     "restaurant_name": "El nombre del restaurante no puede tener más de 100 caracteres"
                 })
-        
         return data
 
     def create(self, validated_data):
-        restaurant_name = validated_data.pop('restaurant_name', None)
-        restaurant_address = validated_data.pop('restaurant_address', None)
-        restaurant_logo = validated_data.pop('restaurant_logo', None)  
+        """
+        Crea una entidad de dominio User a partir de datos validados.
+        NO genera username, NO guarda en BD.
+        """
+        from datetime import datetime
         
-        email = validated_data.pop('email', None)
+        password = validated_data.pop('password', '')
         
-        # Validación extra por seguridad
-        if not email:
-            raise serializers.ValidationError({"email": "El email es requerido"})
-
-        full_name = validated_data.get('full_name') or ''
-        username = validated_data.get('username') or self._generate_username_from_name(full_name) or email
-
-        user = User.objects.create_user(
-            username=username,
-            password=validated_data['password'],
-            email=email,
+        domain_user = DomainUser(
+            id=None,
+            username=validated_data.get('username'),
+            email=validated_data['email'],
             role=validated_data.get('role', 'cliente'),
-            full_name=validated_data.get('full_name', '')
+            password=password,
+            full_name=validated_data.get('full_name', ''),
+            is_active=True,
+            date_joined=datetime.now(),
+            last_login=None,
         )
-
-        if user.role == 'restaurante' and restaurant_name:
-            restaurant = Restaurant.objects.create(
-                name=restaurant_name,
-                address=restaurant_address or '',
-                logo=restaurant_logo
-            )
-            UserRestaurant.objects.create(user=user, restaurant=restaurant)
-
-        return user
-
-    def _generate_username_from_name(self, full_name):
-        base_username = (full_name or '').strip().lower().replace(' ', '_')
-        base_username = ''.join(ch for ch in base_username if ch.isalnum() or ch in ['_', '.', '-', '+', '@'])
-        base_username = base_username[:30] or ''
-        if not base_username:
-            return ''
-        username = base_username
-        counter = 1
-        while User.objects.filter(username__iexact=username).exists():
-            suffix = str(counter)
-            username = f"{base_username[:30 - len(suffix)]}{suffix}"
-            counter += 1
-        return username
+        
+        return domain_user
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'role', 'full_name']
+class UserUpdateSerializer(serializers.Serializer):
+    """Serializer para actualización de usuarios - solo valida formato"""
+    
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False)
+    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante'], required=False)
+    full_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     def validate_username(self, value):
-        """Validar nombre de usuario en actualización"""
         if value and ' ' in value:
             raise serializers.ValidationError("El nombre de usuario no puede contener espacios")
         if value and len(value) < 3:
             raise serializers.ValidationError("El nombre de usuario debe tener al menos 3 caracteres")
+        if value and len(value) > 150:
+            raise serializers.ValidationError("El nombre de usuario no puede tener más de 150 caracteres")
         return value
 
     def validate_email(self, value):
-        """Validar email en actualización"""
         if value and '@' not in value:
             raise serializers.ValidationError("Ingresa un email válido")
         return value
 
     def update(self, instance, validated_data):
-        instance.username = validated_data.get('username', instance.username)
-        instance.email = validated_data.get('email', instance.email)
-        instance.role = validated_data.get('role', instance.role)
-        instance.full_name = validated_data.get('full_name', instance.full_name)
-        instance.save()
+        if 'username' in validated_data and validated_data['username']:
+            instance.username = validated_data['username']
+        if 'email' in validated_data and validated_data['email']:
+            instance.email = validated_data['email']
+        if 'role' in validated_data and validated_data['role']:
+            instance.role = validated_data['role']
+        if 'full_name' in validated_data and validated_data['full_name'] is not None:
+            instance.full_name = validated_data['full_name']
         return instance
 
 
-class UserReadSerializer(serializers.ModelSerializer):
+class UserReadSerializer(serializers.Serializer):
+    """Serializer para lectura de usuarios - trabaja con DTOs o entidades"""
+    
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+    email = serializers.EmailField()
+    role = serializers.CharField()
+    full_name = serializers.CharField(required=False, allow_blank=True, default='')
+    date_joined = serializers.DateTimeField(required=False)
+    last_login = serializers.DateTimeField(allow_null=True, required=False)
+    is_active = serializers.BooleanField(required=False, default=True)
     restaurant = serializers.SerializerMethodField()
 
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'role', 'full_name', 'date_joined', 'last_login', 'is_active', 'restaurant']
-
     def get_restaurant(self, obj):
-        try:
-            user_restaurant = UserRestaurant.objects.filter(user=obj).first()
-            if user_restaurant:
-                return RestaurantSerializer(user_restaurant.restaurant).data
-        except Exception:
-            pass
+        if isinstance(obj, dict):
+            return obj.get('restaurant')
+        if hasattr(obj, '_restaurant_data'):
+            return obj._restaurant_data
+        if hasattr(obj, 'to_dict'):
+            return obj.to_dict().get('restaurant')
         return None
+    
+    def to_representation(self, instance):
+        # Si es DTO
+        if hasattr(instance, 'to_dict'):
+            return instance.to_dict()
+        # Si es lista de DTOs
+        if isinstance(instance, list):
+            return [self.to_representation(item) for item in instance]
+        # Si es entidad de dominio
+        return {
+            'id': instance.id,
+            'username': instance.username,
+            'email': instance.email,
+            'role': instance.role,
+            'full_name': getattr(instance, 'full_name', ''),
+            'date_joined': getattr(instance, 'date_joined', None),
+            'last_login': getattr(instance, 'last_login', None),
+            'is_active': getattr(instance, 'is_active', True),
+            'restaurant': self.get_restaurant(instance),
+        }

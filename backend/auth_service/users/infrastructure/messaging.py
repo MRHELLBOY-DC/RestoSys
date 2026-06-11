@@ -1,5 +1,6 @@
 """
-Messaging - Configuración compartida de RabbitMQ
+Messaging - Publicador de eventos a RabbitMQ
+Capa de Infrastructure - implementación concreta
 """
 import json
 import os
@@ -8,14 +9,13 @@ from functools import lru_cache
 
 import pika
 
-# Configurar logging
 logger = logging.getLogger(__name__)
 
 
-class EventPublisher:
+class RabbitMQEventPublisher:
     """
     Publisher de eventos hacia RabbitMQ
-    Reutilizable por cualquier servicio
+    Implementación concreta para Infrastructure
     """
     
     def __init__(self, host=None, port=None, username=None, password=None, exchange=None):
@@ -35,7 +35,7 @@ class EventPublisher:
                 host=self.host,
                 port=self.port,
                 credentials=credentials,
-                heartbeat=600,
+                heartbeat=3600,
                 blocked_connection_timeout=300
             )
             self._connection = pika.BlockingConnection(parameters)
@@ -79,7 +79,7 @@ class EventPublisher:
                 routing_key=routing,
                 body=message,
                 properties=pika.BasicProperties(
-                    delivery_mode=2,  # Persistente
+                    delivery_mode=2,
                     content_type='application/json'
                 )
             )
@@ -101,10 +101,14 @@ _event_publisher = None
 
 
 def get_event_publisher():
-    """Retorna la instancia global del publisher (singleton)"""
     global _event_publisher
     if _event_publisher is None:
-        _event_publisher = EventPublisher()
+        _event_publisher = RabbitMQEventPublisher()
+        success = _event_publisher.connect()
+        if success:
+            logger.info("RabbitMQ Publisher conectado exitosamente (auth_service)")
+        else:
+            logger.error("No se pudo conectar RabbitMQ Publisher")
     return _event_publisher
 
 

@@ -1,41 +1,41 @@
 """
 Repositories - Acceso a datos para las entidades de dominio
+Implementan los puertos definidos en application/ports/
 """
 from decimal import Decimal
-from datetime import datetime 
-from typing import List, Optional
+from typing import Optional, List
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
+import os
+from datetime import datetime
+
 from .models import Category as CategoryModel
 from .models import Product as ProductModel
 from .models import ProductOption as ProductOptionModel
+from .mappers import CategoryMapper, ProductMapper, OptionMapper
 from ..domain.entities import Category, Product, ProductOption
 
+# Importar puertos
+from ..application.ports.category_repository_port import CategoryRepositoryPort
+from ..application.ports.product_repository_port import ProductRepositoryPort
+from ..application.ports.option_repository_port import OptionRepositoryPort
 
-class CategoryRepository:
-    """Repositorio para operaciones con Categorías"""
+
+class CategoryRepository(CategoryRepositoryPort):
+    """Repositorio para operaciones con Categorías - Implementa CategoryRepositoryPort"""
     
     @staticmethod
     def get_by_id(category_id: int, restaurant_id: int) -> Optional[Category]:
         try:
             model = CategoryModel.objects.get(id=category_id, restaurant_id=restaurant_id)
-            return Category(
-                id=model.id,
-                name=model.name,
-                restaurant_id=model.restaurant_id,
-            )
+            return CategoryMapper.to_domain(model)
         except CategoryModel.DoesNotExist:
             return None
     
     @staticmethod
     def list_by_restaurant(restaurant_id: int) -> List[Category]:
         queryset = CategoryModel.objects.filter(restaurant_id=restaurant_id)
-        return [
-            Category(
-                id=cat.id,
-                name=cat.name,
-                restaurant_id=cat.restaurant_id,
-            )
-            for cat in queryset
-        ]
+        return CategoryMapper.to_domain_list(queryset)
     
     @staticmethod
     def create(name: str, restaurant_id: int) -> Category:
@@ -43,11 +43,7 @@ class CategoryRepository:
             name=name,
             restaurant_id=restaurant_id,
         )
-        return Category(
-            id=model.id,
-            name=model.name,
-            restaurant_id=model.restaurant_id,
-        )
+        return CategoryMapper.to_domain(model)
     
     @staticmethod
     def update(category_id: int, restaurant_id: int, name: str) -> Optional[Category]:
@@ -55,11 +51,7 @@ class CategoryRepository:
             model = CategoryModel.objects.get(id=category_id, restaurant_id=restaurant_id)
             model.name = name
             model.save()
-            return Category(
-                id=model.id,
-                name=model.name,
-                restaurant_id=model.restaurant_id,
-            )
+            return CategoryMapper.to_domain(model)
         except CategoryModel.DoesNotExist:
             return None
     
@@ -73,44 +65,25 @@ class CategoryRepository:
             return False
 
 
-class ProductRepository:
-    """Repositorio para operaciones con Productos"""
+class ProductRepository(ProductRepositoryPort):
+    """Repositorio para operaciones con Productos - Implementa ProductRepositoryPort"""
     
     @staticmethod
     def get_by_id(product_id: int, restaurant_id: int) -> Optional[Product]:
         try:
             model = ProductModel.objects.get(id=product_id, restaurant_id=restaurant_id)
-            return Product(
-                id=model.id,
-                name=model.name,
-                price=model.price,
-                category_id=model.category_id,
-                restaurant_id=model.restaurant_id,
-                image=model.image,
-                description=model.description,
-            )
+            return ProductMapper.to_domain(model)
         except ProductModel.DoesNotExist:
             return None
     
     @staticmethod
     def list_by_restaurant(restaurant_id: int) -> List[Product]:
         queryset = ProductModel.objects.filter(restaurant_id=restaurant_id)
-        return [
-            Product(
-                id=p.id,
-                name=p.name,
-                price=p.price,
-                category_id=p.category_id,
-                restaurant_id=p.restaurant_id,
-                image=p.image,
-                description=p.description,
-            )
-            for p in queryset
-        ]
+        return ProductMapper.to_domain_list(queryset)
     
     @staticmethod
     def create(name: str, price: Decimal, category_id: int, restaurant_id: int,
-               image: str = None, description: str = None) -> Product:
+               image: Optional[str] = None, description: Optional[str] = None) -> Product:
         model = ProductModel.objects.create(
             name=name,
             price=price,
@@ -119,15 +92,7 @@ class ProductRepository:
             image=image,
             description=description,
         )
-        return Product(
-            id=model.id,
-            name=model.name,
-            price=model.price,
-            category_id=model.category_id,
-            restaurant_id=model.restaurant_id,
-            image=model.image,
-            description=model.description,
-        )
+        return ProductMapper.to_domain(model)
     
     @staticmethod
     def update(product_id: int, restaurant_id: int, **kwargs) -> Optional[Product]:
@@ -137,15 +102,7 @@ class ProductRepository:
                 if hasattr(model, key) and value is not None:
                     setattr(model, key, value)
             model.save()
-            return Product(
-                id=model.id,
-                name=model.name,
-                price=model.price,
-                category_id=model.category_id,
-                restaurant_id=model.restaurant_id,
-                image=model.image,
-                description=model.description,
-            )
+            return ProductMapper.to_domain(model)
         except ProductModel.DoesNotExist:
             return None
     
@@ -157,14 +114,11 @@ class ProductRepository:
             return True
         except ProductModel.DoesNotExist:
             return False
-        
+    
     @staticmethod
-    def update_with_image(product_id: int, restaurant_id: int, image_file, **kwargs):
+    def update_with_image(product_id: int, restaurant_id: int, image_file: UploadedFile, **kwargs) -> Optional[Product]:
         """Actualiza un producto con una imagen - guarda la URL"""
         try:
-            from django.core.files.storage import default_storage
-            import os
-            
             model = ProductModel.objects.get(id=product_id, restaurant_id=restaurant_id)
             
             # Actualizar campos
@@ -176,29 +130,17 @@ class ProductRepository:
             ext = os.path.splitext(image_file.name)[1]
             filename = f"products/product_{product_id}_{datetime.now().timestamp()}{ext}"
             saved_path = default_storage.save(filename, image_file)
-            
-            # Guardar la URL en el campo image (CharField)
             model.image = default_storage.url(saved_path)
             model.save()
             
-            return Product(
-                id=model.id,
-                name=model.name,
-                price=model.price,
-                category_id=model.category_id,
-                restaurant_id=model.restaurant_id,
-                image=model.image,
-                description=model.description,
-            )
+            return ProductMapper.to_domain(model)
         except ProductModel.DoesNotExist:
             return None
-        
+    
     @staticmethod
-    def create_with_image(name: str, price: Decimal, category_id: int, restaurant_id: int, image_file, description: str = None) -> Product:
+    def create_with_image(name: str, price: Decimal, category_id: int, restaurant_id: int,
+                          image_file: UploadedFile, description: Optional[str] = None) -> Optional[Product]:
         """Crea un producto con imagen - guarda la URL"""
-        from django.core.files.storage import default_storage
-        import os
-        
         # Crear el producto primero sin imagen
         product = ProductRepository.create(
             name=name,
@@ -209,7 +151,7 @@ class ProductRepository:
         )
         
         # Guardar la imagen y obtener la URL
-        if image_file:
+        if image_file and product.id:
             ext = os.path.splitext(image_file.name)[1]
             filename = f"products/product_{product.id}_{datetime.now().timestamp()}{ext}"
             saved_path = default_storage.save(filename, image_file)
@@ -225,19 +167,14 @@ class ProductRepository:
         return product
 
 
-class ProductOptionRepository:
-    """Repositorio para operaciones con Opciones de Producto"""
+class ProductOptionRepository(OptionRepositoryPort):
+    """Repositorio para operaciones con Opciones - Implementa OptionRepositoryPort"""
     
     @staticmethod
     def get_by_id(option_id: int, restaurant_id: int) -> Optional[ProductOption]:
         try:
             model = ProductOptionModel.objects.get(id=option_id, product__restaurant_id=restaurant_id)
-            return ProductOption(
-                id=model.id,
-                name=model.name,
-                extra_price=model.extra_price,
-                product_id=model.product_id,
-            )
+            return OptionMapper.to_domain(model)
         except ProductOptionModel.DoesNotExist:
             return None
     
@@ -247,15 +184,7 @@ class ProductOptionRepository:
             product_id=product_id,
             product__restaurant_id=restaurant_id
         )
-        return [
-            ProductOption(
-                id=opt.id,
-                name=opt.name,
-                extra_price=opt.extra_price,
-                product_id=opt.product_id,
-            )
-            for opt in queryset
-        ]
+        return OptionMapper.to_domain_list(queryset)
     
     @staticmethod
     def create(name: str, extra_price: Decimal, product_id: int) -> ProductOption:
@@ -264,12 +193,7 @@ class ProductOptionRepository:
             extra_price=extra_price,
             product_id=product_id,
         )
-        return ProductOption(
-            id=model.id,
-            name=model.name,
-            extra_price=model.extra_price,
-            product_id=model.product_id,
-        )
+        return OptionMapper.to_domain(model)
     
     @staticmethod
     def update(option_id: int, restaurant_id: int, **kwargs) -> Optional[ProductOption]:
@@ -279,12 +203,7 @@ class ProductOptionRepository:
                 if hasattr(model, key) and value is not None:
                     setattr(model, key, value)
             model.save()
-            return ProductOption(
-                id=model.id,
-                name=model.name,
-                extra_price=model.extra_price,
-                product_id=model.product_id,
-            )
+            return OptionMapper.to_domain(model)
         except ProductOptionModel.DoesNotExist:
             return None
     

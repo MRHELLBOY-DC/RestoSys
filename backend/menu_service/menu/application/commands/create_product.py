@@ -1,74 +1,109 @@
 """
 Command: Create Product
-CQRS - Command para crear un producto
+CQRS - Command para crear un producto usando Command pattern
 """
+from dataclasses import dataclass
 from decimal import Decimal
-from ...infrastructure.repositories import ProductRepository, CategoryRepository
-from ...domain.entities import Product
+from typing import Optional, Union, Any
+from .base_command import Command, CommandHandler
+from menu.application.ports.product_repository_port import ProductRepositoryPort
+from menu.application.ports.category_repository_port import CategoryRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.entities.product import Product
+from menu.domain.exceptions import CategoryNotFoundException, InvalidProductDataException
 
 
-def create_product_command(
-    name: str,
-    price,
-    category_id: int,
-    restaurant_id: int,
-    event_publisher: EventPublisherPort,
-    image=None,
-    description: str = None,
-    actor_username: str = None
-) -> Product:
-    """
-    Crea un nuevo producto
-    """
-    # Validaciones
-    if not name or not name.strip():
-        raise ValueError("El nombre del producto es requerido")
+@dataclass
+class CreateProductCommand(Command):
+    """Command to create a product"""
+    name: str
+    price: Union[Decimal, str, float, int]
+    category_id: int
+    restaurant_id: int
+    image: Optional[Any] = None
+    description: Optional[str] = None
+    actor_username: Optional[str] = None
+
+
+class CreateProductCommandHandler(CommandHandler):
+    """Handler for CreateProductCommand"""
     
-    # Convertir price si es string
-    if isinstance(price, str):
-        price = Decimal(price)
-    elif isinstance(price, (int, float)):
-        price = Decimal(str(price))
+    def __init__(
+        self,
+        product_repo: ProductRepositoryPort,
+        category_repo: CategoryRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.product_repo = product_repo
+        self.category_repo = category_repo
+        self.event_publisher = event_publisher
     
-    if not price or price <= 0:
-        raise ValueError("El precio debe ser mayor a 0")
-    
-    if not category_id:
-        raise ValueError("Se requiere category_id")
-    
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
-    
-    # Verificar que la categoría existe
-    category = CategoryRepository.get_by_id(category_id, restaurant_id)
-    if not category:
-        raise ValueError(f"Categoría con id {category_id} no encontrada en este restaurante")
-    
-    # Crear producto (con o sin imagen)
-    if image is not None and hasattr(image, 'name'):
-        product = ProductRepository.create_with_image(
-            name=name.strip(),
-            price=price,
-            category_id=category_id,
-            restaurant_id=restaurant_id,
-            image_file=image,
-            description=description
-        )
-    else:
-        product = ProductRepository.create(
-            name=name.strip(),
-            price=price,
-            category_id=category_id,
-            restaurant_id=restaurant_id,
-            image=image if isinstance(image, str) else None,
-            description=description
-        )
-    
-    product.record_created()
-    event = product.pull_domain_events()[-1]
-    if actor_username:
-        event.data['actor_username'] = actor_username
-    event_publisher.persist_and_publish(event, 'product.created')
-    
-    return product
+    def handle(self, command: CreateProductCommand) -> Product:
+        """Execute the command - creates a new product"""
+        
+        # Convertir price a Decimal
+        if isinstance(command.price, str):
+            price = Decimal(command.price)
+        elif isinstance(command.price, (int, float)):
+            price = Decimal(str(command.price))
+        else:
+            price = command.price
+        
+        # Verificar que la categoría existe
+        category = self.category_repo.get_by_id(command.category_id, command.restaurant_id)
+        if not category:
+            raise CategoryNotFoundException(command.category_id)
+        
+        # La validación de nombre y precio ahora está en la entidad
+        # Creamos la entidad (las validaciones ocurren en __post_init__)
+        try:
+            product_entity = Product(
+                name=command.name.strip() if command.name else None,
+                price=price,
+                category_id=command.category_id,
+                restaurant_id=command.restaurant_id,
+                description=command.description
+            )
+        except InvalidProductDataException as e:
+            # Re-lanzar con el mismo mensaje
+            raise e
+        
+        # Crear producto en repositorio
+        product = None
+        image_is_file = hasattr(command.image, 'name') and hasattr(command.image, 'read')
+        
+        if image_is_file:
+            product = self.product_repo.create_with_image(
+                name=product_entity.name,
+                price=product_entity.price,
+                category_id=product_entity.category_id,
+                restaurant_id=product_entity.restaurant_id,
+                image_file=command.image,
+                description=product_entity.description
+            )
+        else:
+            product = self.product_repo.create(
+                name=product_entity.name,
+                price=product_entity.price,
+                category_id=product_entity.category_id,
+                restaurant_id=product_entity.restaurant_id,
+                image=command.image if isinstance(command.image, str) else None,
+                description=product_entity.description
+            )
+        
+        if not product:
+            raise InvalidProductDataException('product', 'Error al crear el producto')
+        
+        # Registrar evento de dominio
+        product.record_created()
+        events = product.pull_domain_events()
+        
+        # Publicar eventos
+        for event in events:
+            if command.actor_username:
+                event.data['actor_username'] = command.actor_username
+            if 'image' in event.data and not isinstance(event.data['image'], str):
+                event.data['image'] = None
+            self.event_publisher.persist_and_publish(event, 'product.created')
+        
+        return product

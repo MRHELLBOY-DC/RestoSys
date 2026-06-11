@@ -84,6 +84,4 @@ class EventStore:
         
         return list(events)
 
-
-# Instancia global del Event Store
 event_store = EventStore()

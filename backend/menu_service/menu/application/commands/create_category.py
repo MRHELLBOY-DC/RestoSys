@@ -1,31 +1,61 @@
 """
 Command: Create Category
-CQRS - Command para crear una categoría
+CQRS - Command para crear una categoría usando Command pattern
 """
-from ...infrastructure.repositories import CategoryRepository
-from ...domain.entities import Category
+from dataclasses import dataclass
+from typing import Optional
+from .base_command import Command, CommandHandler
+from menu.application.ports.category_repository_port import CategoryRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.entities.category import Category
+from menu.domain.exceptions import InvalidCategoryNameException
 
 
-def create_category_command(name: str, restaurant_id: int, event_publisher: EventPublisherPort, actor_username: str = None) -> Category:
-    """
-    Crea una nueva categoría
-    """
-    if not name or not name.strip():
-        raise ValueError("El nombre de la categoría es requerido")
+@dataclass
+class CreateCategoryCommand(Command):
+    """Command to create a category"""
+    name: str
+    restaurant_id: int
+    actor_username: Optional[str] = None
+
+
+class CreateCategoryCommandHandler(CommandHandler):
+    """Handler for CreateCategoryCommand"""
     
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
+    def __init__(
+        self,
+        category_repo: CategoryRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.category_repo = category_repo
+        self.event_publisher = event_publisher
     
-    category = CategoryRepository.create(
-        name=name.strip(),
-        restaurant_id=restaurant_id
-    )
-    
-    category.record_created()
-    event = category.pull_domain_events()[-1]
-    if actor_username:
-        event.data['actor_username'] = actor_username
-    event_publisher.persist_and_publish(event, 'category.created')
-    
-    return category
+    def handle(self, command: CreateCategoryCommand) -> Category:
+        """Execute the command - creates a new category"""
+        
+        # La validación ahora está en la entidad
+        try:
+            category_entity = Category(
+                name=command.name.strip() if command.name else None,
+                restaurant_id=command.restaurant_id
+            )
+        except InvalidCategoryNameException as e:
+            raise e
+        
+        # Crear categoría usando repositorio
+        category = self.category_repo.create(
+            name=category_entity.name,
+            restaurant_id=category_entity.restaurant_id
+        )
+        
+        # Registrar evento de dominio
+        category.record_created()
+        events = category.pull_domain_events()
+        
+        # Publicar eventos
+        for event in events:
+            if command.actor_username:
+                event.data['actor_username'] = command.actor_username
+            self.event_publisher.persist_and_publish(event, 'category.created')
+        
+        return category

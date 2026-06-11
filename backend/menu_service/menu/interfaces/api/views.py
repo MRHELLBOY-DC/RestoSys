@@ -6,29 +6,30 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .permissions import IsRestaurantOrAdmin
 from .serializers import CategorySerializer, ProductSerializer, ProductOptionSerializer
-from ...infrastructure.event_utils import event_publisher
-from ...application.commands import (
-    create_category_command,
-    update_category_command,
-    delete_category_command,
-    create_product_command,
-    update_product_command,
-    delete_product_command,
-    create_option_command,
-    update_option_command,
-    delete_option_command,
-)
-from ...application.queries import (
-    list_categories_query,
-    get_category_query,
-    list_products_query,
-    get_product_query,
-    list_options_by_product_query,
-    get_option_query,
-)
+
+# Importar Container
+from ...infrastructure.container import container
+
+# Importar Commands y Queries de Category
+from ...application.commands.create_category import CreateCategoryCommand
+from ...application.commands.update_category import UpdateCategoryCommand
+from ...application.commands.delete_category import DeleteCategoryCommand
+from ...application.queries.list_categories import ListCategoriesQuery, GetCategoryQuery
+
+# Importar Commands y Queries de Product
+from ...application.commands.create_product import CreateProductCommand
+from ...application.commands.update_product import UpdateProductCommand
+from ...application.commands.delete_product import DeleteProductCommand
+from ...application.queries.list_products import ListProductsQuery, GetProductQuery
+
+# Importar Commands y Queries de Option
+from ...application.commands.create_option import CreateOptionCommand
+from ...application.commands.update_option import UpdateOptionCommand
+from ...application.commands.delete_option import DeleteOptionCommand
+from ...application.queries.list_options import ListOptionsByProductQuery, GetOptionQuery
 
 
-# ========== CATEGORÍAS ==========
+# ========== CATEGORÍAS (REFACTORIZADO) ==========
 
 class CategoryListCreateView(APIView):
     """Listar y crear categorías"""
@@ -43,7 +44,9 @@ class CategoryListCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        categories = list_categories_query(restaurant_id)
+        query = ListCategoriesQuery(restaurant_id=restaurant_id)
+        categories = container.execute_query(query)
+        
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
     
@@ -64,7 +67,13 @@ class CategoryListCreateView(APIView):
             )
         
         try:
-            category = create_category_command(name, restaurant_id, event_publisher, actor_username=request.user.username)
+            command = CreateCategoryCommand(
+                name=name,
+                restaurant_id=restaurant_id,
+                actor_username=request.user.username
+            )
+            category = container.execute_command(command)
+            
             serializer = CategorySerializer(category)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValueError as e:
@@ -84,7 +93,9 @@ class CategoryDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        category = get_category_query(pk, restaurant_id)
+        query = GetCategoryQuery(category_id=pk, restaurant_id=restaurant_id)
+        category = container.execute_query(query)
+        
         if not category:
             return Response(
                 {'error': 'Categoría no encontrada'},
@@ -111,7 +122,14 @@ class CategoryDetailView(APIView):
             )
         
         try:
-            category = update_category_command(pk, name, restaurant_id, actor_username=request.user.username)
+            command = UpdateCategoryCommand(
+                category_id=pk,
+                name=name,
+                restaurant_id=restaurant_id,
+                actor_username=request.user.username
+            )
+            category = container.execute_command(command)
+            
             serializer = CategorySerializer(category)
             return Response(serializer.data)
         except ValueError as e:
@@ -127,7 +145,13 @@ class CategoryDetailView(APIView):
             )
         
         try:
-            delete_category_command(pk, restaurant_id, actor_username=request.user.username)
+            command = DeleteCategoryCommand(
+                category_id=pk,
+                restaurant_id=restaurant_id,
+                actor_username=request.user.username
+            )
+            container.execute_command(command)
+            
             return Response(
                 {'message': 'Categoría eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
@@ -136,7 +160,7 @@ class CategoryDetailView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ========== PRODUCTOS ==========
+# ========== PRODUCTOS (REFACTORIZADO) ==========
 
 class ProductListCreateView(APIView):
     """Listar y crear productos"""
@@ -152,7 +176,21 @@ class ProductListCreateView(APIView):
             )
         
         category_id = request.query_params.get('category_id')
-        products = list_products_query(restaurant_id, category_id)
+        if category_id:
+            try:
+                category_id = int(category_id)
+            except ValueError:
+                return Response(
+                    {'error': 'category_id debe ser un número'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        query = ListProductsQuery(
+            restaurant_id=restaurant_id,
+            category_id=category_id
+        )
+        products = container.execute_query(query)
+        
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
     
@@ -165,17 +203,30 @@ class ProductListCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Manejar imagen si viene como archivo
+        image = None
+        if 'image' in request.FILES:
+            image = request.FILES['image']
+        elif request.data.get('image'):
+            image = request.data.get('image')
+        
         try:
-            product = create_product_command(
+            from decimal import Decimal
+            price = request.data.get('price')
+            if price:
+                price = Decimal(str(price))
+            
+            command = CreateProductCommand(
                 name=request.data.get('name'),
-                price=request.data.get('price'),
-                category_id=request.data.get('category_id'),
+                price=price,
+                category_id=int(request.data.get('category_id')),
                 restaurant_id=restaurant_id,
-                event_publisher=event_publisher,
-                image=request.FILES.get('image') or request.data.get('image'),
+                image=image,
                 description=request.data.get('description'),
                 actor_username=request.user.username
             )
+            product = container.execute_command(command)
+            
             serializer = ProductSerializer(product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValueError as e:
@@ -195,7 +246,9 @@ class ProductDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        product = get_product_query(pk, restaurant_id)
+        query = GetProductQuery(product_id=pk, restaurant_id=restaurant_id)
+        product = container.execute_query(query)
+        
         if not product:
             return Response(
                 {'error': 'Producto no encontrado'},
@@ -214,17 +267,26 @@ class ProductDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Manejar imagen
+        image = None
+        if 'image' in request.FILES:
+            image = request.FILES['image']
+        elif request.data.get('image'):
+            image = request.data.get('image')
+        
         try:
-            product = update_product_command(
+            command = UpdateProductCommand(
                 product_id=pk,
                 restaurant_id=restaurant_id,
                 name=request.data.get('name'),
                 price=request.data.get('price'),
                 category_id=request.data.get('category_id'),
-                image=request.FILES.get('image') or request.data.get('image'),
+                image=image,
                 description=request.data.get('description'),
                 actor_username=request.user.username
             )
+            product = container.execute_command(command)
+            
             serializer = ProductSerializer(product)
             return Response(serializer.data)
         except ValueError as e:
@@ -240,7 +302,13 @@ class ProductDetailView(APIView):
             )
         
         try:
-            delete_product_command(pk, restaurant_id, actor_username=request.user.username)
+            command = DeleteProductCommand(
+                product_id=pk,
+                restaurant_id=restaurant_id,
+                actor_username=request.user.username
+            )
+            container.execute_command(command)
+            
             return Response(
                 {'message': 'Producto eliminado correctamente'},
                 status=status.HTTP_204_NO_CONTENT
@@ -249,7 +317,7 @@ class ProductDetailView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ========== OPCIONES ==========
+# ========== OPCIONES (REFACTORIZADO) ==========
 
 class OptionListCreateView(APIView):
     """Listar y crear opciones"""
@@ -271,7 +339,20 @@ class OptionListCreateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        options = list_options_by_product_query(product_id, restaurant_id)
+        try:
+            product_id = int(product_id)
+        except ValueError:
+            return Response(
+                {'error': 'product_id debe ser un número'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        query = ListOptionsByProductQuery(
+            product_id=product_id,
+            restaurant_id=restaurant_id
+        )
+        options = container.execute_query(query)
+        
         serializer = ProductOptionSerializer(options, many=True)
         return Response(serializer.data)
     
@@ -285,14 +366,22 @@ class OptionListCreateView(APIView):
             )
         
         try:
-            option = create_option_command(
+            from decimal import Decimal
+            extra_price = request.data.get('extra_price', 0)
+            if isinstance(extra_price, str):
+                extra_price = Decimal(extra_price)
+            elif isinstance(extra_price, (int, float)):
+                extra_price = Decimal(str(extra_price))
+            
+            command = CreateOptionCommand(
                 name=request.data.get('name'),
-                extra_price=request.data.get('extra_price', 0),
-                product_id=request.data.get('product_id'),
+                extra_price=extra_price,
+                product_id=int(request.data.get('product_id')),
                 restaurant_id=restaurant_id,
-                event_publisher=event_publisher,
                 actor_username=request.user.username
             )
+            option = container.execute_command(command)
+            
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValueError as e:
@@ -312,7 +401,9 @@ class OptionDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        option = get_option_query(pk, restaurant_id)
+        query = GetOptionQuery(option_id=pk, restaurant_id=restaurant_id)
+        option = container.execute_query(query)
+        
         if not option:
             return Response(
                 {'error': 'Opción no encontrada'},
@@ -332,13 +423,23 @@ class OptionDetailView(APIView):
             )
         
         try:
-            option = update_option_command(
+            from decimal import Decimal
+            extra_price = request.data.get('extra_price')
+            if extra_price is not None:
+                if isinstance(extra_price, str):
+                    extra_price = Decimal(extra_price)
+                elif isinstance(extra_price, (int, float)):
+                    extra_price = Decimal(str(extra_price))
+            
+            command = UpdateOptionCommand(
                 option_id=pk,
                 restaurant_id=restaurant_id,
                 name=request.data.get('name'),
-                extra_price=request.data.get('extra_price'),
+                extra_price=extra_price,
                 actor_username=request.user.username
             )
+            option = container.execute_command(command)
+            
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data)
         except ValueError as e:
@@ -354,7 +455,13 @@ class OptionDetailView(APIView):
             )
         
         try:
-            delete_option_command(pk, restaurant_id, actor_username=request.user.username)
+            command = DeleteOptionCommand(
+                option_id=pk,
+                restaurant_id=restaurant_id,
+                actor_username=request.user.username
+            )
+            container.execute_command(command)
+            
             return Response(
                 {'message': 'Opción eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
@@ -385,7 +492,9 @@ class PublicProductListView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        products = list_products_query(restaurant_id)
+        query = ListProductsQuery(restaurant_id=restaurant_id)
+        products = container.execute_query(query)
+        
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
@@ -410,6 +519,8 @@ class PublicCategoryListView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        categories = list_categories_query(restaurant_id)
+        query = ListCategoriesQuery(restaurant_id=restaurant_id)
+        categories = container.execute_query(query)
+        
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)

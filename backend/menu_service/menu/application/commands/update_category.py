@@ -1,64 +1,94 @@
 """
 Command: Update Category
-CQRS - Command para actualizar una categoría
+CQRS - Command para actualizar una categoría usando Command pattern
 """
+from dataclasses import dataclass
+from typing import Optional
 from datetime import datetime
-from ...infrastructure.repositories import CategoryRepository
-from ...infrastructure.event_store import event_store
-from ...domain.entities import Category
-from shared import publish_event
+from .base_command import Command, CommandHandler
+from menu.application.ports.category_repository_port import CategoryRepositoryPort
+from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.entities.category import Category
+from menu.domain.exceptions import CategoryNotFoundException, InvalidCategoryNameException
+from menu.domain.shared.domain_event import DomainEvent
 
 
-def update_category_command(category_id: int, name: str, restaurant_id: int, actor_username: str = None) -> Category:
-    """
-    Actualiza una categoría existente
-    """
-    # Validaciones
-    if not category_id:
-        raise ValueError("Se requiere category_id")
-    
-    if not name or not name.strip():
-        raise ValueError("El nombre de la categoría es requerido")
-    
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
-    
-    # Obtener datos antiguos
-    old_category = CategoryRepository.get_by_id(category_id, restaurant_id)
-    if not old_category:
-        raise ValueError(f"Categoría con id {category_id} no encontrada")
-    
-    old_data = {
-        'name': old_category.name,
-    }
-    
-    # Actualizar categoría
-    category = CategoryRepository.update(
-        category_id=category_id,
-        restaurant_id=restaurant_id,
-        name=name.strip()
-    )
-    
-    # Guardar evento en Event Store
-    event_data = {
-        'category_id': category.id,
-        'name': category.name,
-        'restaurant_id': restaurant_id,
-        'old_data': old_data,
-        'new_data': {'name': name.strip()},
-        'timestamp': datetime.utcnow().isoformat()
-    }
-    event_store.append_event(
-        aggregate_id=category.id,
-        event_type='CategoryUpdated',
-        data=event_data,
-        aggregate_type='Category'
-    )
-    
-    if actor_username:
-        event_data['actor_username'] = actor_username
+@dataclass
+class UpdateCategoryCommand(Command):
+    """Command to update a category"""
+    category_id: int
+    name: str
+    restaurant_id: int
+    actor_username: Optional[str] = None
 
-    # Publicar evento a RabbitMQ
-    publish_event('category.updated', event_data)
+
+class UpdateCategoryCommandHandler(CommandHandler):
+    """Handler for UpdateCategoryCommand"""
     
-    return category
+    def __init__(
+        self,
+        category_repo: CategoryRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.category_repo = category_repo
+        self.event_publisher = event_publisher
+    
+    def handle(self, command: UpdateCategoryCommand) -> Category:
+        """Execute the command - updates a category"""
+        
+        # Validaciones básicas
+        if not command.category_id:
+            raise ValueError("Se requiere category_id")
+        
+        if not command.restaurant_id:
+            raise ValueError("Se requiere restaurant_id")
+        
+        # Obtener datos antiguos
+        old_category = self.category_repo.get_by_id(command.category_id, command.restaurant_id)
+        if not old_category:
+            raise CategoryNotFoundException(command.category_id)
+        
+        old_data = {'name': old_category.name}
+        
+        # Validar el nuevo nombre usando la entidad
+        try:
+            # Crear una entidad temporal para validar
+            Category(
+                name=command.name.strip(),
+                restaurant_id=command.restaurant_id
+            )
+        except InvalidCategoryNameException as e:
+            raise e
+        
+        # Actualizar categoría
+        category = self.category_repo.update(
+            category_id=command.category_id,
+            restaurant_id=command.restaurant_id,
+            name=command.name.strip()
+        )
+        
+        if not category:
+            raise CategoryNotFoundException(command.category_id)
+        
+        # Publicar evento de dominio
+        event_data = {
+            'category_id': category.id,
+            'name': category.name,
+            'restaurant_id': command.restaurant_id,
+            'old_data': old_data,
+            'new_data': {'name': command.name.strip()},
+        }
+        if command.actor_username:
+            event_data['actor_username'] = command.actor_username
+        
+        event = DomainEvent(
+            event_type='CategoryUpdated',
+            aggregate_id=str(category.id),
+            aggregate_type='Category',
+            data=event_data,
+            occurred_at=datetime.utcnow().isoformat()
+        )
+        
+        self.event_publisher.persist_and_publish(event, 'category.updated')
+        
+        return category

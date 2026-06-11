@@ -2,13 +2,37 @@
 Query: List Users
 CQRS - Query para listar todos los usuarios
 """
-from users.infrastructure.repositories import UserRepository
+from dataclasses import dataclass
+from typing import Optional, List
+from users.application.ports.user_repository_port import UserRepositoryPort
+from users.application.dtos import UserListDTO
+from .base_query import Query, QueryHandler
 
 
-def list_users(role=None):
-    """
-    Retorna lista de usuarios activos
-    Solo devuelve campos necesarios para la query
-    """
-    users = UserRepository.list_active_users(role=role)
-    return list(users.values('id', 'username', 'email', 'role', 'date_joined'))
+@dataclass
+class ListUsersQuery(Query):
+    """Query to list users"""
+    role: Optional[str] = None
+
+
+class ListUsersQueryHandler(QueryHandler):
+    """Handler for ListUsersQuery"""
+    
+    def __init__(self, user_repo: UserRepositoryPort):
+        self.user_repo = user_repo
+    
+    def handle(self, query: ListUsersQuery) -> List[UserListDTO]:
+        """Execute the query"""
+        users = self.user_repo.list_active(query.role)
+        
+        return [
+            UserListDTO(
+                id=u.id,
+                username=u.username,
+                email=u.email,
+                role=u.role,
+                full_name=u.full_name,
+                date_joined=u.date_joined,      
+            )
+            for u in users
+        ]

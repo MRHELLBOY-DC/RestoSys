@@ -1,22 +1,31 @@
-from django.db import models
+"""
+Entidad de dominio Event - PURA (para eventos de dominio, NO para persistencia)
+Este es el evento que se usa dentro del dominio y se pasa a través de los puertos.
+"""
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional, Dict, Any
 
 
-class Event(models.Model):
-    type = models.CharField(max_length=100)
-    data = models.JSONField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    aggregate_id = models.CharField(max_length=100, blank=True, null=True)
-    aggregate_type = models.CharField(max_length=50, blank=True, null=True)
-    version = models.IntegerField(default=1)
-    metadata = models.JSONField(blank=True, default=dict)
-
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['type']),
-            models.Index(fields=['aggregate_id']),
-            models.Index(fields=['created_at']),
-        ]
-
+@dataclass
+class Event:
+    """
+    Entidad de dominio para eventos - NO hereda de models.Model
+    Representa un evento de dominio puro.
+    """
+    
+    # Atributos (los mismos que tenías, pero sin Django)
+    type: str
+    data: Dict[str, Any]
+    created_at: datetime
+    aggregate_id: Optional[str]
+    aggregate_type: Optional[str]
+    version: int
+    metadata: Dict[str, Any]
+    
+    # El id se incluye para eventos recuperados del event store
+    id: Optional[int] = None
+    
     def __str__(self):
+        """Mismo __str__ que tenías"""
         return f"{self.type} - {self.aggregate_id}"

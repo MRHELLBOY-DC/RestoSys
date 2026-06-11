@@ -1,56 +1,76 @@
 """
 Command: Delete Option
-CQRS - Command para eliminar una opción de producto
+CQRS - Command para eliminar una opción de producto usando Command pattern
 """
+from dataclasses import dataclass
+from typing import Optional
 from datetime import datetime
-from ...infrastructure.repositories import ProductOptionRepository
-from ...infrastructure.event_store import event_store
-from shared import publish_event
+from .base_command import Command, CommandHandler
+from menu.application.ports.option_repository_port import OptionRepositoryPort
+from menu.application.ports.event_publisher_port import EventPublisherPort
+from menu.domain.exceptions import OptionNotFoundException
+from menu.domain.shared.domain_event import DomainEvent
 
 
-def delete_option_command(option_id: int, restaurant_id: int, actor_username: str = None) -> bool:
-    """
-    Elimina una opción de producto
-    """
-    # Validaciones
-    if not option_id:
-        raise ValueError("Se requiere option_id")
+@dataclass
+class DeleteOptionCommand(Command):
+    """Command to delete a product option"""
+    option_id: int
+    restaurant_id: int
+    actor_username: Optional[str] = None
+
+
+class DeleteOptionCommandHandler(CommandHandler):
+    """Handler for DeleteOptionCommand"""
     
-    if not restaurant_id:
-        raise ValueError("Se requiere restaurant_id")
+    def __init__(
+        self,
+        option_repo: OptionRepositoryPort,
+        event_publisher: EventPublisherPort
+    ):
+        self.option_repo = option_repo
+        self.event_publisher = event_publisher
     
-    # Verificar si existe y obtener datos
-    option = ProductOptionRepository.get_by_id(option_id, restaurant_id)
-    if not option:
-        raise ValueError(f"Opción con id {option_id} no encontrada")
-    
-    # Guardar datos para el evento antes de eliminar
-    option_name = option.name
-    option_product_id = option.product_id
-    
-    # Eliminar
-    deleted = ProductOptionRepository.delete(option_id, restaurant_id)
-    
-    # Guardar evento en Event Store
-    if deleted:
-        event_data = {
-            'option_id': option_id,
-            'name': option_name,
-            'product_id': option_product_id,
-            'restaurant_id': restaurant_id,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        event_store.append_event(
-            aggregate_id=option_id,
-            event_type='OptionDeleted',
-            data=event_data,
-            aggregate_type='ProductOption'
-        )
+    def handle(self, command: DeleteOptionCommand) -> bool:
+        """Execute the command - deletes a product option"""
         
-        if actor_username:
-            event_data['actor_username'] = actor_username
-
-        # Publicar evento a RabbitMQ
-        publish_event('option.deleted', event_data)
-    
-    return deleted
+        # Validaciones
+        if not command.option_id:
+            raise ValueError("Se requiere option_id")
+        
+        if not command.restaurant_id:
+            raise ValueError("Se requiere restaurant_id")
+        
+        # Verificar si existe y obtener datos
+        option = self.option_repo.get_by_id(command.option_id, command.restaurant_id)
+        if not option:
+            raise OptionNotFoundException(command.option_id)
+        
+        option_name = option.name
+        option_product_id = option.product_id
+        
+        # Eliminar
+        deleted = self.option_repo.delete(command.option_id, command.restaurant_id)
+        
+        # Publicar evento de dominio
+        if deleted:
+            event_data = {
+                'option_id': command.option_id,
+                'name': option_name,
+                'product_id': option_product_id,
+                'restaurant_id': command.restaurant_id,
+            }
+            if command.actor_username:
+                event_data['actor_username'] = command.actor_username
+            
+            event = DomainEvent(
+                event_type='OptionDeleted',
+                aggregate_id=str(command.option_id),
+                aggregate_type='ProductOption',
+                data=event_data,
+                occurred_at=datetime.utcnow().isoformat()
+            )
+            
+            self.event_publisher.persist_and_publish(event, 'option.deleted')
+        
+        return deleted
