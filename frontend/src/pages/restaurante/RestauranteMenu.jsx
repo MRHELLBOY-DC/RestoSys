@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars, no-undef */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
-import { getCurrentUser } from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 import { 
     getProducts, 
@@ -13,310 +12,11 @@ import {
     updateCategory, 
     deleteCategory,
     getOptions,
-    createOption,
-    updateOption,
-    deleteOption
 } from "../../services/menuApi";
-import { useNavigate } from "react-router-dom";
 import RestauranteShell from "../../components/RestauranteShell";
-
-// Modal Category Component
-const CategoryModal = ({ show, onClose, onSubmit, editing, initialData, adminGradient }) => {
-    const [name, setName] = useState('');
-    
-    useEffect(() => {
-        if (show) {
-            if (editing && initialData) {
-                setName(initialData.name || '');
-            } else {
-                setName('');
-            }
-        }
-    }, [editing, initialData, show]);
-    
-    if (!show) return null;
-    
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit({ name });
-        onClose();
-    };
-    
-    return (
-        <div className="modal modal-dark show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content" style={{ borderRadius: '20px' }}>
-                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
-                        <h5 className="modal-title fw-bold">{editing ? 'Editar' : 'Agregar'} Categoría</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
-                    </div>
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            <input
-                                type="text"
-                                className="form-control form-control-lg"
-                                placeholder="Nombre de la categoría"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                autoFocus
-                                required
-                            />
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Modal Product Component
-const ProductModal = ({ show, onClose, onSubmit, editing, initialData, categories, adminGradient }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        price: '',
-        description: '',
-        category: '',
-        image: null
-    });
-    
-    // Actualizar cuando se abre el modal o cambia initialData
-    useEffect(() => {
-        if (show) {
-            if (editing && initialData) {
-                setFormData({
-                    name: initialData.name || '',
-                    price: initialData.price || '',
-                    description: initialData.description || '',
-                    category: initialData.category ? String(initialData.category) : '',
-                    image: null
-                });
-            } else {
-                setFormData({
-                    name: '',
-                    price: '',
-                    description: '',
-                    category: '',
-                    image: null
-                });
-            }
-        }
-    }, [editing, initialData, show]);
-    
-    if (!show) return null;
-    
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-    
-    const handleFileChange = (e) => {
-        setFormData(prev => ({ ...prev, image: e.target.files[0] }));
-    };
-    
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit(formData);
-        onClose();
-    };
-    
-    return (
-        <div className="modal modal-dark show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-                <div className="modal-content" style={{ borderRadius: '20px' }}>
-                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
-                        <h5 className="modal-title fw-bold">{editing ? 'Editar' : 'Agregar'} Producto</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
-                    </div>
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Nombre del producto</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    className="form-control"
-                                    placeholder="Ej: Pizza Margherita"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="row mb-3">
-                                <div className="col-md-6">
-                                    <label className="form-label fw-bold">Precio</label>
-                                    <input
-                                        type="number"
-                                        name="price"
-                                        step="0.01"
-                                        className="form-control"
-                                        placeholder="0.00"
-                                        value={formData.price}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label fw-bold">Categoría</label>
-                                    <select
-                                        name="category"
-                                        className="form-select"
-                                        value={formData.category}
-                                        onChange={handleChange}
-                                        required
-                                    >
-                                        <option value="">Seleccionar Categoría</option>
-                                        {categories.map(cat => (
-                                            <option key={cat.id} value={cat.id.toString()}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Descripción</label>
-                                <textarea
-                                    name="description"
-                                    className="form-control"
-                                    placeholder="Describe el producto..."
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    rows="3"
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Imagen del producto</label>
-                                <input
-                                    type="file"
-                                    className="form-control"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                />
-                                {editing && initialData?.image && (
-                                    <div className="mt-2 d-flex align-items-center gap-2">
-                                        <img
-                                            src={`http://localhost:8001${initialData.image}`}
-                                            alt="Imagen actual"
-                                            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)' }}
-                                        />
-                                        <small className="text-muted">Dejar vacío para mantener la imagen actual</small>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Modal Option Component
-const OptionModal = ({ show, onClose, onSubmit, editing, initialData, products, adminGradient }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        extra_price: '',
-        product: ''
-    });
-    
-    useEffect(() => {
-        if (show) {
-            if (editing && initialData) {
-                setFormData({
-                    name: initialData.name || '',
-                    extra_price: initialData.extra_price || '',
-                    product: initialData.product ? String(initialData.product) : ''
-                });
-            } else {
-                setFormData({
-                    name: '',
-                    extra_price: '',
-                    product: initialData?.product ? String(initialData.product) : ''
-                });
-            }
-        }
-    }, [editing, initialData, show]);
-    
-    if (!show) return null;
-    
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-    
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit(formData);
-        onClose();
-    };
-    
-    return (
-        <div className="modal modal-dark show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-            <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content" style={{ borderRadius: '20px' }}>
-                    <div className="modal-header" style={{ background: adminGradient, color: 'white', borderBottom: 'none' }}>
-                        <h5 className="modal-title fw-bold">{editing ? 'Editar' : 'Agregar'} Opción</h5>
-                        <button type="button" className="btn-close btn-close-white" onClick={onClose}></button>
-                    </div>
-                    <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Nombre de la opción</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    className="form-control"
-                                    placeholder="Ej: Extra queso"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Precio extra</label>
-                                <input
-                                    type="number"
-                                    name="extra_price"
-                                    step="0.01"
-                                    className="form-control"
-                                    placeholder="0.00"
-                                    value={formData.extra_price}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Producto</label>
-                                <select
-                                    name="product"
-                                    className="form-select"
-                                    value={formData.product}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    <option value="">Seleccionar Producto</option>
-                                    {products.map(prod => (
-                                        <option key={prod.id} value={prod.id}>{prod.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
-                            <button type="submit" className="btn" style={{ background: adminGradient, color: 'white' }}>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-};
+import { CategoryModal } from "../../components/modals/CategoryModal";
+import { ProductModal } from "../../components/modals/ProductModal";
+import { ExtrasModal } from "../../components/modals/ExtrasModal";
 
 const getFoodIcon = (name = '', category = '') => {
     const t = `${name} ${category}`.toLowerCase();
@@ -344,15 +44,14 @@ export default function RestauranteMenu() {
     const [products, setProducts] = useState([]);
     const [options, setOptions] = useState([]);
     const [loadingData, setLoadingData] = useState(true);
-    const navigate = useNavigate();
 
     // Estados para formularios
     const [showCategoryForm, setShowCategoryForm] = useState(false);
     const [showProductForm, setShowProductForm] = useState(false);
-    const [showOptionForm, setShowOptionForm] = useState(false);
+    const [showExtrasForm, setShowExtrasForm] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
     const [editingCategory, setEditingCategory] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [editingOption, setEditingOption] = useState(null);
 
     // Form data
     const [categoryData, setCategoryData] = useState({ name: '' });
@@ -363,7 +62,6 @@ export default function RestauranteMenu() {
         category: '',
         image: null 
     });
-    const [optionData, setOptionData] = useState({ name: '', extra_price: '', product: '' });
 
     // Degradado personalizado
     const adminGradient = 'linear-gradient(135deg, #c0392b 0%, #7b1d1d 100%)';
@@ -393,47 +91,53 @@ export default function RestauranteMenu() {
         setProductData({ name: '', price: '', description: '', category: '', image: null });
     };
 
-    const openOptionForm = () => {
-        setEditingOption(null);
-        setOptionData({ name: '', extra_price: '', product: '' });
-        setShowOptionForm(true);
+    const openExtrasForm = (product) => {
+        setSelectedProduct(product);
+        setShowExtrasForm(true);
     };
 
-    const closeOptionForm = () => {
-        setShowOptionForm(false);
-        setEditingOption(null);
-        setOptionData({ name: '', extra_price: '', product: '' });
+    const closeExtrasForm = () => {
+        setShowExtrasForm(false);
+        setSelectedProduct(null);
     };
 
-   const loadData = async () => {
-    try {
-        // 1. Cargar categorías y productos
-        const [cats, prods] = await Promise.all([
-            getCategories(),
-            getProducts()
-        ]);
-        setCategories(cats);
-        setProducts(prods);
-        
-        // 2. Cargar opciones para cada producto (uno por uno)
-        let todasLasOpciones = [];
-        for (const prod of prods) {
-            try {
-                const opts = await getOptions(prod.id);
-                todasLasOpciones = [...todasLasOpciones, ...opts];
-            } catch (err) {
-                console.error(`Error cargando opciones para producto ${prod.id}:`, err);
+    const loadData = async () => {
+        try {
+            const [cats, prods] = await Promise.all([
+                getCategories(),
+                getProducts()
+            ]);
+            setCategories(cats);
+            setProducts(prods);
+            
+            let todasLasOpciones = [];
+            for (const prod of prods) {
+                try {
+                    const opts = await getOptions(prod.id);
+                    todasLasOpciones = [...todasLasOpciones, ...opts];
+                } catch (err) {
+                    console.error(`Error cargando opciones para producto ${prod.id}:`, err);
+                }
             }
+            setOptions(todasLasOpciones);
+        } catch (error) {
+            console.error('Error loading data:', error);
+        } finally {
+            setLoadingData(false);
         }
-        
-        setOptions(todasLasOpciones);
-        
-    } catch (error) {
-        console.error('Error loading data:', error);
-    } finally {
-        setLoadingData(false);
-    }
-};
+    };
+
+    const refreshOptionsForProduct = async (productId) => {
+        try {
+            const nuevasOpciones = await getOptions(productId);
+            setOptions(prevOptions => {
+                const otrasOpciones = prevOptions.filter(opt => opt.product_id !== productId);
+                return [...otrasOpciones, ...nuevasOpciones];
+            });
+        } catch (err) {
+            console.error(`Error refreshing options for product ${productId}:`, err);
+        }
+    };
 
     useEffect(() => {
         loadData();
@@ -556,86 +260,9 @@ export default function RestauranteMenu() {
         }
     };
 
-    // ========== OPCIONES ==========
-const handleOptionSubmit = async (data) => {
-    if (!data.product) {
-        alert("Selecciona un producto primero");
-        return;
-    }
-    
-    try {
-        const productId = parseInt(data.product);
-        
-        if (editingOption) {
-            await updateOption(editingOption.id, {
-                name: data.name,
-                extra_price: parseFloat(data.extra_price)
-            });
-            alert("Opción actualizada");
-        } else {
-            await createOption({
-                name: data.name,
-                extra_price: parseFloat(data.extra_price),
-                product_id: productId
-            });
-            alert("Opción creada");
-        }
-        
-        // Recargar SOLO las opciones del producto afectado
-        const nuevasOpcionesDelProducto = await getOptions(productId);
-        
-        // Actualizar el estado: mantener opciones de otros productos y actualizar las del producto modificado
-        setOptions(prevOptions => {
-            // Filtrar las opciones que NO son del producto que cambió
-            const otrasOpciones = prevOptions.filter(opt => opt.product_id !== productId);
-            // Unir con las nuevas opciones del producto
-            return [...otrasOpciones, ...nuevasOpcionesDelProducto];
-        });
-        
-        closeOptionForm();
-    } catch (error) {
-        console.error("Error saving option:", error);
-        alert("Error al guardar la opción");
-    }
-};
-
-    const handleEditOption = (option) => {
-        setEditingOption(option);
-        setOptionData({ 
-            name: option.name, 
-            extra_price: option.extra_price, 
-            product: option.product_id 
-        });
-        setShowOptionForm(true);
+    const getOptionsForProduct = (productId) => {
+        return options.filter(opt => opt.product_id === productId);
     };
-
-const handleDeleteOption = async (id) => {
-    if (window.confirm('¿Eliminar opción?')) {
-        try {
-            // Obtener el product_id antes de eliminar
-            const optionToDelete = options.find(opt => opt.id === id);
-            const productId = optionToDelete?.product_id;
-            
-            await deleteOption(id);
-            alert("Opción eliminada");
-            
-            if (productId) {
-                // Recargar opciones del producto afectado
-                const nuevasOpciones = await getOptions(productId);
-                setOptions(prevOptions => {
-                    const otrasOpciones = prevOptions.filter(opt => opt.product_id !== productId);
-                    return [...otrasOpciones, ...nuevasOpciones];
-                });
-            } else {
-                // Si no sabemos el producto, recargar todo
-                await loadData();
-            }
-        } catch (error) {
-            console.error('Error deleting option:', error);
-            alert("Error al eliminar la opción");
-        }
-    }
-};
 
     if (loading || loadingData) {
         return (
@@ -654,8 +281,6 @@ const handleDeleteOption = async (id) => {
         map.set(cat.id, cat.name);
         return map;
     }, new Map());
-
-    const extrasCount = (productId) => options.filter((opt) => opt.product_id === productId).length;
 
     return (
         <RestauranteShell
@@ -677,7 +302,6 @@ const handleDeleteOption = async (id) => {
                     <span>Producto</span>
                     <span>Categoria</span>
                     <span>Precio</span>
-                    <span>Extras</span>
                     <span></span>
                 </div>
                 {products.length === 0 ? (
@@ -702,9 +326,9 @@ const handleDeleteOption = async (id) => {
                             </div>
                             <div className="resto-muted">{categoriesMap.get(prod.category_id) || "-"}</div>
                             <div className="resto-price">S/ {Number(prod.price).toFixed(2)}</div>
-                            <div className="resto-muted">{extrasCount(prod.id)}</div>
                             <div className="resto-row-actions">
                                 <button className="resto-icon-btn" type="button" onClick={() => handleEditProduct(prod)}>Editar</button>
+                                <button className="resto-icon-btn" type="button" onClick={() => openExtrasForm(prod)}>Extras</button>
                                 <button className="resto-icon-btn danger" type="button" onClick={() => handleDeleteProduct(prod.id)}>Eliminar</button>
                             </div>
                         </div>
@@ -763,7 +387,7 @@ const handleDeleteOption = async (id) => {
                 .resto-table-header,
                 .resto-row {
                     display: grid;
-                    grid-template-columns: 2fr 1fr 0.7fr 0.5fr 0.8fr;
+                    grid-template-columns: 2fr 1fr 0.7fr 0.8fr;
                     align-items: center;
                     gap: 12px;
                 }
@@ -842,6 +466,7 @@ const handleDeleteOption = async (id) => {
                     border-radius: 16px;
                     border: 1px solid rgba(255, 255, 255, 0.08);
                     padding: 16px;
+                    margin-top: 24px;
                 }
                 .resto-section-title {
                     font-weight: 700;
@@ -956,13 +581,16 @@ const handleDeleteOption = async (id) => {
                 adminGradient={adminGradient}
             />
             
-            <OptionModal 
-                show={showOptionForm}
-                onClose={closeOptionForm}
-                onSubmit={handleOptionSubmit}
-                editing={!!editingOption}
-                initialData={optionData}
-                products={products}
+            <ExtrasModal 
+                show={showExtrasForm}
+                onClose={closeExtrasForm}
+                product={selectedProduct}
+                productOptions={selectedProduct ? getOptionsForProduct(selectedProduct.id) : []}
+                onOptionsChanged={() => {
+                    if (selectedProduct) {
+                        refreshOptionsForProduct(selectedProduct.id);
+                    }
+                }}
                 adminGradient={adminGradient}
             />
         </RestauranteShell>
