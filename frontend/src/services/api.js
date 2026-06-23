@@ -100,7 +100,12 @@ export const getAdminRestaurantes = async () => {
 
 export const createRestaurante = async (data) => {
     try {
-        const res = await authClient.post('/api/admin/restaurantes/', data);
+        // data ya debe ser un objeto FormData desde el componente React
+        const res = await authClient.post('/api/admin/restaurantes/', data, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return res.data;
     } catch (err) {
         if (err.response?.data) {

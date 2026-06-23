@@ -1,6 +1,6 @@
 // src/pages/restaurante/modals/ExtrasModal.jsx
 import { useState, useEffect } from "react";
-import { createOption, updateOption, deleteOption } from "../../services/menuApi";
+import { createOption, updateOption, deleteOption } from "../../../services/menuApi";
 
 export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsChanged, adminGradient }) => {
     const [newExtras, setNewExtras] = useState([{ name: '', extra_price: '' }]);

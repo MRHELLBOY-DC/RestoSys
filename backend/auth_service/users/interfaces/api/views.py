@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
+from rest_framework.parsers import MultiPartParser, FormParser
 import os
 from datetime import datetime
 from users.infrastructure.container import container
@@ -330,43 +331,52 @@ def public_restaurantes(request):
 # ============================================
 @api_view(['GET', 'POST'])
 @permission_classes([IsAdminUser])
+# Agregamos esto para que DRF pueda leer archivos y form-data
 def admin_restaurantes(request):
-    """Administración de restaurantes - Usa CommandBus"""
+    # Forzamos los parsers necesarios para recibir archivos
+    parser_classes = [MultiPartParser, FormParser] 
     
     if request.method == 'GET':
         query = ListRestaurantsQuery()
         restaurants = container.execute_query(query)
         return Response([r.to_dict() for r in restaurants])
     
-    serializer = RestaurantSerializer(data=request.data)
-    if serializer.is_valid():
-        try:
-            command = CreateRestaurantCommand(
-                name=serializer.validated_data['name'],
-                address=serializer.validated_data.get('address', ''),
-                logo=serializer.validated_data.get('logo'),
-                actor_username=request.user.username
-            )
-            saved = container.execute_command(command)
-            return Response({
-                'id': saved.id,
-                'name': saved.name,
-                'address': saved.address,
-                'logo': saved.logo,
-            }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    # --- PROCESAMIENTO POST ---
+    # Extraemos manualmente para evitar conflictos con el Serializer
+    name = request.data.get('name')
+    address = request.data.get('address')
+    logo = request.FILES.get('logo') # Django obtiene el archivo aquí
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not name:
+        return Response({'error': 'El nombre es obligatorio'}, status=400)
+
+    try:
+        command = CreateRestaurantCommand(
+            name=name,
+            address=address if address else '',
+            logo=logo, # Pasamos el objeto archivo directamente
+            actor_username=request.user.username
+        )
+        saved = container.execute_command(command)
+        
+        return Response({
+            'id': saved.id,
+            'name': saved.name,
+            'address': saved.address,
+            'logo': saved.logo,
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAdminUser])
+# Añadimos los parsers para manejar multipart/form-data
 def admin_restaurante_detail(request, restaurante_id):
     """Detalle, actualización y eliminación de restaurante - Usa CommandBus"""
     
     if request.method == 'GET':
-        # Usar query existente para obtener restaurante
         query = GetUserRestaurantQuery(user_id=restaurante_id)
         restaurant_dto = container.execute_query(query)
         if restaurant_dto is None:
@@ -374,26 +384,34 @@ def admin_restaurante_detail(request, restaurante_id):
         return Response(restaurant_dto.to_dict())
     
     if request.method == 'PUT':
-        serializer = RestaurantSerializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                command = UpdateRestaurantCommand(
-                    restaurant_id=restaurante_id,
-                    name=serializer.validated_data.get('name'),
-                    address=serializer.validated_data.get('address', ''),
-                    logo=serializer.validated_data.get('logo'),
-                    actor_username=request.user.username
-                )
-                saved = container.execute_command(command)
-                return Response({
-                    'id': saved.id,
-                    'name': saved.name,
-                    'address': saved.address,
-                    'logo': saved.logo,
-                })
-            except Exception as e:
-                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # 1. Extraemos los datos manualmente (para manejar el logo como archivo)
+        name = request.data.get('name')
+        address = request.data.get('address')
+        logo_file = request.FILES.get('logo') # <--- Captura el archivo si viene
+        
+        # 2. Si no hay archivo, usamos el logo que ya viene en el JSON (si lo hay)
+        # o dejamos que el comando decida si mantener el anterior
+        logo = logo_file if logo_file else request.data.get('logo')
+
+        try:
+            # 3. Creamos el comando con la lógica de logo flexible
+            command = UpdateRestaurantCommand(
+                restaurant_id=restaurante_id,
+                name=name,
+                address=address or '',
+                logo=logo, 
+                actor_username=request.user.username
+            )
+            saved = container.execute_command(command)
+            
+            return Response({
+                'id': saved.id,
+                'name': saved.name,
+                'address': saved.address,
+                'logo': saved.logo,
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     # DELETE
     try:

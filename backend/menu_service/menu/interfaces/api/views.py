@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .permissions import IsRestaurantOrAdmin
-from .serializers import CategorySerializer, ProductSerializer, ProductOptionSerializer
+from ..serializers import CategorySerializer, ProductSerializer, ProductOptionSerializer
 
 # Importar Container
 from ...infrastructure.container import container

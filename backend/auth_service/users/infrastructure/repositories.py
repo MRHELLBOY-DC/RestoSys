@@ -2,8 +2,11 @@
 Repositorios que implementan los puertos definidos en application/ports/
 Usan mappers para convertir entre modelos Django y entidades de dominio puras
 """
-from typing import Optional, List
+from typing import Optional, List, Any
 from django.db import models as django_models
+from django.core.files.storage import default_storage
+from datetime import datetime
+import os
 
 # Importar modelos Django REALES (desde infrastructure/models)
 from users.infrastructure.models import User as DjangoUser
@@ -142,6 +145,38 @@ class RestaurantRepository(RestaurantRepositoryPort):
             return True
         except DjangoRestaurant.DoesNotExist:
             return False
+        
+    @staticmethod
+    def create_with_logo(name: str, address: str, logo_file: Any, actor_username: str) -> DomainRestaurant:
+            # 1. Crear instancia base en Django
+            model = DjangoRestaurant.objects.create(name=name, address=address)
+            
+            # 2. Lógica de almacenamiento
+            ext = os.path.splitext(logo_file.name)[1]
+            filename = f"restaurantes_logos/logo_{model.id}_{datetime.now().timestamp()}{ext}"
+            saved_path = default_storage.save(filename, logo_file)
+            model.logo = default_storage.url(saved_path)
+            
+            # 3. Persistir y retornar dominio
+            model.save()
+            return RestaurantMapper.to_domain(model)
+    
+    @staticmethod
+    def update_with_logo(restaurant_id: int, name: str, address: str, logo_file: Any, actor_username: str) -> DomainRestaurant:
+        """Nuevo método para actualizar con archivo opcional"""
+        model = DjangoRestaurant.objects.get(id=restaurant_id)
+        model.name = name
+        model.address = address
+        
+        # Solo actualizamos el logo si viene un archivo nuevo
+        if logo_file:
+            ext = os.path.splitext(logo_file.name)[1]
+            filename = f"restaurantes_logos/logo_{model.id}_{datetime.now().timestamp()}{ext}"
+            saved_path = default_storage.save(filename, logo_file)
+            model.logo = default_storage.url(saved_path)
+        
+        model.save()
+        return RestaurantMapper.to_domain(model)
 
 
 class UserRestaurantRepository(UserRestaurantRepositoryPort):

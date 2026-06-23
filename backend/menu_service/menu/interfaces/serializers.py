@@ -3,7 +3,7 @@ Serializers para la API
 """
 from rest_framework import serializers
 from decimal import Decimal
-from ...domain.entities import Category, Product, ProductOption
+from ..domain.entities import Category, Product, ProductOption
 
 
 class CategorySerializer(serializers.Serializer):

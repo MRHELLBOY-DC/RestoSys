@@ -1,17 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import {getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante } from "../../services/api";
+import { getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante } from "../../services/api";
 import AdminShell from "../../components/AdminShell";
+import RestauranteModal from "../../components/modals/RestauranteModal";
 
 export default function AdminRestaurantes() {
-    const {loading: authLoading } = useAuth(['admin']);
+    const { loading: authLoading } = useAuth(['admin']);
     const [restaurantes, setRestaurantes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(null);
-    const formRef = useRef(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
     const [form, setForm] = useState({
         name: "",
-        address: ""
+        address: "",
+        logo: null
     });
 
     useEffect(() => {
@@ -38,21 +41,23 @@ export default function AdminRestaurantes() {
             alert("El nombre es requerido");
             return;
         }
+
+        const formData = new FormData();
+        formData.append("name", form.name);
+        formData.append("address", form.address);
+        if (form.logo) {
+            formData.append("logo", form.logo);
+        }
         
         try {
             if (editing) {
-                await updateRestaurante(editing, {
-                    name: form.name,
-                    address: form.address
-                });
+                await updateRestaurante(editing, formData);
             } else {
-                await createRestaurante({
-                    name: form.name,
-                    address: form.address
-                });
+                await createRestaurante(formData);
             }
-            setForm({ name: "", address: "" });
+            setForm({ name: "", address: "", logo: null });
             setEditing(null);
+            setIsModalOpen(false);
             loadData();
         } catch (error) {
             console.error("Error:", error);
@@ -74,8 +79,14 @@ export default function AdminRestaurantes() {
 
     const handleNew = () => {
         setEditing(null);
-        setForm({ name: "", address: "" });
-        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setForm({ name: "", address: "", logo: null });
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditing(null);
+        setForm({ name: "", address: "", logo: null });
     };
 
     if (loading) return (
@@ -88,105 +99,95 @@ export default function AdminRestaurantes() {
     );
 
     return (
-        <AdminShell
-            title="Restaurantes"
-            subtitle="Registra, edita o pausa establecimientos en la red."
-            actions={(
-                <button type="button" className="admin-btn admin-btn-primary" onClick={handleNew}>
-                    + Nuevo restaurante
-                </button>
-            )}
-        >
-            <div className="admin-grid admin-grid-2">
-                <div ref={formRef} className="admin-card admin-card--glass">
-                    <h3 className="h5 fw-bold mb-4">{editing ? "Editar" : "Nuevo"} Restaurante</h3>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label className="form-label small fw-bold">Nombre</label>
-                            <input
-                                type="text"
-                                className="form-control admin-input"
-                                placeholder="Ej: La Pizzeria"
-                                value={form.name}
-                                onChange={e => setForm({...form, name: e.target.value})}
-                                required
-                            />
+        <>
+            <AdminShell
+                title="Restaurantes"
+                subtitle="Registra, edita o pausa establecimientos en la red."
+                actions={(
+                    <button type="button" className="admin-btn admin-btn-primary" onClick={handleNew}>
+                        + Nuevo restaurante
+                    </button>
+                )}
+            >
+                <div className="admin-grid admin-grid-1">
+                    <div className="admin-card admin-card--glass">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h3 className="h5 fw-bold mb-1">Restaurantes registrados</h3>
+                                <small className="admin-subtitle">{restaurantes.length} establecimientos</small>
+                            </div>
                         </div>
-                        <div className="mb-4">
-                            <label className="form-label small fw-bold">Direccion</label>
-                            <input
-                                type="text"
-                                className="form-control admin-input"
-                                placeholder="Ej: Av. Principal 123"
-                                value={form.address}
-                                onChange={e => setForm({...form, address: e.target.value})}
-                            />
-                        </div>
-                        <div className="d-grid gap-2">
-                            <button type="submit" className="admin-btn admin-btn-primary">
-                                {editing ? "Actualizar" : "Crear"}
-                            </button>
-                            {editing && (
-                                <button
-                                    type="button"
-                                    className="admin-btn admin-btn-ghost"
-                                    onClick={() => {
-                                        setEditing(null);
-                                        setForm({ name: "", address: "" });
-                                    }}
-                                >
-                                    Cancelar
-                                </button>
-                            )}
-                        </div>
-                    </form>
-                </div>
-
-                <div className="admin-card admin-card--glass">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h3 className="h5 fw-bold mb-1">Restaurantes registrados</h3>
-                            <small className="admin-subtitle">{restaurantes.length} establecimientos</small>
-                        </div>
-                    </div>
-                    {restaurantes.length === 0 ? (
-                        <div className="admin-surface text-center text-white-50">
-                            <p className="mb-0">No hay restaurantes registrados. Crea el primero.</p>
-                        </div>
-                    ) : (
-                        <div className="table-responsive">
-                            <table className="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th>Direccion</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {restaurantes.map(r => (
-                                        <tr key={r.id}>
-                                            <td className="fw-semibold">{r.id}</td>
-                                            <td>{r.name}</td>
-                                            <td className="text-white-50">{r.address || "Sin direccion"}</td>
-                                            <td>
-                                                <div className="d-flex gap-2">
-                                                    <button className="admin-btn admin-btn-ghost" onClick={() => {
-                                                        setEditing(r.id);
-                                                        setForm({ name: r.name, address: r.address || "" });
-                                                    }}>Editar</button>
-                                                    <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(r.id, r.name)}>Eliminar</button>
-                                                </div>
-                                            </td>
+                        {restaurantes.length === 0 ? (
+                            <div className="admin-surface text-center text-white-50">
+                                <p className="mb-0">No hay restaurantes registrados. Crea el primero.</p>
+                            </div>
+                        ) : (
+                            <div className="table-responsive">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Logo</th>
+                                            <th>Nombre</th>
+                                            <th>Direccion</th>
+                                            <th>Acciones</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                    </thead>
+                                    <tbody>
+                                        {restaurantes.map(r => (
+                                            <tr key={r.id}>
+                                                <td className="fw-semibold">{r.id}</td>
+                                                <td>
+                                                    {r.logo ? (
+                                                        <img
+                                                            src={`http://localhost:8000${r.logo}`}
+                                                            alt={r.name}
+                                                            style={{ 
+                                                                width: 40, 
+                                                                height: 40, 
+                                                                objectFit: 'cover', 
+                                                                borderRadius: '50%',
+                                                                border: '1px solid rgba(255,255,255,0.1)'
+                                                            }}
+                                                            onError={(e) => { 
+                                                                e.target.style.display = 'none';
+                                                                e.target.parentElement.innerHTML = '<span style="font-size:20px">🍽️</span>';
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span style={{ fontSize: '20px' }}>🍽️</span>
+                                                    )}
+                                                </td>
+                                                <td>{r.name}</td>
+                                                <td className="text-white-50">{r.address || "Sin direccion"}</td>
+                                                <td>
+                                                    <div className="d-flex gap-2">
+                                                        <button className="admin-btn admin-btn-ghost" onClick={() => {
+                                                            setEditing(r.id);
+                                                            setForm({ name: r.name, address: r.address || "", logo: null });
+                                                            setIsModalOpen(true);
+                                                        }}>Editar</button>
+                                                        <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(r.id, r.name)}>Eliminar</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </AdminShell>
+            </AdminShell>
+
+            <RestauranteModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onSubmit={handleSubmit}
+                editing={editing}
+                form={form}
+                setForm={setForm}
+            />
+        </>
     );
 }

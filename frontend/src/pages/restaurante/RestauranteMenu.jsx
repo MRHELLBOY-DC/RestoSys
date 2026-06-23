@@ -14,9 +14,9 @@ import {
     getOptions,
 } from "../../services/menuApi";
 import RestauranteShell from "../../components/RestauranteShell";
-import { CategoryModal } from "../../components/modals/CategoryModal";
-import { ProductModal } from "../../components/modals/ProductModal";
-import { ExtrasModal } from "../../components/modals/ExtrasModal";
+import { CategoryModal } from "../../components/modals/restaurantModals/CategoryModal";
+import { ProductModal } from "../../components/modals/restaurantModals/ProductModal";
+import { ExtrasModal } from "../../components/modals/restaurantModals/ExtrasModal";
 
 const getFoodIcon = (name = '', category = '') => {
     const t = `${name} ${category}`.toLowerCase();
@@ -299,8 +299,9 @@ export default function RestauranteMenu() {
         >
             <div className="resto-table">
                 <div className="resto-table-header">
+                    <span></span>
                     <span>Producto</span>
-                    <span>Categoria</span>
+                    <span>Categoría</span>
                     <span>Precio</span>
                     <span></span>
                 </div>
@@ -309,20 +310,18 @@ export default function RestauranteMenu() {
                 ) : (
                     products.map((prod) => (
                         <div key={prod.id} className="resto-row">
-                            <div className="resto-product">
-                                <div className="resto-thumb">
-                                    {prod.image ? (
-                                        <img src={`http://localhost:8001${prod.image}`} alt={prod.name} />
-                                    ) : (
-                                        <div className="resto-thumb-fallback">
-                                            <i className={`fa ${getFoodIcon(prod.name, categoriesMap.get(prod.category_id))}`} />
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="resto-name">{prod.name}</div>
-                                    <div className="resto-muted">{prod.description || "Sin descripcion"}</div>
-                                </div>
+                            <div className="resto-thumb">
+                                {prod.image ? (
+                                    <img src={`http://localhost:8001${prod.image}`} alt={prod.name} />
+                                ) : (
+                                    <div className="resto-thumb-fallback">
+                                        <i className={`fa ${getFoodIcon(prod.name, categoriesMap.get(prod.category_id))}`} />
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <div className="resto-name">{prod.name}</div>
+                                <div className="resto-muted">{prod.description || "Sin descripción"}</div>
                             </div>
                             <div className="resto-muted">{categoriesMap.get(prod.category_id) || "-"}</div>
                             <div className="resto-price">S/ {Number(prod.price).toFixed(2)}</div>
@@ -387,7 +386,7 @@ export default function RestauranteMenu() {
                 .resto-table-header,
                 .resto-row {
                     display: grid;
-                    grid-template-columns: 2fr 1fr 0.7fr 0.8fr;
+                    grid-template-columns: 60px 1.5fr 1fr 0.7fr 0.8fr;
                     align-items: center;
                     gap: 12px;
                 }
@@ -405,11 +404,6 @@ export default function RestauranteMenu() {
                 }
                 .resto-row:last-child {
                     border-bottom: none;
-                }
-                .resto-product {
-                    display: flex;
-                    gap: 12px;
-                    align-items: center;
                 }
                 .resto-thumb {
                     width: 44px;
