@@ -39,7 +39,7 @@ class UserSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, min_length=6, max_length=128)
     email = serializers.EmailField(required=True)
-    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante'], default='cliente')
+    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante', 'empleado'], default='cliente')
     full_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
     
     # Campos para creación de restaurante
@@ -54,8 +54,6 @@ class UserSerializer(serializers.Serializer):
         """Validar formato de nombre de usuario (no verifica existencia)"""
         if value and not value.strip():
             raise serializers.ValidationError("El nombre de usuario es requerido")
-        if value and len(value) < 3:
-            raise serializers.ValidationError("El nombre de usuario debe tener al menos 3 caracteres")
         if value and len(value) > 150:
             raise serializers.ValidationError("El nombre de usuario no puede tener más de 150 caracteres")
         if value and ' ' in value:
@@ -89,7 +87,7 @@ class UserSerializer(serializers.Serializer):
 
     def validate_role(self, value):
         """Validar rol"""
-        valid_roles = ['cliente', 'restaurante', 'admin']
+        valid_roles = ['cliente', 'restaurante', 'admin', 'empleado']
         if value not in valid_roles:
             raise serializers.ValidationError(f"Rol inválido. Opciones: {', '.join(valid_roles)}")
         return value
@@ -110,10 +108,6 @@ class UserSerializer(serializers.Serializer):
             if not restaurant_name and not restaurante_id:
                 raise serializers.ValidationError({
                     "restaurante_id": "Se requiere el nombre del restaurante o un ID de restaurante existente"
-                })
-            if restaurant_name and len(restaurant_name) < 3:
-                raise serializers.ValidationError({
-                    "restaurant_name": "El nombre del restaurante debe tener al menos 3 caracteres"
                 })
             if restaurant_name and len(restaurant_name) > 100:
                 raise serializers.ValidationError({
@@ -150,14 +144,12 @@ class UserUpdateSerializer(serializers.Serializer):
     
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     email = serializers.EmailField(required=False)
-    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante'], required=False)
+    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante', 'empleado'], required=False)
     full_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     def validate_username(self, value):
         if value and ' ' in value:
             raise serializers.ValidationError("El nombre de usuario no puede contener espacios")
-        if value and len(value) < 3:
-            raise serializers.ValidationError("El nombre de usuario debe tener al menos 3 caracteres")
         if value and len(value) > 150:
             raise serializers.ValidationError("El nombre de usuario no puede tener más de 150 caracteres")
         return value

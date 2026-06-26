@@ -4,48 +4,16 @@ Data Transfer Objects para Usuarios
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-import re
-
-
-def validate_email(email: str) -> bool:
-    """Valida formato de email básico"""
-    if not email:
-        return False
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return bool(re.match(pattern, email))
-
-
-def validate_username(username: str) -> bool:
-    """Valida formato de username"""
-    if not username or len(username) < 3:
-        return False
-    if ' ' in username:
-        return False
-    return True
-
-
-def validate_role(role: str) -> bool:
-    """Valida rol"""
-    return role in ['cliente', 'restaurante', 'admin']
 
 
 @dataclass
 class UserDTO:
-    """DTO básico para usuario"""
+    """DTO básico para usuario - SOLO transfiere datos, SIN validaciones"""
     id: int
     username: str
     email: str
     role: str
     full_name: str
-    
-    def __post_init__(self):
-        """Validaciones automáticas al crear el DTO"""
-        if not validate_username(self.username):
-            raise ValueError(f"Username inválido: '{self.username}'")
-        if not validate_email(self.email):
-            raise ValueError(f"Email inválido: '{self.email}'")
-        if not validate_role(self.role):
-            raise ValueError(f"Rol inválido: '{self.role}'")
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -59,7 +27,7 @@ class UserDTO:
 
 @dataclass
 class UserProfileDTO:
-    """DTO para perfil de usuario (profile view)"""
+    """DTO para perfil de usuario (profile view) - SOLO transfiere datos"""
     id: int
     username: str
     email: str
@@ -68,15 +36,6 @@ class UserProfileDTO:
     restaurant: Optional[Dict[str, Any]]
     date_joined: datetime
     last_login: Optional[datetime]
-    
-    def __post_init__(self):
-        """Validaciones automáticas al crear el DTO"""
-        if not validate_username(self.username):
-            raise ValueError(f"Username inválido: '{self.username}'")
-        if not validate_email(self.email):
-            raise ValueError(f"Email inválido: '{self.email}'")
-        if not validate_role(self.role):
-            raise ValueError(f"Rol inválido: '{self.role}'")
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -93,22 +52,13 @@ class UserProfileDTO:
 
 @dataclass
 class UserListDTO:
-    """DTO para listado de usuarios"""
+    """DTO para listado de usuarios - SOLO transfiere datos"""
     id: int
     username: str
     email: str
     role: str
-    full_name: str  # ← AGREGAR
+    full_name: str
     date_joined: datetime
-    
-    def __post_init__(self):
-        """Validaciones automáticas al crear el DTO"""
-        if not validate_username(self.username):
-            raise ValueError(f"Username inválido: '{self.username}'")
-        if not validate_email(self.email):
-            raise ValueError(f"Email inválido: '{self.email}'")
-        if not validate_role(self.role):
-            raise ValueError(f"Rol inválido: '{self.role}'")
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -116,13 +66,14 @@ class UserListDTO:
             'username': self.username,
             'email': self.email,
             'role': self.role,
-            'full_name': self.full_name,  # ← AGREGAR
+            'full_name': self.full_name,
             'date_joined': self.date_joined.isoformat() if hasattr(self.date_joined, 'isoformat') else str(self.date_joined),
         }
 
+
 @dataclass
 class UserDetailDTO:
-    """DTO para detalles completos de usuario"""
+    """DTO para detalles completos de usuario - SOLO transfiere datos"""
     id: int
     username: str
     email: str
@@ -131,15 +82,6 @@ class UserDetailDTO:
     date_joined: datetime
     last_login: Optional[datetime]
     restaurants: List[Dict[str, Any]]
-    
-    def __post_init__(self):
-        """Validaciones automáticas al crear el DTO"""
-        if not validate_username(self.username):
-            raise ValueError(f"Username inválido: '{self.username}'")
-        if not validate_email(self.email):
-            raise ValueError(f"Email inválido: '{self.email}'")
-        if not validate_role(self.role):
-            raise ValueError(f"Rol inválido: '{self.role}'")
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -156,7 +98,7 @@ class UserDetailDTO:
 
 @dataclass
 class EventDTO:
-    """DTO para eventos"""
+    """DTO para eventos - SOLO transfiere datos"""
     id: int
     type: str
     data: Dict[str, Any]

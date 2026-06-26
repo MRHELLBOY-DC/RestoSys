@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante } from "../../services/api";
+import { getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante, getCurrentUser } from "../../services/api";
 import AdminShell from "../../components/AdminShell";
 import RestauranteModal from "../../components/modals/RestauranteModal";
 
 export default function AdminRestaurantes() {
-    const { loading: authLoading } = useAuth(['admin']);
+    const { loading: authLoading } = useAuth(['admin', 'restaurante']);
     const [restaurantes, setRestaurantes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(null);
@@ -16,6 +16,11 @@ export default function AdminRestaurantes() {
         address: "",
         logo: null
     });
+
+    // Obtener usuario autenticado para determinar permisos
+    const currentUser = getCurrentUser();
+    const isSuperAdmin = currentUser?.role === 'admin';
+    const isAdminRestaurante = currentUser?.role === 'restaurante';
 
     useEffect(() => {
         if (!authLoading) {
@@ -89,6 +94,11 @@ export default function AdminRestaurantes() {
         setForm({ name: "", address: "", logo: null });
     };
 
+    // Filtrar restaurantes si es Admin Restaurante (solo ve su restaurante)
+    const filteredRestaurantes = isAdminRestaurante
+        ? restaurantes.filter(r => r.id === currentUser.restaurant_id)
+        : restaurantes;
+
     if (loading) return (
         <div className="admin-loading">
             <div className="d-flex align-items-center gap-2">
@@ -104,9 +114,11 @@ export default function AdminRestaurantes() {
                 title="Restaurantes"
                 subtitle="Registra, edita o pausa establecimientos en la red."
                 actions={(
-                    <button type="button" className="admin-btn admin-btn-primary" onClick={handleNew}>
-                        + Nuevo restaurante
-                    </button>
+                    isSuperAdmin && (
+                        <button type="button" className="admin-btn admin-btn-primary" onClick={handleNew}>
+                            + Nuevo restaurante
+                        </button>
+                    )
                 )}
             >
                 <div className="admin-grid admin-grid-1">
@@ -114,10 +126,10 @@ export default function AdminRestaurantes() {
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <div>
                                 <h3 className="h5 fw-bold mb-1">Restaurantes registrados</h3>
-                                <small className="admin-subtitle">{restaurantes.length} establecimientos</small>
+                                <small className="admin-subtitle">{filteredRestaurantes.length} establecimientos</small>
                             </div>
                         </div>
-                        {restaurantes.length === 0 ? (
+                        {filteredRestaurantes.length === 0 ? (
                             <div className="admin-surface text-center text-white-50">
                                 <p className="mb-0">No hay restaurantes registrados. Crea el primero.</p>
                             </div>
@@ -134,7 +146,7 @@ export default function AdminRestaurantes() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {restaurantes.map(r => (
+                                        {filteredRestaurantes.map(r => (
                                             <tr key={r.id}>
                                                 <td className="fw-semibold">{r.id}</td>
                                                 <td>
@@ -162,12 +174,16 @@ export default function AdminRestaurantes() {
                                                 <td className="text-white-50">{r.address || "Sin direccion"}</td>
                                                 <td>
                                                     <div className="d-flex gap-2">
-                                                        <button className="admin-btn admin-btn-ghost" onClick={() => {
-                                                            setEditing(r.id);
-                                                            setForm({ name: r.name, address: r.address || "", logo: null });
-                                                            setIsModalOpen(true);
-                                                        }}>Editar</button>
-                                                        <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(r.id, r.name)}>Eliminar</button>
+                                                        {(isSuperAdmin || (isAdminRestaurante && r.id === currentUser.restaurant_id)) && (
+                                                            <button className="admin-btn admin-btn-ghost" onClick={() => {
+                                                                setEditing(r.id);
+                                                                setForm({ name: r.name, address: r.address || "", logo: null });
+                                                                setIsModalOpen(true);
+                                                            }}>Editar</button>
+                                                        )}
+                                                        {isSuperAdmin && (
+                                                            <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(r.id, r.name)}>Eliminar</button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

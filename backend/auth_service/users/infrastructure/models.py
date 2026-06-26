@@ -14,8 +14,9 @@ class User(AbstractUser):
     """
     ROLE_CHOICES = (
         ('cliente', 'Cliente'),
-        ('admin', 'Admin'),
-        ('restaurante', 'Restaurante'),
+        ('admin', 'Super Administrador'),
+        ('restaurante', 'Administrador de Restaurante'),
+        ('empleado', 'Empleado'),
     )
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')

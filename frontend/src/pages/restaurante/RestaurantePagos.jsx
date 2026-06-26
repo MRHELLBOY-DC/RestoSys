@@ -5,6 +5,7 @@ import { listActiveOrders, listOrderHistory } from "../../services/ordersApi";
 import {
     confirmPayment,
     createPayment,
+    getPaymentByOrder,
     getReceiptHtmlUrl,
     listPayments,
     simulateQrPayment
@@ -23,7 +24,7 @@ const getErrorMessage = (err, fallback) => {
 };
 
 export default function RestaurantePagos() {
-    const { user, loading } = useAuth(["restaurante"]);
+    const { user, loading } = useAuth(["empleado"]);
     const [orders, setOrders] = useState([]);
     const [payments, setPayments] = useState([]);
     const [selectedMethodByOrder, setSelectedMethodByOrder] = useState({});
@@ -71,20 +72,36 @@ export default function RestaurantePagos() {
         return payments.find((payment) => payment.orderId === orderId);
     };
 
+    // ✅ HANDLE CREATE PAYMENT - CORREGIDO
     const handleCreatePayment = async (order) => {
         setBusy(true);
         setError("");
         setSuccess("");
         try {
-            const method = selectedMethodByOrder[order.id] || "CASH";
-            await createPayment({
-                orderId: order.id,
-                restaurantId: toUUID(restaurantId),
-                amount: order.totalAmount,
-                method
-            });
-            setSuccess("Pago creado correctamente");
-            await loadData();
+            // 1. Verificar si el pago ya existe
+            let existingPayment;
+            try {
+                existingPayment = await getPaymentByOrder(order.id);
+                // Si existe, mostrar mensaje y recargar
+                setSuccess("Este pedido ya tiene un pago generado");
+                await loadData();
+                return;
+            } catch (err) {
+                // 2. Si no existe (404), CREAR el pago
+                if (err?.status === 404 || err?.response?.status === 404) {
+                    const method = selectedMethodByOrder[order.id] || "CASH";
+                    await createPayment({
+                        orderId: order.id,
+                        restaurantId: toUUID(restaurantId),
+                        amount: order.totalAmount,
+                        method
+                    });
+                    setSuccess("Pago creado correctamente");
+                    await loadData();
+                } else {
+                    throw err;
+                }
+            }
         } catch (err) {
             setError(getErrorMessage(err, "No se pudo crear el pago"));
         } finally {

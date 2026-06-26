@@ -60,11 +60,24 @@ class UserRepository(UserRepositoryPort):
             return None
     
     @staticmethod
-    def list_active(role: Optional[str] = None) -> List[DomainUser]:
-        """Lista usuarios activos, opcionalmente filtrados por rol"""
+    def list_active(role: Optional[str] = None, restaurant_id: Optional[int] = None) -> List[DomainUser]:
+        """
+        Lista usuarios activos, opcionalmente filtrados por rol y/o restaurante
+        """
         queryset = DjangoUser.objects.filter(is_active=True)
+        
+        # Filtrar por rol si se proporciona
         if role:
             queryset = queryset.filter(role=role)
+        
+        # Filtrar por restaurante si se proporciona
+        if restaurant_id:
+            # Obtener IDs de usuarios asociados a este restaurante
+            user_ids = DjangoUserRestaurant.objects.filter(
+                restaurant_id=restaurant_id
+            ).values_list('user_id', flat=True)
+            queryset = queryset.filter(id__in=user_ids)
+        
         return [UserMapper.to_domain(u) for u in queryset]
     
     @staticmethod

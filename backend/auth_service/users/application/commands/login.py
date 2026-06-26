@@ -6,7 +6,7 @@ from users.domain.entities.user import User as DomainUser
 from users.application.ports.user_repository_port import UserRepositoryPort
 from users.application.ports.authentication_port import AuthenticationPort
 from users.application.ports.event_publisher_port import EventPublisherPort
-from users.domain.shared.domain_event import DomainEvent
+from users.domain.shared import DomainEvent
 from users.domain.exceptions import InvalidCredentialsException
 from users.application.queries.get_restaurant_queries import GetUserRestaurantQuery
 from .base_command import Command, CommandHandler

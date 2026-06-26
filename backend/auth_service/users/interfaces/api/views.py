@@ -1,9 +1,3 @@
-"""
-API Views - Capa de Interfaces
-SOLO orquestan: reciben request, llaman a commands/queries, retornan response.
-NO contienen lógica de negocio.
-"""
-
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
@@ -16,6 +10,7 @@ import os
 from datetime import datetime
 from users.infrastructure.container import container
 from users.domain.exceptions import InvalidCredentialsException
+from users.domain.shared.core import BusinessRuleValidationException
 
 # Importar serializers (solo para validación de entrada/salida)
 from users.interfaces.serializers import (
@@ -44,65 +39,31 @@ from users.application.queries import (
     ListRestaurantsQuery,
 )
 
-# Importar mappers (solo para convertir entre Django y dominio)
 from users.infrastructure.mappers.user_mapper import UserMapper
 
 
 # ============================================
-# REGISTER VIEW - USANDO COMMAND BUS
+# REGISTER VIEW
 # ============================================
 class RegisterView(generics.CreateAPIView):
-    """Registro de nuevos usuarios - Usa CommandBus"""
     
     serializer_class = UserSerializer
 
     def create(self, request, *args, **kwargs):
-        # Validar y guardar logo si existe (lógica de presentación SOLO)
-        if 'restaurant_logo' in request.FILES:
-            logo_file = request.FILES['restaurant_logo']
-            
-            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
-            if logo_file.content_type not in allowed_types:
-                return Response(
-                    {'error': 'Formato de imagen no válido. Use JPG, PNG o WEBP'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            if logo_file.size > 2 * 1024 * 1024:
-                return Response(
-                    {'error': 'La imagen no puede superar los 2MB'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            extension = os.path.splitext(logo_file.name)[1]
-            filename = f"restaurantes_logos/logo_{timestamp}_{logo_file.name}"
-            
-            saved_path = default_storage.save(filename, ContentFile(logo_file.read()))
-            logo_url = f"{settings.MEDIA_URL}{saved_path}"
-            
-            request.data._mutable = True
-            request.data['restaurant_logo'] = logo_url
-            request.data._mutable = False
         
-        # Validar serializer (validaciones de formato)
+        # 1. Validar datos (solo email, password, username, full_name)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Obtener datos validados
+        # 2. Obtener datos validados
         validated_data = serializer.validated_data
         password = validated_data.pop('password', '')
         
-        # Extraer datos de restaurante
-        restaurant_name = validated_data.pop('restaurant_name', None)
-        restaurant_address = validated_data.pop('restaurant_address', None)
-        restaurant_logo = validated_data.pop('restaurant_logo', None)
-        
-        # Determinar el rol
-        role = validated_data.get('role', 'cliente')
+        # 3. FORZAR ROL CLIENTE (SEGURIDAD)
+        role = 'cliente'
         
         try:
-            # Crear el comando para el usuario
+            # 4. Crear comando con rol forzado
             command = CreateUserCommand(
                 email=validated_data['email'],
                 password=password,
@@ -112,16 +73,21 @@ class RegisterView(generics.CreateAPIView):
                 actor_username=None
             )
             
-            # Ejecutar comando para crear el usuario
+            # 5. Ejecutar comando
             saved_user = container.execute_command(command)
             
+        except BusinessRuleValidationException as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             return Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Retornar respuesta
+        # 6. Retornar respuesta (SOLO datos de usuario)
         return Response({
             'id': saved_user.id,
             'username': saved_user.username,
@@ -163,6 +129,8 @@ class UpdateUserView(generics.UpdateAPIView):
             django_user.full_name = updated_user.full_name
             django_user.save()
             
+        except BusinessRuleValidationException as e:
+            raise serializers.ValidationError(str(e))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -184,6 +152,8 @@ class DeleteUserView(generics.DestroyAPIView):
         
         try:
             container.execute_command(command)
+        except BusinessRuleValidationException as e:
+            raise serializers.ValidationError(str(e))
         except Exception as e:
             raise serializers.ValidationError(str(e))
 
@@ -221,18 +191,93 @@ def profile(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def users_list(request):
-    """Lista de usuarios (con filtro por rol)"""
+    """Lista de usuarios con filtros según el rol del usuario autenticado"""
     
-    role = request.query_params.get('role')
+    current_user = request.user
+    role_filter = request.query_params.get('role')
     
-    # Usar QueryBus
-    query = ListUsersQuery(role=role)
-    users = container.execute_query(query)
-
-    return Response({
-        'count': len(users),
-        'users': [u.to_dict() for u in users]
-    })
+    # ============================================
+    # CASO 1: ADMIN (Super Admin) - Ve todos los usuarios
+    # ============================================
+    if current_user.role == 'admin':
+        query = ListUsersQuery(role=role_filter)
+        users = container.execute_query(query)
+        return Response({
+            'count': len(users),
+            'users': [u.to_dict() for u in users]
+        })
+    
+    # ============================================
+    # CASO 2: CLIENTE - Solo ve su propio perfil
+    # ============================================
+    if current_user.role == 'cliente':
+        query = GetUserDetailsQuery(user_id=current_user.id)
+        try:
+            user = container.execute_query(query)
+            return Response({
+                'count': 1,
+                'users': [user.to_dict()]
+            })
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    
+    # ============================================
+    # CASO 3: RESTAURANTE (Admin Restaurante) - Ve usuarios de su restaurante
+    # ============================================
+    if current_user.role == 'restaurante':
+        # Obtener el restaurante del usuario
+        restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        restaurant_dto = container.execute_query(restaurant_query)
+        
+        if not restaurant_dto:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Listar usuarios de ese restaurante
+        query = ListUsersQuery(
+            role=role_filter,
+            restaurant_id=restaurant_dto.id
+        )
+        users = container.execute_query(query)
+        
+        return Response({
+            'count': len(users),
+            'users': [u.to_dict() for u in users]
+        })
+    
+    # ============================================
+    # CASO 4: EMPLEADO - Ve usuarios de su restaurante (solo lectura)
+    # ============================================
+    if current_user.role == 'empleado':
+        # Obtener el restaurante del empleado
+        restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        restaurant_dto = container.execute_query(restaurant_query)
+        
+        if not restaurant_dto:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Listar usuarios de ese restaurante (solo lectura, sin filtro de rol adicional)
+        query = ListUsersQuery(
+            restaurant_id=restaurant_dto.id
+        )
+        users = container.execute_query(query)
+        
+        return Response({
+            'count': len(users),
+            'users': [u.to_dict() for u in users]
+        })
+    
+    return Response(
+        {'error': 'No autorizado'},
+        status=status.HTTP_403_FORBIDDEN
+    )
 
 
 # ============================================
@@ -241,17 +286,117 @@ def users_list(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_detail(request, user_id):
-    """Detalle de un usuario específico"""
+    """Detalle de un usuario específico con validación de permisos"""
     
-    # Usar QueryBus
-    query = GetUserDetailsQuery(user_id=user_id)
+    current_user = request.user
+    target_user_id = user_id
     
-    try:
-        user = container.execute_query(query)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    # ============================================
+    # CASO 1: ADMIN (Super Admin) - Puede ver cualquier usuario
+    # ============================================
+    if current_user.role == 'admin':
+        query = GetUserDetailsQuery(user_id=target_user_id)
+        try:
+            user = container.execute_query(query)
+            return Response(user.to_dict())
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
     
-    return Response(user.to_dict())
+    # ============================================
+    # CASO 2: CLIENTE - Solo puede verse a sí mismo
+    # ============================================
+    if current_user.role == 'cliente':
+        if current_user.id != target_user_id:
+            return Response(
+                {'error': 'No tienes permiso para ver este usuario'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        query = GetUserDetailsQuery(user_id=target_user_id)
+        try:
+            user = container.execute_query(query)
+            return Response(user.to_dict())
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    
+    # ============================================
+    # CASO 3: RESTAURANTE (Admin Restaurante) - Solo usuarios de su restaurante
+    # ============================================
+    if current_user.role == 'restaurante':
+        # Obtener el restaurante del usuario actual
+        current_restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        current_restaurant = container.execute_query(current_restaurant_query)
+        
+        if not current_restaurant:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Obtener el restaurante del usuario objetivo
+        target_restaurant_query = GetUserRestaurantQuery(user_id=target_user_id)
+        target_restaurant = container.execute_query(target_restaurant_query)
+        
+        # Si el usuario objetivo no tiene restaurante o es de otro restaurante
+        if not target_restaurant or target_restaurant.id != current_restaurant.id:
+            return Response(
+                {'error': 'Este usuario no pertenece a tu restaurante'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Si pertenece al mismo restaurante, mostrar detalles
+        query = GetUserDetailsQuery(user_id=target_user_id)
+        try:
+            user = container.execute_query(query)
+            return Response(user.to_dict())
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    
+    # ============================================
+    # CASO 4: EMPLEADO - Solo usuarios de su restaurante (solo lectura)
+    # ============================================
+    if current_user.role == 'empleado':
+        # Obtener el restaurante del empleado
+        current_restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        current_restaurant = container.execute_query(current_restaurant_query)
+        
+        if not current_restaurant:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Obtener el restaurante del usuario objetivo
+        target_restaurant_query = GetUserRestaurantQuery(user_id=target_user_id)
+        target_restaurant = container.execute_query(target_restaurant_query)
+        
+        # Si el usuario objetivo no tiene restaurante o es de otro restaurante
+        if not target_restaurant or target_restaurant.id != current_restaurant.id:
+            return Response(
+                {'error': 'Este usuario no pertenece a tu restaurante'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Si pertenece al mismo restaurante, mostrar detalles
+        query = GetUserDetailsQuery(user_id=target_user_id)
+        try:
+            user = container.execute_query(query)
+            return Response(user.to_dict())
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    
+    return Response(
+        {'error': 'No autorizado'},
+        status=status.HTTP_403_FORBIDDEN
+    )
 
 
 # ============================================
@@ -280,7 +425,7 @@ def event_history(request):
 
 
 # ============================================
-# LOGIN - USANDO USE CASE
+# LOGIN 
 # ============================================
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -305,11 +450,17 @@ def login(request):
             {'success': False, 'message': str(e)},
             status=status.HTTP_401_UNAUTHORIZED
         )
+    except BusinessRuleValidationException as e:
+        return Response(
+            {'success': False, 'message': str(e)},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
     except Exception as e:
         return Response(
             {'success': False, 'message': str(e)},
             status=status.HTTP_401_UNAUTHORIZED
         )
+
 
 # ============================================
 # PUBLIC ENDPOINTS
@@ -366,187 +517,491 @@ def admin_restaurantes(request):
             'logo': saved.logo,
         }, status=status.HTTP_201_CREATED)
         
+    except BusinessRuleValidationException as e:
+        return Response({'error': str(e)}, status=400)
     except Exception as e:
         return Response({'error': str(e)}, status=400)
 
 
+# ============================================
+# ADMIN RESTAURANTE DETAIL - USANDO COMMAND BUS
+# ============================================
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 # Añadimos los parsers para manejar multipart/form-data
 def admin_restaurante_detail(request, restaurante_id):
-    """Detalle, actualización y eliminación de restaurante - Usa CommandBus"""
+    """
+    Detalle, actualización y eliminación de restaurante
+    - Super Admin (admin): Puede cualquier restaurante
+    - Admin Restaurante (restaurante): Solo su restaurante (GET, PUT)
+    """
     
-    if request.method == 'GET':
-        query = GetUserRestaurantQuery(user_id=restaurante_id)
-        restaurant_dto = container.execute_query(query)
-        if restaurant_dto is None:
-            return Response({'error': 'Restaurante no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(restaurant_dto.to_dict())
+    current_user = request.user
     
-    if request.method == 'PUT':
-        # 1. Extraemos los datos manualmente (para manejar el logo como archivo)
-        name = request.data.get('name')
-        address = request.data.get('address')
-        logo_file = request.FILES.get('logo') # <--- Captura el archivo si viene
+    # ============================================
+    # CASO 1: SUPER ADMIN - Puede hacer todo
+    # ============================================
+    if current_user.role == 'admin':
+        if request.method == 'GET':
+            query = GetUserRestaurantQuery(user_id=restaurante_id)
+            restaurant_dto = container.execute_query(query)
+            if restaurant_dto is None:
+                return Response({'error': 'Restaurante no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(restaurant_dto.to_dict())
         
-        # 2. Si no hay archivo, usamos el logo que ya viene en el JSON (si lo hay)
-        # o dejamos que el comando decida si mantener el anterior
-        logo = logo_file if logo_file else request.data.get('logo')
+        if request.method == 'PUT':
+            # 1. Extraemos los datos manualmente
+            name = request.data.get('name')
+            address = request.data.get('address')
+            logo_file = request.FILES.get('logo')
+            logo = logo_file if logo_file else request.data.get('logo')
 
-        try:
-            # 3. Creamos el comando con la lógica de logo flexible
-            command = UpdateRestaurantCommand(
-                restaurant_id=restaurante_id,
-                name=name,
-                address=address or '',
-                logo=logo, 
-                actor_username=request.user.username
-            )
-            saved = container.execute_command(command)
-            
-            return Response({
-                'id': saved.id,
-                'name': saved.name,
-                'address': saved.address,
-                'logo': saved.logo,
-            })
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                command = UpdateRestaurantCommand(
+                    restaurant_id=restaurante_id,
+                    name=name,
+                    address=address or '',
+                    logo=logo,
+                    actor_username=request.user.username
+                )
+                saved = container.execute_command(command)
+                
+                return Response({
+                    'id': saved.id,
+                    'name': saved.name,
+                    'address': saved.address,
+                    'logo': saved.logo,
+                })
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.method == 'DELETE':
+            try:
+                command = DeleteRestaurantCommand(
+                    restaurant_id=restaurante_id,
+                    actor_username=request.user.username
+                )
+                container.execute_command(command)
+                return Response({'message': 'Restaurante eliminado'}, status=status.HTTP_204_NO_CONTENT)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
     
-    # DELETE
-    try:
-        command = DeleteRestaurantCommand(
-            restaurant_id=restaurante_id,
-            actor_username=request.user.username
-        )
-        container.execute_command(command)
-        return Response({'message': 'Restaurante eliminado'}, status=status.HTTP_204_NO_CONTENT)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    # ============================================
+    # CASO 2: ADMIN RESTAURANTE - Solo su restaurante (GET, PUT)
+    # ============================================
+    if current_user.role == 'restaurante':
+        # Verificar que el restaurante pertenece al admin
+        user_restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        user_restaurant = container.execute_query(user_restaurant_query)
+        
+        if not user_restaurant:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verificar que el restaurante solicitado es el del admin
+        if user_restaurant.id != restaurante_id:
+            return Response(
+                {'error': 'No tienes permiso para acceder a este restaurante'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if request.method == 'GET':
+            query = GetUserRestaurantQuery(user_id=restaurante_id)
+            restaurant_dto = container.execute_query(query)
+            if restaurant_dto is None:
+                return Response({'error': 'Restaurante no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(restaurant_dto.to_dict())
+        
+        if request.method == 'PUT':
+            name = request.data.get('name')
+            address = request.data.get('address')
+            logo_file = request.FILES.get('logo')
+            logo = logo_file if logo_file else request.data.get('logo')
 
+            try:
+                command = UpdateRestaurantCommand(
+                    restaurant_id=restaurante_id,
+                    name=name,
+                    address=address or '',
+                    logo=logo,
+                    actor_username=request.user.username
+                )
+                saved = container.execute_command(command)
+                
+                return Response({
+                    'id': saved.id,
+                    'name': saved.name,
+                    'address': saved.address,
+                    'logo': saved.logo,
+                })
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # DELETE - Admin Restaurante NO puede eliminar
+        if request.method == 'DELETE':
+            return Response(
+                {'error': 'No tienes permiso para eliminar restaurantes'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+    # ============================================
+    # CASO 3: OTROS ROLES - No autorizados
+    # ============================================
+    return Response(
+        {'error': 'No autorizado'},
+        status=status.HTTP_403_FORBIDDEN
+    )
 
 # ============================================
 # ADMIN USUARIOS - USANDO COMMAND BUS
 # ============================================
 @api_view(['GET', 'POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def admin_usuarios(request):
-    """Administración de usuarios (admin)"""
+    """
+    Administración de usuarios
+    - Super Admin (admin): Puede crear cualquier usuario en cualquier restaurante
+    - Admin Restaurante (restaurante): Solo puede crear usuarios para su restaurante
+    """
     
-    if request.method == 'GET':
-        query = ListUsersQuery()
-        users = container.execute_query(query)
-        serializer = UserReadSerializer(users, many=True)
-        return Response(serializer.data)
+    current_user = request.user
     
-    serializer = UserSerializer(data=request.data)
-    if serializer.is_valid():
-        validated_data = serializer.validated_data
-        password = validated_data.pop('password', '')
+    # ============================================
+    # CASO 1: SUPER ADMIN - Puede hacer todo
+    # ============================================
+    if current_user.role == 'admin':
+        if request.method == 'GET':
+            query = ListUsersQuery()
+            users = container.execute_query(query)
+            serializer = UserReadSerializer(users, many=True)
+            return Response(serializer.data)
         
-        try:
-            # Usar CommandBus para crear usuario
-            command = CreateUserCommand(
-                email=validated_data['email'],
-                password=password,
-                username=validated_data.get('username'),
-                role=validated_data.get('role', 'cliente'),
-                full_name=validated_data.get('full_name', ''),
-                actor_username=request.user.username
+        # POST - Crear usuario (cualquier rol, cualquier restaurante)
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            password = validated_data.pop('password', '')
+            
+            try:
+                command = CreateUserCommand(
+                    email=validated_data['email'],
+                    password=password,
+                    username=validated_data.get('username'),
+                    role=validated_data.get('role', 'cliente'),
+                    full_name=validated_data.get('full_name', ''),
+                    actor_username=request.user.username
+                )
+                saved_user = container.execute_command(command)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+            restaurante_id = request.data.get('restaurante_id')
+            if restaurante_id:
+                assign_command = AssignRestaurantCommand(
+                    user_id=saved_user.id,
+                    restaurant_id=restaurante_id,
+                    actor_username=request.user.username
+                )
+                container.execute_command(assign_command)
+            
+            return Response(UserReadSerializer(saved_user).data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # ============================================
+    # CASO 2: ADMIN RESTAURANTE - Solo su restaurante
+    # ============================================
+    if current_user.role == 'restaurante':
+        # Obtener el restaurante del admin
+        restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        restaurant_dto = container.execute_query(restaurant_query)
+        
+        if not restaurant_dto:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
             )
-            saved_user = container.execute_command(command)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        restaurante_id = request.data.get('restaurante_id')
-        if restaurante_id:
-            # Usar Command para asignar restaurante
+        if request.method == 'GET':
+            # CORREGIDO: Ver TODOS los usuarios de su restaurante (sin filtrar por rol)
+            query = ListUsersQuery(
+                restaurant_id=restaurant_dto.id  # ← SIN role
+            )
+            users = container.execute_query(query)
+            serializer = UserReadSerializer(users, many=True)
+            return Response(serializer.data)
+        
+        # POST - Crear usuario SOLO para su restaurante
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            password = validated_data.pop('password', '')
+            
+            # Validar que el rol no sea admin (Super Admin)
+            role = validated_data.get('role', 'cliente')
+            if role == 'admin':
+                return Response(
+                    {'error': 'No puedes crear usuarios con rol de Super Administrador'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Validar que el restaurante_id enviado coincide con el del admin
+            requested_restaurant_id = request.data.get('restaurante_id')
+            if requested_restaurant_id and int(requested_restaurant_id) != restaurant_dto.id:
+                return Response(
+                    {'error': 'No puedes crear usuarios para otro restaurante'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            try:
+                command = CreateUserCommand(
+                    email=validated_data['email'],
+                    password=password,
+                    username=validated_data.get('username'),
+                    role=role,
+                    full_name=validated_data.get('full_name', ''),
+                    actor_username=request.user.username
+                )
+                saved_user = container.execute_command(command)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Asignar al restaurante del admin
             assign_command = AssignRestaurantCommand(
                 user_id=saved_user.id,
-                restaurant_id=restaurante_id,
+                restaurant_id=restaurant_dto.id,
                 actor_username=request.user.username
             )
             container.execute_command(assign_command)
+            
+            return Response(UserReadSerializer(saved_user).data, status=status.HTTP_201_CREATED)
         
-        return Response(UserReadSerializer(saved_user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    # ============================================
+    # CASO 3: OTROS ROLES - No autorizados
+    # ============================================
+    return Response(
+        {'error': 'No tienes permiso para administrar usuarios'},
+        status=status.HTTP_403_FORBIDDEN
+    )
 
 # ============================================
 # ADMIN USUARIO DETAIL - USANDO COMMAND BUS
 # ============================================
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def admin_usuario_detail(request, usuario_id):
-    """Detalle, actualización y eliminación de usuario (admin)"""
+    """
+    Detalle, actualización y eliminación de usuario
+    - Super Admin (admin): Puede cualquier usuario
+    - Admin Restaurante (restaurante): Solo usuarios de su restaurante
+    """
     
-    if request.method == 'GET':
-        query = GetUserDetailsQuery(user_id=usuario_id)
-        try:
-            user = container.execute_query(query)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
-        serializer = UserReadSerializer(user)
-        return Response(serializer.data)
+    current_user = request.user
     
-    if request.method == 'PUT':
-        query = GetUserDetailsQuery(user_id=usuario_id)
-        try:
-            user = container.execute_query(query)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
-        
-        old_data = {
-            'username': user.username,
-            'email': user.email,
-            'role': user.role,
-        }
-        
-        serializer = UserUpdateSerializer(user, data=request.data)
-        if serializer.is_valid():
+    # ============================================
+    # CASO 1: SUPER ADMIN - Puede hacer todo
+    # ============================================
+    if current_user.role == 'admin':
+        if request.method == 'GET':
+            query = GetUserDetailsQuery(user_id=usuario_id)
             try:
-                command = UpdateUserCommand(
+                user = container.execute_query(query)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            serializer = UserReadSerializer(user)
+            return Response(serializer.data)
+        
+        if request.method == 'PUT':
+            query = GetUserDetailsQuery(user_id=usuario_id)
+            try:
+                user = container.execute_query(query)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = UserUpdateSerializer(user, data=request.data)
+            if serializer.is_valid():
+                try:
+                    command = UpdateUserCommand(
+                        user_id=usuario_id,
+                        username=serializer.validated_data.get('username'),
+                        email=serializer.validated_data.get('email'),
+                        role=serializer.validated_data.get('role'),
+                        full_name=serializer.validated_data.get('full_name'),
+                        actor_username=request.user.username
+                    )
+                    updated_user = container.execute_command(command)
+                except BusinessRuleValidationException as e:
+                    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as e:
+                    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                
+                restaurante_id = request.data.get('restaurante_id')
+                if restaurante_id is not None:
+                    if restaurante_id:
+                        assign_command = AssignRestaurantCommand(
+                            user_id=updated_user.id,
+                            restaurant_id=restaurante_id,
+                            actor_username=request.user.username
+                        )
+                        container.execute_command(assign_command)
+                    else:
+                        unassign_command = UnassignRestaurantCommand(
+                            user_id=updated_user.id,
+                            actor_username=request.user.username
+                        )
+                        container.execute_command(unassign_command)
+                
+                return Response(UserReadSerializer(updated_user).data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.method == 'DELETE':
+            try:
+                command = DeleteUserCommand(
                     user_id=usuario_id,
-                    username=serializer.validated_data.get('username'),
-                    email=serializer.validated_data.get('email'),
-                    role=serializer.validated_data.get('role'),
-                    full_name=serializer.validated_data.get('full_name'),
                     actor_username=request.user.username
                 )
-                updated_user = container.execute_command(command)
+                container.execute_command(command)
+                return Response({'message': 'Usuario eliminado'}, status=status.HTTP_204_NO_CONTENT)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
             except Exception as e:
-                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
-            restaurante_id = request.data.get('restaurante_id')
-            if restaurante_id is not None:
-                if restaurante_id:
-                    assign_command = AssignRestaurantCommand(
-                        user_id=updated_user.id,
-                        restaurant_id=restaurante_id,
-                        actor_username=request.user.username
-                    )
-                    container.execute_command(assign_command)
-                else:
-                    unassign_command = UnassignRestaurantCommand(
-                        user_id=updated_user.id,
-                        actor_username=request.user.username
-                    )
-                    container.execute_command(unassign_command)
-            
-            return Response(UserReadSerializer(updated_user).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
     
-    # DELETE
-    try:
-        command = DeleteUserCommand(
-            user_id=usuario_id,
-            actor_username=request.user.username
-        )
-        container.execute_command(command)
-        return Response({'message': 'Usuario eliminado'}, status=status.HTTP_204_NO_CONTENT)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    # ============================================
+    # CASO 2: ADMIN RESTAURANTE - Solo usuarios de su restaurante
+    # ============================================
+    if current_user.role == 'restaurante':
+        # Obtener el restaurante del admin
+        admin_restaurant_query = GetUserRestaurantQuery(user_id=current_user.id)
+        admin_restaurant = container.execute_query(admin_restaurant_query)
+        
+        if not admin_restaurant:
+            return Response(
+                {'error': 'No tienes un restaurante asignado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Obtener el restaurante del usuario objetivo
+        target_restaurant_query = GetUserRestaurantQuery(user_id=usuario_id)
+        target_restaurant = container.execute_query(target_restaurant_query)
+        
+        # Si el usuario objetivo no tiene restaurante o es de otro restaurante
+        if not target_restaurant or target_restaurant.id != admin_restaurant.id:
+            return Response(
+                {'error': 'Este usuario no pertenece a tu restaurante'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if request.method == 'GET':
+            query = GetUserDetailsQuery(user_id=usuario_id)
+            try:
+                user = container.execute_query(query)
+                return Response(user.to_dict())
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        
+        if request.method == 'PUT':
+            query = GetUserDetailsQuery(user_id=usuario_id)
+            try:
+                user = container.execute_query(query)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = UserUpdateSerializer(user, data=request.data)
+            if serializer.is_valid():
+                # Validar que el rol no sea admin (Super Admin)
+                new_role = serializer.validated_data.get('role')
+                if new_role == 'admin':
+                    return Response(
+                        {'error': 'No puedes asignar rol de Super Administrador'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                
+                try:
+                    command = UpdateUserCommand(
+                        user_id=usuario_id,
+                        username=serializer.validated_data.get('username'),
+                        email=serializer.validated_data.get('email'),
+                        role=new_role,
+                        full_name=serializer.validated_data.get('full_name'),
+                        actor_username=request.user.username
+                    )
+                    updated_user = container.execute_command(command)
+                except BusinessRuleValidationException as e:
+                    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                except Exception as e:
+                    return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # No permitir cambiar de restaurante a un usuario de otro restaurante
+                restaurante_id = request.data.get('restaurante_id')
+                if restaurante_id is not None and int(restaurante_id) != admin_restaurant.id:
+                    return Response(
+                        {'error': 'No puedes mover usuarios a otro restaurante'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                
+                return Response(UserReadSerializer(updated_user).data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if request.method == 'DELETE':
+            # Admin Restaurante puede eliminar usuarios de su restaurante
+            # Verificar que no está eliminando un Super Admin
+            target_user_query = GetUserDetailsQuery(user_id=usuario_id)
+            try:
+                target_user = container.execute_query(target_user_query)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            
+            if target_user.role == 'admin':
+                return Response(
+                    {'error': 'No puedes eliminar un Super Administrador'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Eliminar el usuario
+            try:
+                command = DeleteUserCommand(
+                    user_id=usuario_id,
+                    actor_username=request.user.username
+                )
+                container.execute_command(command)
+                return Response({'message': 'Usuario eliminado'}, status=status.HTTP_204_NO_CONTENT)
+            except BusinessRuleValidationException as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    
+    # ============================================
+    # CASO 3: OTROS ROLES - No autorizados
+    # ============================================
+    return Response(
+        {'error': 'No autorizado'},
+        status=status.HTTP_403_FORBIDDEN
+    )
 
 
 # ============================================
@@ -573,6 +1028,8 @@ def admin_asignar_restaurante(request, usuario_id):
             )
             container.execute_command(command)
             return Response({'message': 'Usuario asignado correctamente'})
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
     
@@ -584,5 +1041,7 @@ def admin_asignar_restaurante(request, usuario_id):
         )
         container.execute_command(command)
         return Response({'message': 'Usuario desasignado de su restaurante'})
+    except BusinessRuleValidationException as e:
+        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)

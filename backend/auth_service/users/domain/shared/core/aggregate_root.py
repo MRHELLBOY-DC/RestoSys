@@ -20,7 +20,7 @@ class AggregateRoot(Entity):
         """Agrega un evento de dominio al agregado"""
         event = DomainEvent(
             event_type=event_type,
-            aggregate_id=str(self.identity),
+            aggregate_id=str(self.identity) if self.identity else None,
             aggregate_type=aggregate_type or self.__class__.__name__,
             data=data,
             occurred_at=datetime.utcnow().isoformat()

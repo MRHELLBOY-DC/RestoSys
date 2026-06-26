@@ -82,6 +82,8 @@ docker-compose logs -f reports
 docker-compose logs --tail=30
 docker-compose logs auth --tail=50
 docker-compose logs menu --tail=50
+docker-compose logs orders --tail=50
+docker-compose logs payments-billing --tail=50
 docker-compose logs -f auth
 docker-compose logs -f menu
 docker-compose logs -f orders

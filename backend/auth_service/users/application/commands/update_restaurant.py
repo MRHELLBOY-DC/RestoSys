@@ -3,7 +3,7 @@ from typing import Optional, Any
 from users.domain.entities.restaurant import Restaurant as DomainRestaurant
 from users.application.ports.restaurant_repository_port import RestaurantRepositoryPort
 from users.application.ports.event_publisher_port import EventPublisherPort
-from users.domain.exceptions import RestaurantNotFoundException, InvalidRestaurantNameException
+from users.domain.exceptions import RestaurantNotFoundException
 from .base_command import Command, CommandHandler
 from django.core.files.uploadedfile import UploadedFile
 
@@ -14,7 +14,7 @@ class UpdateRestaurantCommand(Command):
     restaurant_id: int
     name: Optional[str] = None
     address: Optional[str] = None
-    logo: Optional[Any] = None  # Puede ser un archivo o una URL string
+    logo: Optional[Any] = None  
     actor_username: Optional[str] = None
 
 
@@ -44,23 +44,28 @@ class UpdateRestaurantCommandHandler(CommandHandler):
             'logo': restaurant.logo,
         }
         
-        # 3. Validar nombre (si se proporciona)
-        name_to_update = command.name if command.name is not None else restaurant.name
-        if len(name_to_update.strip()) < 3:
-            raise InvalidRestaurantNameException(name_to_update, "debe tener al menos 3 caracteres")
+        # 3. Actualizar nombre si se proporciona (LA ENTIDAD VALIDA)
+        if command.name is not None:
+            restaurant.update_name(command.name)
         
-        # 4. Llamar al repositorio usando el método especializado en archivos
-        # Delegamos la lógica de persistencia al repo
+        # 4. Actualizar dirección si se proporciona (LA ENTIDAD VALIDA)
+        if command.address is not None:
+            restaurant.update_address(command.address)
+        
+        # 5. Actualizar logo si se proporciona
+        if command.logo is not None:
+            restaurant.update_logo(command.logo)
+        
+        # 6. Llamar al repositorio usando el método especializado en archivos
         saved = self.restaurant_repo.update_with_logo(
             restaurant_id=command.restaurant_id,
-            name=name_to_update,
-            address=command.address if command.address is not None else restaurant.address,
-            logo_file=command.logo,
+            name=restaurant.name,
+            address=restaurant.address,
+            logo_file=command.logo if hasattr(command.logo, 'read') else None,
             actor_username=command.actor_username or ""
         )
         
-        # 5. Publicar evento de actualización
-        # Nota: Aseguramos que la entidad refleje los cambios guardados
+        # 7. Publicar evento de actualización
         saved.record_updated(old_data, command.actor_username)
         events = saved.pull_domain_events()
         for event in events:

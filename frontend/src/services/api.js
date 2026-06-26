@@ -7,6 +7,33 @@ const authClient = createApiClient(AUTH_API);
 const menuClient = createApiClient(MENU_API);
 
 // ============================================
+// INTERCEPTOR PARA MANEJAR ERRORES 403
+// ============================================
+authClient.interceptors.response.use(
+    response => response,
+    error => {
+        // Si es error 403 (Forbidden)
+        if (error.response?.status === 403) {
+            const errorMessage = error.response?.data?.error || 
+                               error.response?.data?.detail || 
+                               'No tienes permiso para realizar esta acción';
+            console.error('🔒 Permiso denegado:', errorMessage);
+            
+            // Crear un error personalizado con el mensaje
+            const customError = new Error(errorMessage);
+            customError.status = 403;
+            customError.data = error.response?.data;
+            
+            // Opcional: Mostrar notificación al usuario (si tienes un sistema de toast)
+            // toast.error(errorMessage);
+            
+            return Promise.reject(customError);
+        }
+        return Promise.reject(error);
+    }
+);
+
+// ============================================
 // AUTH ENDPOINTS (puerto 8000)
 // ============================================
 
@@ -227,7 +254,11 @@ export const getCurrentUser = () => {
     const userStr = localStorage.getItem("user");
     if (!userStr) return null;
     try {
-        return JSON.parse(userStr);
+        const user = JSON.parse(userStr);
+        if (user.role) {
+            user.role = user.role.trim();
+        }
+        return user;
     } catch (e) {
         console.error("Error parsing user:", e);
         return null;
@@ -248,6 +279,11 @@ export const isAdmin = () => {
 export const isRestaurante = () => {
     const user = getCurrentUser();
     return user && user.role === 'restaurante';
+};
+
+export const isEmpleado = () => {
+    const user = getCurrentUser();
+    return user && user.role === 'empleado';
 };
 
 export const isCliente = () => {

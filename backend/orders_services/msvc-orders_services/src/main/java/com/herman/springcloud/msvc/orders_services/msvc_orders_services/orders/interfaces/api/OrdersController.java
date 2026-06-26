@@ -157,13 +157,29 @@ public class OrdersController {
     }
 
     private void authorizeRestaurantAccess(UUID restaurantId, Authentication authentication) {
-        if (!isRole(authentication, "restaurante")) {
+        AuthenticatedUserPrincipal user = authenticatedUser(authentication);
+        String role = user.role();
+        Long userRestaurantId = user.restaurantId();
+        
+        if ("admin".equals(role)) {
             return;
         }
-        Long restaurantNumericId = authenticatedUser(authentication).restaurantId();
-        if (restaurantNumericId == null || !numericIdToUuid(restaurantNumericId).equals(restaurantId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes acceder a pedidos de otro restaurante");
+        
+        if ("cliente".equals(role)) {
+            return;
         }
+        
+        if ("empleado".equals(role) || "restaurante".equals(role)) {
+            if (userRestaurantId == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes restaurante asignado");
+            }
+            if (!numericIdToUuid(userRestaurantId).equals(restaurantId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No puedes acceder a pedidos de otro restaurante");
+            }
+            return;
+        }
+        
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para acceder a pedidos");
     }
 
     private AuthenticatedUserPrincipal authenticatedUser(Authentication authentication) {

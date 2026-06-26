@@ -4,7 +4,7 @@ Entidad de dominio UserRestaurant - PURA
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List, Any, Dict
-from users.domain.shared.aggregate_root import AggregateRoot
+from users.domain.shared import AggregateRoot
 
 
 @dataclass

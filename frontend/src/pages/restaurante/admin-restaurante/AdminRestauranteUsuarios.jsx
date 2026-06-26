@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 import { 
     getAdminUsuarios, 
     getAdminRestaurantes, 
@@ -8,11 +8,11 @@ import {
     deleteAdminUsuario, 
     asignarRestaurante,
     getCurrentUser
-} from "../../services/api";
-import AdminShell from "../../components/AdminShell";
+} from "../../../services/api";
+import AdminShell from "../../../components/AdminShell";
 
-export default function AdminUsuarios() {
-    const { loading: authLoading } = useAuth(['admin']);
+export default function AdminRestauranteUsuarios() {
+    const { loading: authLoading } = useAuth(['restaurante']);
     const [usuarios, setUsuarios] = useState([]);
     const [restaurantes, setRestaurantes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ export default function AdminUsuarios() {
 
     // Obtener usuario autenticado
     const currentUser = getCurrentUser();
-    const isSuperAdmin = currentUser?.role === 'admin';
+    const isAdminRestaurante = currentUser?.role === 'restaurante';
 
     const sanitizeUsername = (value) => {
         if (!value) return "";
@@ -52,10 +52,19 @@ export default function AdminUsuarios() {
 
     const loadData = async () => {
         try {
-            const [usuariosData, restaurantesData] = await Promise.all([
-                getAdminUsuarios(),
-                getAdminRestaurantes()
-            ]);
+            let usuariosData = [];
+            let restaurantesData = [];
+
+            // Admin Restaurante: carga todos los usuarios y filtra localmente
+            usuariosData = await getAdminUsuarios();
+            
+            // Usar el restaurante del usuario autenticado para el select
+            if (currentUser.restaurant_id) {
+                restaurantesData = [{
+                    id: currentUser.restaurant_id,
+                    name: currentUser.restaurant?.name || "Tu restaurante"
+                }];
+            }
 
             setUsuarios(usuariosData);
             setRestaurantes(restaurantesData);
@@ -70,6 +79,9 @@ export default function AdminUsuarios() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Forzar el restaurante_id del admin
+            const restauranteId = currentUser.restaurant_id;
+            
             if (editing) {
                 const updateData = {
                     username: usernameFromName(form.full_name, form.email),
@@ -77,8 +89,8 @@ export default function AdminUsuarios() {
                     email: form.email,
                     role: form.role
                 };
-                if (form.role !== 'cliente' && form.restaurante_id) {
-                    updateData.restaurante_id = form.restaurante_id;
+                if (form.role !== 'cliente' && restauranteId) {
+                    updateData.restaurante_id = restauranteId;
                 }
                 await updateAdminUsuario(editing, updateData);
             } else {
@@ -89,8 +101,8 @@ export default function AdminUsuarios() {
                     password: form.password,
                     role: form.role,
                 };
-                if (form.role !== 'cliente' && form.restaurante_id) {
-                    createData.restaurante_id = form.restaurante_id;
+                if (form.role !== 'cliente' && restauranteId) {
+                    createData.restaurante_id = restauranteId;
                 }
                 await createAdminUsuario(createData);
             }
@@ -148,6 +160,31 @@ export default function AdminUsuarios() {
         }
     };
 
+    // ✅ FILTRO - Solo muestra usuarios de su restaurante
+    const filteredUsuarios = usuarios.filter(u => {
+        // Si es el propio Admin Restaurante, siempre mostrar
+        if (u.id === currentUser.id) {
+            return true;
+        }
+        
+        // Si tiene restaurant_id, verificar que coincida
+        if (u.restaurant_id) {
+            return u.restaurant_id === currentUser.restaurant_id;
+        }
+        
+        // Si tiene restaurant anidado, verificar que coincida
+        if (u.restaurant?.id) {
+            return u.restaurant.id === currentUser.restaurant_id;
+        }
+        
+        // Si es empleado o cliente, mostrarlo (asumimos que es de su restaurante)
+        if (u.role === 'empleado' || u.role === 'cliente') {
+            return true;
+        }
+        
+        return false;
+    });
+
     if (loading) return (
         <div className="admin-loading">
             <div className="d-flex align-items-center gap-2">
@@ -160,7 +197,7 @@ export default function AdminUsuarios() {
     return (
         <AdminShell
             title="Usuarios"
-            subtitle="Control de roles y cuentas de la plataforma."
+            subtitle="Control de roles y cuentas de tu restaurante."
             actions={(
                 <button
                     type="button"
@@ -172,7 +209,7 @@ export default function AdminUsuarios() {
                             email: "", 
                             password: "", 
                             role: "cliente", 
-                            restaurante_id: ""
+                            restaurante_id: currentUser.restaurant_id
                         });
                     }}
                 >
@@ -228,8 +265,6 @@ export default function AdminUsuarios() {
                             >
                                 <option value="cliente" className="bg-dark text-white">Cliente</option>
                                 <option value="empleado" className="bg-dark text-white">Empleado</option>
-                                <option value="restaurante" className="bg-dark text-white">Administrador de Restaurante</option>
-                                <option value="admin" className="bg-dark text-white">Super Administrador</option>
                             </select>
                         </div>
 
@@ -241,10 +276,9 @@ export default function AdminUsuarios() {
                                     value={form.restaurante_id}
                                     onChange={e => setForm({...form, restaurante_id: e.target.value})}
                                 >
-                                    <option value="" className="bg-dark text-white">Sin restaurante asignado</option>
-                                    {restaurantes.map(r => (
-                                        <option key={r.id} value={r.id} className="bg-dark text-white">{r.name}</option>
-                                    ))}
+                                    <option value={currentUser.restaurant_id} className="bg-dark text-white">
+                                        {currentUser.restaurant?.name || "Tu restaurante"}
+                                    </option>
                                 </select>
                             </div>
                         )}
@@ -273,7 +307,7 @@ export default function AdminUsuarios() {
                     <div className="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <h3 className="h5 fw-bold mb-1">Usuarios registrados</h3>
-                            <small className="admin-subtitle">{usuarios.length} cuentas activas</small>
+                            <small className="admin-subtitle">{filteredUsuarios.length} cuentas activas</small>
                         </div>
                     </div>
                     <div className="table-responsive">
@@ -287,7 +321,7 @@ export default function AdminUsuarios() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {usuarios.map(u => (
+                                {filteredUsuarios.map(u => (
                                     <tr key={u.id}>
                                         <td>
                                             <div className="d-flex align-items-center gap-3">
@@ -337,7 +371,10 @@ export default function AdminUsuarios() {
                                                         restaurante_id: u.restaurant?.id || u.restaurant_id || ""
                                                     });
                                                 }}>Editar</button>
-                                                <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(u.id, u.username)}>Eliminar</button>
+                                                {/* Admin Restaurante puede eliminar usuarios (excepto Super Admin) */}
+                                                {u.role !== 'admin' && (
+                                                    <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(u.id, u.username)}>Eliminar</button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

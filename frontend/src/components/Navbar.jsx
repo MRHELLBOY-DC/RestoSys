@@ -9,7 +9,7 @@ export default function Navbar() {
     const getDashboardPath = () => {
         if (!user) return "/";
         if (user.role === "admin") return "/admin/dashboard";
-        if (user.role === "restaurante") return "/restaurante/dashboard";
+        if (user.role === "restaurante" || user.role === "empleado") return "/restaurante/dashboard";
         return "/cliente/dashboard";
     };
 
@@ -72,7 +72,7 @@ export default function Navbar() {
                 .landing-nav .nav-link:hover {
                     color: #f0554d;
                 }
-.landing-cta {
+                .landing-cta {
                     background: linear-gradient(135deg, #f0554d 0%, #d73a35 100%);
                     border: none;
                 }

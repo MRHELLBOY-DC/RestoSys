@@ -3,8 +3,8 @@ from typing import Optional, Any
 from users.domain.entities.restaurant import Restaurant as DomainRestaurant
 from users.application.ports.restaurant_repository_port import RestaurantRepositoryPort
 from users.application.ports.event_publisher_port import EventPublisherPort
-from users.domain.exceptions import InvalidRestaurantNameException
 from .base_command import Command, CommandHandler
+
 
 @dataclass
 class CreateRestaurantCommand(Command):
@@ -12,6 +12,7 @@ class CreateRestaurantCommand(Command):
     address: str
     logo: Optional[Any] = None  # Permitimos archivo o string
     actor_username: Optional[str] = None
+
 
 class CreateRestaurantCommandHandler(CommandHandler):
     
@@ -25,12 +26,8 @@ class CreateRestaurantCommandHandler(CommandHandler):
     
     def handle(self, command: CreateRestaurantCommand) -> DomainRestaurant:
         
-        # 1. Validación de negocio
-        if not command.name or len(command.name.strip()) < 3:
-            raise InvalidRestaurantNameException(command.name, "debe tener al menos 3 caracteres")
-        
-        # 2. Selección del método de persistencia
-        # Si 'logo' tiene método 'read', asumimos que es un archivo subido (UploadedFile)
+        # 1. Selección del método de persistencia
+
         is_file = hasattr(command.logo, 'read')
         
         if is_file:
@@ -41,16 +38,17 @@ class CreateRestaurantCommandHandler(CommandHandler):
                 actor_username=command.actor_username
             )
         else:
-            # Flujo para URL string o None
+
             restaurant = DomainRestaurant(
                 id=None, 
                 name=command.name, 
                 address=command.address, 
                 logo=command.logo
             )
+
             saved = self.restaurant_repo.save(restaurant)
         
-        # 3. Publicación de eventos de dominio
+        # 2. Publicación de eventos de dominio
         saved.record_created(command.actor_username)
         events = saved.pull_domain_events()
         

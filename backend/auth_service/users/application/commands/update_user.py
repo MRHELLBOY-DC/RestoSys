@@ -44,16 +44,18 @@ class UpdateUserCommandHandler(CommandHandler):
             'role': existing_user.role,
         }
         
-        # 3. Validar unicidad si cambia email
+        # 3. Validar unicidad si cambia email (regla que necesita repositorio)
         if command.email and command.email != existing_user.email:
             if self.user_repo.get_by_email(command.email):
                 raise UserAlreadyExistsException("email", command.email)
+
             existing_user.email = command.email
         
-        # 4. Validar unicidad si cambia username
+        # 4. Validar unicidad si cambia username (regla que necesita repositorio)
         if command.username and command.username != existing_user.username:
             if self.user_repo.get_by_username(command.username):
                 raise UserAlreadyExistsException("username", command.username)
+
             existing_user.username = command.username
         
         # 5. Actualizar otros campos
@@ -61,6 +63,8 @@ class UpdateUserCommandHandler(CommandHandler):
             existing_user.role = command.role
         if command.full_name is not None:
             existing_user.full_name = command.full_name
+
+        existing_user._validate()
         
         # 6. Guardar cambios
         saved_user = self.user_repo.save(existing_user)

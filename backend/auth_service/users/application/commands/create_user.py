@@ -36,7 +36,7 @@ class CreateUserCommandHandler(CommandHandler):
     def handle(self, command: CreateUserCommand) -> DomainUser:
         """Execute the command - creates a new user"""
         
-        # 1. Validar unicidad
+        # 1. Validar unicidad (regla que necesita repositorio)
         if self.user_repo.get_by_email(command.email):
             raise UserAlreadyExistsException("email", command.email)
         
@@ -51,7 +51,7 @@ class CreateUserCommandHandler(CommandHandler):
         # 2. Hashear contraseña
         hashed_password = self.hashing_service.hash(command.password)
         
-        # 3. Crear entidad de dominio
+        # 3. Crear entidad de dominio (LA ENTIDAD VALIDA SUS REGLAS)
         domain_user = DomainUser(
             id=None,
             username=username,

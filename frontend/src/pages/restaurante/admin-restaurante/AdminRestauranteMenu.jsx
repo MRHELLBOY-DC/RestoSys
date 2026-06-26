@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars, no-undef */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../../hooks/useAuth";
 import { 
     getProducts, 
     createProduct,
@@ -12,11 +12,11 @@ import {
     updateCategory, 
     deleteCategory,
     getOptions,
-} from "../../services/menuApi";
-import RestauranteShell from "../../components/RestauranteShell";
-import { CategoryModal } from "../../components/modals/restaurantModals/CategoryModal";
-import { ProductModal } from "../../components/modals/restaurantModals/ProductModal";
-import { ExtrasModal } from "../../components/modals/restaurantModals/ExtrasModal";
+} from "../../../services/menuApi";
+import AdminShell from "../../../components/AdminShell";
+import { CategoryModal } from "../../../components/modals/restaurantModals/CategoryModal";
+import { ProductModal } from "../../../components/modals/restaurantModals/ProductModal";
+import { ExtrasModal } from "../../../components/modals/restaurantModals/ExtrasModal";
 
 const getFoodIcon = (name = '', category = '') => {
     const t = `${name} ${category}`.toLowerCase();
@@ -37,9 +37,8 @@ const getFoodIcon = (name = '', category = '') => {
     return 'fa-utensils';
 };
 
-// Componente principal
-export default function RestauranteMenu() {
-    const { user, loading } = useAuth(['empleado']);
+export default function AdminRestauranteMenu() {
+    const { user, loading } = useAuth(['restaurante']);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const [options, setOptions] = useState([]);
@@ -266,12 +265,12 @@ export default function RestauranteMenu() {
 
     if (loading || loadingData) {
         return (
-            <RestauranteShell title="Gestion de menu" subtitle="Cargando gestion de menu...">
+            <AdminShell title="Gestion de menu" subtitle="Cargando gestion de menu...">
                 <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
                     <div className="spinner-border text-light me-2" role="status"></div>
                     <p className="mb-0 fw-bold">Cargando gestion de menu...</p>
                 </div>
-            </RestauranteShell>
+            </AdminShell>
         );
     }
 
@@ -283,7 +282,7 @@ export default function RestauranteMenu() {
     }, new Map());
 
     return (
-        <RestauranteShell
+        <AdminShell
             title="Gestion de menu"
             subtitle={`${products.length} productos · ${categories.length} categorias`}
             actions={
@@ -587,6 +586,6 @@ export default function RestauranteMenu() {
                 }}
                 adminGradient={adminGradient}
             />
-        </RestauranteShell>
+        </AdminShell>
     );
 }

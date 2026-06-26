@@ -13,6 +13,7 @@ from .base_query import Query, QueryHandler
 class ListUsersQuery(Query):
     """Query to list users"""
     role: Optional[str] = None
+    restaurant_id: Optional[int] = None
 
 
 class ListUsersQueryHandler(QueryHandler):
@@ -23,7 +24,7 @@ class ListUsersQueryHandler(QueryHandler):
     
     def handle(self, query: ListUsersQuery) -> List[UserListDTO]:
         """Execute the query"""
-        users = self.user_repo.list_active(query.role)
+        users = self.user_repo.list_active(query.role, query.restaurant_id)
         
         return [
             UserListDTO(

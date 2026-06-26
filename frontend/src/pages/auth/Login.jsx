@@ -15,7 +15,8 @@ export default function Login() {
 
         if (result.success) {
             if (result.user.role === 'admin') navigate("/admin/dashboard");
-            else if (result.user.role === 'restaurante') navigate("/restaurante/dashboard");
+            else if (result.user.role === 'restaurante') navigate("/admin/dashboard");  // ← Admin Restaurante al panel ADMIN
+            else if (result.user.role === 'empleado') navigate("/restaurante/dashboard");
             else navigate("/cliente/dashboard");
         } else {
             setError(result.message || "Error en login");

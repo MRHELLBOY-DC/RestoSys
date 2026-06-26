@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import AdminShell from "../../components/AdminShell";
-import { useAuth } from "../../hooks/useAuth";
+import AdminShell from "../../../components/AdminShell";
+import { useAuth } from "../../../hooks/useAuth";
 
-export default function AdminDashboard() {
-    const { user, loading } = useAuth(['admin']);
+export default function AdminRestauranteDashboard() {
+    const { user, loading } = useAuth(['restaurante']);
 
     if (loading) {
         return (
@@ -21,43 +21,39 @@ export default function AdminDashboard() {
     if (!user) return null;
 
     const displayName = user.full_name?.trim() || user.username || user.email || "";
+    const restaurantName = user.restaurant?.name || "Tu restaurante";
 
     const quickActions = [
         {
-            title: "Restaurantes",
-            description: "Registra, edita o pausa establecimientos de la red.",
-            action: "Gestionar",
-            to: "/admin/restaurantes",
-        },
-        {
             title: "Usuarios",
-            description: "Control de roles y cuentas de duenos y staff.",
+            description: "Control de roles y cuentas de tu restaurante.",
             action: "Gestionar",
-            to: "/admin/usuarios",
+            to: "/admin-restaurante/usuarios",
         },
         {
             title: "Reportes",
-            description: "Visualiza estadisticas y rendimiento global.",
+            description: "Visualiza estadisticas y rendimiento de tu restaurante.",
             action: "Ver reportes",
-            to: "/admin/reportes",
+            to: "/admin-restaurante/reportes",
         },
         {
-            title: "Auditoria",
-            description: "Registro de acciones y eventos de la plataforma.",
-            action: "Ver auditoria",
-            to: "/admin/auditoria",
+            title: "Pedidos",
+            description: "Supervisa los pedidos en tiempo real.",
+            action: "Supervisar",
+            to: "/admin-restaurante/pedidos",
         },
+        {
+            title: "Menú",
+            description: "Gestiona productos y categorías de tu restaurante.",
+            action: "Gestionar",
+            to: "/admin-restaurante/menu",
+        }
     ];
 
     return (
         <AdminShell
             title={`Bienvenido de vuelta, ${displayName}`}
-            subtitle="Gestiona toda la plataforma MenuRojo desde un solo lugar."
-            actions={(
-                <Link to="/admin/restaurantes" className="admin-btn admin-btn-primary text-decoration-none">
-                    + Alta de restaurante
-                </Link>
-            )}
+            subtitle={`Gestiona tu restaurante "${restaurantName}" desde un solo lugar.`}
         >
             <section className="admin-grid admin-grid-4">
                 {quickActions.map((item) => (
@@ -72,7 +68,6 @@ export default function AdminDashboard() {
                     </div>
                 ))}
             </section>
-
         </AdminShell>
     );
 }

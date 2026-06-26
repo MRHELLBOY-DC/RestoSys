@@ -25,7 +25,9 @@ export const useAuth = (allowedRoles = []) => {
                 if (currentUser.role === 'admin') {
                     navigate("/admin/dashboard");
                 } else if (currentUser.role === 'restaurante') {
-                    navigate("/restaurante/dashboard");
+                    navigate("/admin-restaurante/dashboard");  // ← Admin Restaurante a su panel
+                } else if (currentUser.role === 'empleado') {
+                    navigate("/restaurante/dashboard");  // ← Empleado al panel RESTAURANTE
                 } else {
                     navigate("/cliente/dashboard");
                 }

@@ -4,7 +4,7 @@ Entidad de dominio Restaurant - PURA
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List, Any, Dict
-from users.domain.shared.aggregate_root import AggregateRoot
+from users.domain.shared import AggregateRoot
 
 
 @dataclass
@@ -19,6 +19,20 @@ class Restaurant(AggregateRoot):
     def __post_init__(self):
         """Inicializa la lista de eventos después de la creación"""
         self._domain_events = []
+        self._validate()
+    
+    def _validate(self) -> None:
+        """
+        Valida las reglas de negocio del Restaurant.
+        Estas validaciones se ejecutan automáticamente al crear o reconstituir un Restaurant.
+        """
+        from users.domain.shared.rules import (
+            StringNotNullOrEmptyRule,
+            RestaurantNameValidRule
+        )
+        
+        self._check_rule(RestaurantNameValidRule(self.name))
+        self._check_rule(StringNotNullOrEmptyRule(self.address, "La dirección del restaurante"))
     
     @property
     def identity(self) -> Optional[int]:
@@ -26,6 +40,38 @@ class Restaurant(AggregateRoot):
     
     def __str__(self) -> str:
         return self.name
+    
+    # ========== MÉTODOS DE COMPORTAMIENTO (NUEVOS) ==========
+    
+    def update_name(self, new_name: str) -> None:
+        """
+        Actualiza el nombre del restaurante con validación de negocio.
+        """
+        from users.domain.shared.rules import RestaurantNameValidRule
+        
+        self._check_rule(RestaurantNameValidRule(new_name))
+        old_data = {'name': self.name}
+        self.name = new_name.strip()
+        self.record_updated(old_data, {'name': self.name})
+    
+    def update_address(self, new_address: str) -> None:
+        """
+        Actualiza la dirección del restaurante con validación de negocio.
+        """
+        from users.domain.shared.rules import StringNotNullOrEmptyRule
+        
+        self._check_rule(StringNotNullOrEmptyRule(new_address, "La dirección del restaurante"))
+        old_data = {'address': self.address}
+        self.address = new_address.strip()
+        self.record_updated(old_data, {'address': self.address})
+    
+    def update_logo(self, new_logo: Optional[str]) -> None:
+        """
+        Actualiza el logo del restaurante.
+        """
+        old_data = {'logo': self.logo}
+        self.logo = new_logo
+        self.record_updated(old_data, {'logo': self.logo})
     
     # ========== MÉTODOS DE EVENTOS DE DOMINIO ==========
     

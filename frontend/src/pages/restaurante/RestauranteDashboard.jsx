@@ -4,9 +4,11 @@ import { useAuth } from "../../hooks/useAuth";
 import RestauranteShell from "../../components/RestauranteShell";
 
 export default function RestauranteDashboard() {
-    const { user, loading } = useAuth(['restaurante']);
+    const { user, loading } = useAuth(['empleado']);
     const navigate = useNavigate();
-    
+
+    // Determinar si es Admin Restaurante para mostrar opciones adicionales
+    const isAdminRestaurante = user?.role === 'restaurante';
 
     if (loading) {
         return (
@@ -26,6 +28,7 @@ export default function RestauranteDashboard() {
             title="Panel del restaurante"
             subtitle={user.restaurant?.name || "Establecimiento no asignado"}
         >
+
             {user.restaurant?.id && (
                 <div className="resto-dashboard-card">
                     <div className="resto-qr">
@@ -47,22 +50,31 @@ export default function RestauranteDashboard() {
             )}
 
             <div className="resto-dashboard-grid">
-                <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/menu")}>
-                    <div className="resto-tile-title">Gestion de productos</div>
-                    <div className="resto-tile-text">Actualiza menu, precios y categorias.</div>
-                </button>
+                {/* ✅ Gestión de productos - SOLO visible para Admin Restaurante */}
+                {isAdminRestaurante && (
+                    <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/menu")}>
+                        <div className="resto-tile-title">Gestion de productos</div>
+                        <div className="resto-tile-text">Actualiza menu, precios y categorias.</div>
+                    </button>
+                )}
+                
                 <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/pedidos")}>
                     <div className="resto-tile-title">Pedidos activos</div>
                     <div className="resto-tile-text">Monitorea y despacha ordenes.</div>
                 </button>
+                
                 <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/pagos")}>
                     <div className="resto-tile-title">Pagos y facturacion</div>
                     <div className="resto-tile-text">Pagos en caja, QR y comprobantes.</div>
                 </button>
-                <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/reportes")}>
-                    <div className="resto-tile-title">Reportes</div>
-                    <div className="resto-tile-text">Metricas de rendimiento y crecimiento.</div>
-                </button>
+                
+                {/* ✅ Reportes - SOLO visible para Admin Restaurante */}
+                {isAdminRestaurante && (
+                    <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/reportes")}>
+                        <div className="resto-tile-title">Reportes</div>
+                        <div className="resto-tile-text">Metricas de rendimiento y crecimiento.</div>
+                    </button>
+                )}
             </div>
 
             <style>{`
@@ -107,6 +119,7 @@ export default function RestauranteDashboard() {
                     text-align: left;
                     color: #fff;
                     transition: transform 0.2s ease, border 0.2s ease;
+                    position: relative;
                 }
                 .resto-dashboard-tile:hover {
                     transform: translateY(-4px);

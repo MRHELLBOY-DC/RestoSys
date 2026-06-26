@@ -5,14 +5,21 @@ import { getCurrentUser } from './services/api';
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 
-// Admin
+// Admin (Super Admin)
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminRestaurantes from "./pages/admin/AdminRestaurantes";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminReportes from "./pages/admin/AdminReportes";
 import AdminAuditoria from "./pages/admin/AdminAuditoria";
 
-// Restaurante
+// Admin Restaurante (dentro de carpeta restaurante/admin-restaurante)
+import AdminRestauranteDashboard from "./pages/restaurante/admin-restaurante/AdminRestauranteDashboard";
+import AdminRestauranteUsuarios from "./pages/restaurante/admin-restaurante/AdminRestauranteUsuarios";  // ← NUEVO
+import AdminRestauranteReportes from "./pages/restaurante/admin-restaurante/AdminRestauranteReportes";
+import AdminRestaurantePedidos from "./pages/restaurante/admin-restaurante/AdminRestaurantePedidos";
+import AdminRestauranteMenu from "./pages/restaurante/admin-restaurante/AdminRestauranteMenu";  // ← NUEVO
+
+// Restaurante (Empleado)
 import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
 import RestauranteMenu from "./pages/restaurante/RestauranteMenu";
 import RestaurantePedidos from "./pages/restaurante/RestaurantePedidos";
@@ -24,7 +31,7 @@ import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import Menu from "./pages/cliente/Menu";
 import Carrito from "./pages/cliente/Carrito";
 import MisPedidos from "./pages/cliente/MisPedidos";
-import RestauranteMenuPage from "./pages/cliente/RestauranteMenuPage"; // ✅ NUEVA IMPORTACIÓN
+import RestauranteMenuPage from "./pages/cliente/RestauranteMenuPage";
 
 // Shared
 import Home from "./pages/shared/Home";
@@ -39,9 +46,9 @@ function ProtectedRoute({ children, allowedRoles }) {
     }
     
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-        console.log(`Rol ${user.role} no permitido`);
         if (user.role === 'admin') return <Navigate to="/admin/dashboard" />;
-        if (user.role === 'restaurante') return <Navigate to="/restaurante/dashboard" />;
+        if (user.role === 'restaurante') return <Navigate to="/admin-restaurante/dashboard" />;
+        if (user.role === 'empleado') return <Navigate to="/restaurante/dashboard" />;
         return <Navigate to="/cliente/dashboard" />;
     }
     
@@ -51,17 +58,16 @@ function ProtectedRoute({ children, allowedRoles }) {
 function App() {
     return (
         <Routes>
-            {/* Ruta pública - Home */}
             <Route path="/" element={<Home />} />
 
-            {/* Auth - Rutas públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            {/* Página pública de restaurante (sin autenticación) */}
             <Route path="/restaurante/:id/menu" element={<RestauranteMenuPage />} />
             
-            {/* Cliente */}
+            {/* ============================================ */}
+            {/* CLIENTE */}
+            {/* ============================================ */}
             <Route path="/cliente/dashboard" element={
                 <ProtectedRoute allowedRoles={['cliente']}>
                     <ClienteDashboard />
@@ -83,7 +89,9 @@ function App() {
                 </ProtectedRoute>
             } />
             
-            {/* Admin */}
+            {/* ============================================ */}
+            {/* SUPER ADMIN - Solo admin */}
+            {/* ============================================ */}
             <Route path="/admin/dashboard" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                     <AdminDashboard />
@@ -110,29 +118,60 @@ function App() {
                 </ProtectedRoute>
             } />
             
-            {/* Restaurante */}
-            <Route path="/restaurante/dashboard" element={
+            {/* ============================================ */}
+            {/* ADMIN RESTAURANTE - Solo restaurante */}
+            {/* ============================================ */}
+            <Route path="/admin-restaurante/dashboard" element={
                 <ProtectedRoute allowedRoles={['restaurante']}>
+                    <AdminRestauranteDashboard />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin-restaurante/usuarios" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <AdminRestauranteUsuarios /> 
+                </ProtectedRoute>
+            } />
+            <Route path="/admin-restaurante/reportes" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <AdminRestauranteReportes />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin-restaurante/pedidos" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <AdminRestaurantePedidos />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin-restaurante/menu" element={
+                <ProtectedRoute allowedRoles={['restaurante']}>
+                    <AdminRestauranteMenu /> 
+                </ProtectedRoute>
+            } />
+            
+            {/* ============================================ */}
+            {/* EMPLEADO - Solo empleado */}
+            {/* ============================================ */}
+            <Route path="/restaurante/dashboard" element={
+                <ProtectedRoute allowedRoles={['empleado']}>
                     <RestauranteDashboard />
                 </ProtectedRoute>
             } />
             <Route path="/restaurante/menu" element={
-                <ProtectedRoute allowedRoles={['restaurante']}>
+                <ProtectedRoute allowedRoles={['empleado']}>
                     <RestauranteMenu />
                 </ProtectedRoute>
             } />
             <Route path="/restaurante/pedidos" element={
-                <ProtectedRoute allowedRoles={['restaurante']}>
+                <ProtectedRoute allowedRoles={['empleado']}>
                     <RestaurantePedidos />
                 </ProtectedRoute>
             } />
             <Route path="/restaurante/pagos" element={
-                <ProtectedRoute allowedRoles={['restaurante']}>
+                <ProtectedRoute allowedRoles={['empleado']}>
                     <RestaurantePagos />
                 </ProtectedRoute>
             } />
             <Route path="/restaurante/reportes" element={
-                <ProtectedRoute allowedRoles={['restaurante']}>
+                <ProtectedRoute allowedRoles={['empleado']}>
                     <RestauranteReportes />
                 </ProtectedRoute>
             } />

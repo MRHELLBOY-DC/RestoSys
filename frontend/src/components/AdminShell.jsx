@@ -3,14 +3,6 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "../services/api";
 import "../styles/admin-ui.css";
 
-const navItems = [
-    { to: "/admin/dashboard", label: "Dashboard", meta: "Inicio" },
-    { to: "/admin/restaurantes", label: "Restaurantes", meta: "Red" },
-    { to: "/admin/usuarios", label: "Usuarios", meta: "Roles" },
-    { to: "/admin/reportes", label: "Reportes", meta: "Global" },
-    { to: "/admin/auditoria", label: "Auditoria", meta: "Logs" }
-];
-
 export default function AdminShell({ title, subtitle, actions, children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const navigate = useNavigate();
@@ -18,6 +10,33 @@ export default function AdminShell({ title, subtitle, actions, children }) {
     const displayName = user?.full_name?.trim() || user?.username || user?.email || "Admin";
     const handleLabel = user?.email || user?.username || "";
     const initials = displayName.slice(0, 2).toUpperCase();
+
+    const isSuperAdmin = user?.role === 'admin';
+    const isAdminRestaurante = user?.role === 'restaurante';
+
+    // Menú dinámico según el rol
+    const navItems = isSuperAdmin ? [
+        { to: "/admin/dashboard", label: "Dashboard", meta: "Inicio" },
+        { to: "/admin/restaurantes", label: "Restaurantes", meta: "Red" },
+        { to: "/admin/usuarios", label: "Usuarios", meta: "Roles" },
+        { to: "/admin/reportes", label: "Reportes", meta: "Global" },
+        { to: "/admin/auditoria", label: "Auditoria", meta: "Logs" }
+    ] : isAdminRestaurante ? [
+        { to: "/admin-restaurante/dashboard", label: "Dashboard", meta: "Inicio" },
+        { to: "/admin-restaurante/usuarios", label: "Usuarios", meta: "Roles" },
+        { to: "/admin-restaurante/reportes", label: "Reportes", meta: "Global" },
+        { to: "/admin-restaurante/pedidos", label: "Pedidos", meta: "Supervisión" },
+        { to: "/admin-restaurante/menu", label: "Menú", meta: "Productos" }
+    ] : [];
+
+    // Determinar la ruta base del brand según el rol
+    const brandPath = isSuperAdmin ? "/admin/dashboard" : 
+                      isAdminRestaurante ? "/admin-restaurante/dashboard" : 
+                      "/admin/dashboard";
+
+    const brandSubtitle = isSuperAdmin ? "Admin Console" : 
+                          isAdminRestaurante ? "Restaurante Console" : 
+                          "Admin Console";
 
     const handleLogout = () => {
         logout();
@@ -27,11 +46,11 @@ export default function AdminShell({ title, subtitle, actions, children }) {
     return (
         <div className={`admin-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
             <aside className="admin-sidebar">
-                <Link to="/admin/dashboard" className="admin-brand text-decoration-none">
+                <Link to={brandPath} className="admin-brand text-decoration-none">
                     <div className="admin-brand-icon">RS</div>
                     <div className="admin-brand-text">
                         <p className="admin-brand-title mb-0">RestoSys</p>
-                        <span className="admin-brand-subtitle">Admin Console</span>
+                        <span className="admin-brand-subtitle">{brandSubtitle}</span>
                     </div>
                 </Link>
 

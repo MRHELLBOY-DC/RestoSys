@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import AdminShell from "../../components/AdminShell";
-//import RestauranteShell from "../../components/RestauranteShell";
-import { useAuth } from "../../hooks/useAuth";
-import { getSalesByDay, getTopProducts } from "../../services/reportsApi";
-import { listActiveOrders } from "../../services/ordersApi";
+import AdminShell from "../../../components/AdminShell";
+import { useAuth } from "../../../hooks/useAuth";
+import { getSalesByDay, getTopProducts } from "../../../services/reportsApi";
+import { listActiveOrders } from "../../../services/ordersApi";
 
 const toDateInput = (date) => date.toISOString().slice(0, 10);
 const startOfDayIso = (dateText) => `${dateText}T00:00:00.000Z`;
@@ -17,8 +16,8 @@ const formatMoney = (value) => {
 
 const getErrorMessage = (err, fallback) => err?.data?.detail || err?.data?.message || err?.message || fallback;
 
-export default function RestauranteReportes() {
-    const { user, loading } = useAuth(["empleado"]);
+export default function AdminRestauranteReportes() {
+    const { user, loading } = useAuth(["restaurante"]);
     const today = toDateInput(new Date());
     const sevenDaysAgo = toDateInput(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000));
 
@@ -86,7 +85,10 @@ export default function RestauranteReportes() {
     const salesSummary = salesByDay.slice(-7);
 
     return (
-        <RestauranteShell title="Reportes" subtitle={new Date().toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long" })}>
+        <AdminShell 
+            title="Reportes" 
+            subtitle={new Date().toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long" })}
+        >
             {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
             {success && <div className="alert alert-success border-0 bg-success bg-opacity-25 text-white">{success}</div>}
 
@@ -303,6 +305,6 @@ export default function RestauranteReportes() {
                     }
                 }
             `}</style>
-        </RestauranteShell>
+        </AdminShell>
     );
 }

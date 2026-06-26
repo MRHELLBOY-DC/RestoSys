@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import RestauranteShell from "../../components/RestauranteShell";
-import { useAuth } from "../../hooks/useAuth";
-import { changeOrderStatus, listActiveOrders, listOrderHistory } from "../../services/ordersApi";
-import { confirmPayment, getPaymentByOrder, getReceiptHtmlUrl } from "../../services/paymentsApi";
+import AdminShell from "../../../components/AdminShell";
+import { useAuth } from "../../../hooks/useAuth";
+import { listActiveOrders, listOrderHistory } from "../../../services/ordersApi";
 
 const toUUID = (id) => `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`;
 
@@ -16,12 +15,6 @@ const STATUS_LABEL = {
     CANCELADO: "Cancelado",
 };
 
-const getNextStatus = (status) => {
-    const index = STATUS_FLOW.indexOf(status);
-    if (index === -1 || index === STATUS_FLOW.length - 1) return null;
-    return STATUS_FLOW[index + 1];
-};
-
 const formatAmount = (value) => {
     if (value === null || value === undefined) return "0.00";
     const number = Number(value);
@@ -29,8 +22,8 @@ const formatAmount = (value) => {
     return number.toFixed(2);
 };
 
-export default function RestaurantePedidos() {
-    const { user, loading } = useAuth(["empleado"]);
+export default function AdminRestaurantePedidos() {
+    const { user, loading } = useAuth(["restaurante"]);
     const [activeOrders, setActiveOrders] = useState([]);
     const [historyOrders, setHistoryOrders] = useState([]);
     const [error, setError] = useState("");
@@ -76,39 +69,6 @@ export default function RestaurantePedidos() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [restaurantId]);
 
-    const handleAdvanceStatus = async (orderId, currentStatus) => {
-        const nextStatus = getNextStatus(currentStatus);
-        if (!nextStatus) return;
-        setBusy(true);
-        setError("");
-        try {
-            await changeOrderStatus(orderId, nextStatus);
-            await loadActiveOrders();
-        } catch (err) {
-            setError(err?.message || "No se pudo cambiar el estado");
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    const handleConfirmPayment = async (orderId) => {
-        setBusy(true);
-        setError("");
-        try {
-            const payment = await getPaymentByOrder(orderId);
-            await confirmPayment(payment.id, "BOLETA");
-            await loadActiveOrders();
-        } catch (err) {
-            if (err?.status === 404) {
-                setError("Este pedido no tiene pago registrado. Ve a 'Pagos y Facturacion' para crearlo primero.");
-            } else {
-                setError(err?.data?.detail || err?.message || "No se pudo confirmar el pago");
-            }
-        } finally {
-            setBusy(false);
-        }
-    };
-
     const THIRTY_MIN = 30 * 60 * 1000;
 
     const ordersByStatus = useMemo(() => {
@@ -123,7 +83,6 @@ export default function RestaurantePedidos() {
         }, {});
     }, [activeOrders]);
 
-
     const formatItems = (order) => {
         const items = order.items || [];
         if (items.length === 0) return "Sin items";
@@ -132,22 +91,23 @@ export default function RestaurantePedidos() {
 
     if (loading) {
         return (
-            <RestauranteShell title="Pedidos en vivo" subtitle="Cargando pedidos...">
+            <AdminShell title="Supervisión de Pedidos" subtitle="Cargando pedidos...">
                 <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
                     <div className="spinner-border text-light me-2" role="status"></div>
                     <p className="mb-0 fw-bold">Cargando pedidos...</p>
                 </div>
-            </RestauranteShell>
+            </AdminShell>
         );
     }
 
     if (!user) return null;
 
     return (
-        <RestauranteShell
-            title="Pedidos en vivo"
+        <AdminShell
+            title="Supervisión de Pedidos"
             subtitle={new Date().toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long" })}
         >
+
             {error && (
                 <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">
                     {error}
@@ -164,7 +124,6 @@ export default function RestaurantePedidos() {
 
                         <div className="resto-column-body">
                             {(ordersByStatus[status] || []).map((order) => {
-                                const nextStatus = getNextStatus(order.status);
                                 const paymentBadge = order.paymentStatus === "PAGADO" ? "Pagado" : "En caja";
                                 return (
                                     <div key={order.id} className="resto-card">
@@ -180,43 +139,13 @@ export default function RestaurantePedidos() {
                                             </span>
                                         </div>
 
-                                        {order.paymentStatus === "PENDIENTE" && (
-                                            <button
-                                                className="resto-action muted"
-                                                onClick={() => handleConfirmPayment(order.id)}
-                                                disabled={busy}
-                                            >
-                                                Confirmar pago en caja
-                                            </button>
-                                        )}
-
-                                        {order.paymentStatus === "PAGADO" && (
-                                            <button
-                                                className="resto-action muted"
-                                                onClick={async () => {
-                                                    try {
-                                                        const p = await getPaymentByOrder(order.id);
-                                                        await getReceiptHtmlUrl(p.id);
-                                                    } catch {
-                                                        setError("No se encontro el comprobante");
-                                                    }
-                                                }}
-                                            >
-                                                Ver comprobante
-                                            </button>
-                                        )}
-
-                                        {nextStatus && order.status !== "ENTREGADO" && (
-                                            <button
-                                                className="resto-action"
-                                                onClick={() => handleAdvanceStatus(order.id, order.status)}
-                                                disabled={busy}
-                                            >
-                                                -&gt; {STATUS_LABEL[nextStatus].toUpperCase()}
-                                            </button>
-                                        )}
-                                        {order.status === "ENTREGADO" && (
+                                        {/* SOLO MOSTRAR ESTADO - SIN BOTONES DE ACCIÓN */}
+                                        {order.status === "ENTREGADO" ? (
                                             <div className="resto-done">Pedido completado</div>
+                                        ) : (
+                                            <div className="resto-status-label">
+                                                Estado actual: <strong>{STATUS_LABEL[order.status]}</strong>
+                                            </div>
                                         )}
                                     </div>
                                 );
@@ -247,6 +176,16 @@ export default function RestaurantePedidos() {
             </div>
 
             <style>{`
+                .resto-supervision-banner {
+                    background: rgba(255, 193, 7, 0.15);
+                    border: 1px solid rgba(255, 193, 7, 0.3);
+                    border-radius: 12px;
+                    padding: 12px 18px;
+                    color: #ffc107;
+                    font-size: 0.9rem;
+                    text-align: center;
+                    margin-bottom: 16px;
+                }
                 .resto-orders-grid {
                     display: grid;
                     grid-template-columns: repeat(4, minmax(220px, 1fr));
@@ -323,31 +262,25 @@ export default function RestaurantePedidos() {
                     background: rgba(255, 193, 7, 0.2);
                     color: #f5d07a;
                 }
-                .resto-action {
-                    width: 100%;
-                    border: none;
-                    border-radius: 12px;
-                    padding: 8px 10px;
-                    font-weight: 700;
-                    background: #d44a42;
-                    color: #fff;
-                    cursor: pointer;
-                }
-                .resto-action.muted {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: rgba(255, 255, 255, 0.8);
-                }
                 .resto-done {
                     text-align: center;
                     font-size: 0.78rem;
                     color: #9ad7a0;
                     padding: 6px 0 2px;
                 }
+                .resto-status-label {
+                    text-align: center;
+                    font-size: 0.78rem;
+                    color: rgba(255, 255, 255, 0.7);
+                    padding: 6px 0 2px;
+                    border-top: 1px solid rgba(255, 255, 255, 0.05);
+                }
                 .resto-history {
                     background: rgba(255, 255, 255, 0.03);
                     border-radius: 18px;
                     padding: 16px;
                     border: 1px solid rgba(255, 255, 255, 0.08);
+                    margin-top: 18px;
                 }
                 .resto-history-header {
                     font-weight: 700;
@@ -387,6 +320,6 @@ export default function RestaurantePedidos() {
                     }
                 }
             `}</style>
-        </RestauranteShell>
+        </AdminShell>
     );
 }

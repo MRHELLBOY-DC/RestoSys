@@ -31,8 +31,11 @@ class UserRepositoryPort(ABC):
         pass
     
     @abstractmethod
-    def list_active(self, role: Optional[str] = None) -> List[User]:
-        """Lista usuarios activos, opcionalmente filtrados por rol"""
+    def list_active(self, role: Optional[str] = None, restaurant_id: Optional[int] = None) -> List[User]:
+        """
+        Lista usuarios activos, opcionalmente filtrados por rol y/o restaurante
+        
+        """
         pass
     
     @abstractmethod
