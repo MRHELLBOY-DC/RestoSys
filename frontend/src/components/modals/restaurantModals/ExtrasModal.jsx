@@ -175,7 +175,7 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                                             ) : (
                                                 <div className="display-mode">
                                                     <span className="option-name">{opt.name}</span>
-                                                    <span className="option-price">+ S/ {parseFloat(opt.extra_price).toFixed(2)}</span>
+                                                    <span className="option-price">+ USD/ {parseFloat(opt.extra_price).toFixed(2)}</span>
                                                     <div className="option-actions">
                                                         <button className="btn-icon-edit" onClick={() => handleEditOption(opt)} title="Editar">✏️</button>
                                                         <button className="btn-icon-delete" onClick={() => handleDeleteOption(opt.id)} title="Eliminar">🗑️</button>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import Navbar from "../../components/Navbar";
 import { getOrdersByClient } from "../../services/ordersApi";
 import { getPaymentByOrder, getReceiptUrl } from "../../services/paymentsApi";
 
@@ -74,7 +74,7 @@ export default function MisPedidos() {
     if (loading) {
         return (
             <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-                <DashboardNavbar />
+                <Navbar />
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
                     <div className="spinner-border text-light me-2" role="status"></div>
                     <p className="mb-0">Cargando tus pedidos...</p>
@@ -87,7 +87,7 @@ export default function MisPedidos() {
 
     return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-            <DashboardNavbar />
+            <Navbar />
             <div className="container py-5">
                 <div className="text-white mb-4 d-flex align-items-center justify-content-between">
                     <div>

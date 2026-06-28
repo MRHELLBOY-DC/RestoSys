@@ -175,7 +175,7 @@ export default function RestaurantePagos() {
                                                 <div className="resto-code">Pedido {order.orderCode}</div>
                                                 <div className="resto-muted">{order.type} · Mesa {order.tableNumber || "-"}</div>
                                             </div>
-                                            <div className="resto-amount">S/ {formatAmount(order.totalAmount)}</div>
+                                            <div className="resto-amount">USD/ {formatAmount(order.totalAmount)}</div>
                                         </div>
 
                                         {!payment ? (
@@ -233,7 +233,7 @@ export default function RestaurantePagos() {
                                             <div className="resto-code">{payment.method}</div>
                                             <div className="resto-muted">{payment.id}</div>
                                         </div>
-                                        <div className="resto-amount">S/ {formatAmount(payment.amount)}</div>
+                                        <div className="resto-amount">USD/ {formatAmount(payment.amount)}</div>
                                     </div>
 
                                     {payment.qrPayload && (

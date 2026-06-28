@@ -2,6 +2,7 @@ import { useState } from "react";
 import { registerUser } from "../../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 export default function Register() {
     const [fullName, setFullName] = useState("");
@@ -129,12 +130,7 @@ const handleRegister = async () => {
             </div>
             </div>
 
-            <footer style={{ background: 'linear-gradient(135deg, rgba(30,8,8,0.95) 0%, rgba(15,5,5,0.98) 100%)', borderTop: '1px solid rgba(240,85,77,0.2)', padding: '20px 0', textAlign: 'center' }}>
-                <p className="text-white-50 mb-1 small">© 2026 RestoSys - Todos los derechos reservados</p>
-                <div className="small text-white-50">
-                    <span>Luis Alfredo Vargas Pizarro</span> | <span>Eduardo Durana</span>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

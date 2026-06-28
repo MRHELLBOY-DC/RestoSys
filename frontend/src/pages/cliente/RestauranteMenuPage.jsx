@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getPublicRestaurantes } from "../../services/api";
 import { getPublicProducts, getPublicCategories } from "../../services/menuApi";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import Navbar from "../../components/Navbar";
 
 const bg = 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)';
 
@@ -123,7 +123,7 @@ export default function RestauranteMenuPage() {
 
     return (
         <div className="min-vh-100" style={{ background: bg }}>
-            <DashboardNavbar />
+            <Navbar />
 
             <div className="container py-4">
                 {/* Header del restaurante */}
@@ -197,7 +197,7 @@ export default function RestauranteMenuPage() {
                                             <div className="d-flex justify-content-between align-items-start mb-2">
                                                 <h5 className="fw-bold mb-0">{product.name}</h5>
                                                 <span className="badge px-3 py-2 fs-6" style={{ background: 'linear-gradient(135deg, #f0554d, #d73a35)', color: '#fff' }}>
-                                                    S/ {totalPrice.toFixed(2)}
+                                                    USD/ {totalPrice.toFixed(2)}
                                                 </span>
                                             </div>
                                             {product.description && (
@@ -218,7 +218,7 @@ export default function RestauranteMenuPage() {
                                                                     onChange={() => handleExtraChange(product.id, opt)}
                                                                 />
                                                                 <label className="form-check-label small" htmlFor={`opt_${product.id}_${opt.id}`}>
-                                                                    {opt.name} <span className="text-primary">+S/ {Number(opt.extra_price).toFixed(2)}</span>
+                                                                    {opt.name} <span className="text-primary">+USD/ {Number(opt.extra_price).toFixed(2)}</span>
                                                                 </label>
                                                             </div>
                                                         ))}

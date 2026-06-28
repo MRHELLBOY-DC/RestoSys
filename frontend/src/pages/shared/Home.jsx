@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { getPublicRestaurantes } from "../../services/api";
+import Footer from "../../components/Footer";
 
 export default function Home() {
     const [restaurantes, setRestaurantes] = useState([]);
@@ -273,14 +274,7 @@ export default function Home() {
 
             </main>
 
-            <footer className="footer">
-                <div className="container text-center">
-                    <p className="text-white-50 mb-1 small">© 2026 RestoSys - Todos los derechos reservados</p>
-                    <div className="small text-white-50">
-                        <span>Luis Alfredo Vargas Pizarro</span> | <span>Eduardo Durana</span>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
 
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
@@ -499,11 +493,7 @@ export default function Home() {
                     font-weight: 700;
                     color: #f0554d;
                 }
-                .footer {
-                    background: linear-gradient(135deg, rgba(30, 8, 8, 0.95) 0%, rgba(15, 5, 5, 0.98) 100%);
-                    border-top: 1px solid rgba(240, 85, 77, 0.2);
-                    padding: 24px 0;
-                }
+               
                 @media (max-width: 991px) {
                     .hero-gallery {
                         grid-template-columns: 1fr;

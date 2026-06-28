@@ -10,6 +10,7 @@ import {
     getCurrentUser
 } from "../../services/api";
 import AdminShell from "../../components/AdminShell";
+import UsuarioModal from "../../components/modals/UsuarioModal"; // Importar el modal
 
 export default function AdminUsuarios() {
     const { loading: authLoading } = useAuth(['admin']);
@@ -17,6 +18,8 @@ export default function AdminUsuarios() {
     const [restaurantes, setRestaurantes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false); // Estado para controlar el modal
+    const [submitting, setSubmitting] = useState(false); // Estado para el submit
     const [form, setForm] = useState({
         full_name: "",
         email: "",
@@ -67,8 +70,49 @@ export default function AdminUsuarios() {
         }
     };
 
+    // Abrir modal para crear
+    const handleOpenCreateModal = () => {
+        setEditing(null);
+        setForm({ 
+            full_name: "", 
+            email: "", 
+            password: "", 
+            role: "cliente", 
+            restaurante_id: ""
+        });
+        setModalOpen(true);
+    };
+
+    // Abrir modal para editar
+    const handleOpenEditModal = (usuario) => {
+        setEditing(usuario.id);
+        setForm({
+            full_name: usuario.full_name || "",
+            email: usuario.email || "",
+            password: "",
+            role: usuario.role,
+            restaurante_id: usuario.restaurant?.id || usuario.restaurant_id || ""
+        });
+        setModalOpen(true);
+    };
+
+    // Cerrar modal
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setEditing(null);
+        setForm({ 
+            full_name: "", 
+            email: "", 
+            password: "", 
+            role: "cliente", 
+            restaurante_id: ""
+        });
+        setSubmitting(false);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true);
         try {
             if (editing) {
                 const updateData = {
@@ -94,8 +138,7 @@ export default function AdminUsuarios() {
                 }
                 await createAdminUsuario(createData);
             }
-            setForm({ full_name: "", email: "", password: "", role: "cliente", restaurante_id: "" });
-            setEditing(null);
+            handleCloseModal();
             loadData();
         } catch (error) {
             console.log("=== ERROR COMPLETO ===");
@@ -111,6 +154,8 @@ export default function AdminUsuarios() {
                 || "Error al guardar";
             
             alert("Error al guardar: " + message);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -158,195 +203,114 @@ export default function AdminUsuarios() {
     );
 
     return (
-        <AdminShell
-            title="Usuarios"
-            subtitle="Control de roles y cuentas de la plataforma."
-            actions={(
-                <button
-                    type="button"
-                    className="admin-btn admin-btn-primary"
-                    onClick={() => {
-                        setEditing(null);
-                        setForm({ 
-                            full_name: "", 
-                            email: "", 
-                            password: "", 
-                            role: "cliente", 
-                            restaurante_id: ""
-                        });
-                    }}
-                >
-                    + Invitar usuario
-                </button>
-            )}
-        >
-            <div className="admin-grid admin-grid-2">
-                <div className="admin-card admin-card--glass">
-                    <h3 className="h5 fw-bold mb-4">{editing ? "Editar" : "Nuevo"} Usuario</h3>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label className="form-label small fw-semibold text-white-50">Nombre completo</label>
-                            <input
-                                type="text"
-                                className="form-control admin-input"
-                                value={form.full_name}
-                                onChange={e => setForm({...form, full_name: e.target.value})}
-                                required
-                            />
-                        </div>
-
-                        <div className="mb-3">
-                            <label className="form-label small fw-semibold text-white-50">Email</label>
-                            <input
-                                type="email"
-                                className="form-control admin-input"
-                                value={form.email}
-                                onChange={e => setForm({...form, email: e.target.value})}
-                                required
-                            />
-                        </div>
-
-                        {!editing && (
-                            <div className="mb-3">
-                                <label className="form-label small fw-semibold text-white-50">Contrasena</label>
-                                <input
-                                    type="password"
-                                    className="form-control admin-input"
-                                    value={form.password}
-                                    onChange={e => setForm({...form, password: e.target.value})}
-                                    required
-                                />
+        <>
+            <AdminShell
+                title="Usuarios"
+                subtitle="Control de roles y cuentas de la plataforma."
+                actions={(
+                    <button
+                        type="button"
+                        className="admin-btn admin-btn-primary"
+                        onClick={handleOpenCreateModal}
+                    >
+                        + Invitar usuario
+                    </button>
+                )}
+            >
+                <div className="admin-grid admin-grid-2">
+                    {/* Tabla de usuarios (sin el formulario) */}
+                    <div className="admin-card admin-card--glass">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h3 className="h5 fw-bold mb-1">Usuarios registrados</h3>
+                                <small className="admin-subtitle">{usuarios.length} cuentas activas</small>
                             </div>
-                        )}
-
-                        <div className="mb-3">
-                            <label className="form-label small fw-semibold text-white-50">Rol de acceso</label>
-                            <select
-                                className="form-select admin-select"
-                                value={form.role}
-                                onChange={e => setForm({...form, role: e.target.value, restaurante_id: e.target.value === 'cliente' ? "" : form.restaurante_id})}
-                            >
-                                <option value="cliente" className="bg-dark text-white">Cliente</option>
-                                <option value="empleado" className="bg-dark text-white">Empleado</option>
-                                <option value="restaurante" className="bg-dark text-white">Administrador de Restaurante</option>
-                                <option value="admin" className="bg-dark text-white">Super Administrador</option>
-                            </select>
                         </div>
-
-                        {form.role !== 'cliente' && (
-                            <div className="mb-4">
-                                <label className="form-label small fw-semibold text-white-50">Asignar sede</label>
-                                <select
-                                    className="form-select admin-select"
-                                    value={form.restaurante_id}
-                                    onChange={e => setForm({...form, restaurante_id: e.target.value})}
-                                >
-                                    <option value="" className="bg-dark text-white">Sin restaurante asignado</option>
-                                    {restaurantes.map(r => (
-                                        <option key={r.id} value={r.id} className="bg-dark text-white">{r.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        <div className="d-grid gap-2 mt-4">
-                            <button type="submit" className="admin-btn admin-btn-primary">
-                                {editing ? "Guardar cambios" : "Registrar usuario"}
-                            </button>
-                            {editing && (
-                                <button
-                                    type="button"
-                                    className="admin-btn admin-btn-ghost"
-                                    onClick={() => {
-                                        setEditing(null);
-                                        setForm({ full_name: "", email: "", password: "", role: "cliente", restaurante_id: "" });
-                                    }}
-                                >
-                                    Cancelar
-                                </button>
-                            )}
-                        </div>
-                    </form>
-                </div>
-
-                <div className="admin-card admin-card--glass">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h3 className="h5 fw-bold mb-1">Usuarios registrados</h3>
-                            <small className="admin-subtitle">{usuarios.length} cuentas activas</small>
-                        </div>
-                    </div>
-                    <div className="table-responsive">
-                        <table className="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>Usuario</th>
-                                    <th>Rol</th>
-                                    <th>Sede asignada</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {usuarios.map(u => (
-                                    <tr key={u.id}>
-                                        <td>
-                                            <div className="d-flex align-items-center gap-3">
-                                                <div className="admin-user-avatar">
-                                                    {(u.full_name || u.username || "U").charAt(0).toUpperCase()}
-                                                </div>
-                                                <span className="fw-semibold">{u.full_name || u.username}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span className={`badge rounded-pill ${getBadgeColor(u.role)}`}>
-                                                {u.role === 'admin' ? 'Super Admin' : 
-                                                 u.role === 'restaurante' ? 'Admin Restaurante' : 
-                                                 u.role === 'empleado' ? 'Empleado' : 'Cliente'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {u.role === 'cliente' ? (
-                                                <small className="text-white-50">Acceso QR</small>
-                                            ) : u.restaurant?.name ? (
-                                                <span className="small text-white-50">{u.restaurant.name}</span>
-                                            ) : u.restaurant_id ? (
-                                                <span className="small text-white-50">Restaurante ID: {u.restaurant_id}</span>
-                                            ) : (
-                                                <select
-                                                    className="form-select form-select-sm admin-select"
-                                                    onChange={(e) => handleAsignarRestaurante(u.id, e.target.value)}
-                                                    defaultValue=""
-                                                    style={{ maxWidth: '170px' }}
-                                                >
-                                                    <option value="" className="bg-dark">Asignar...</option>
-                                                    {restaurantes.map(r => (
-                                                        <option key={r.id} value={r.id} className="bg-dark text-white">{r.name}</option>
-                                                    ))}
-                                                </select>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <div className="d-flex gap-2">
-                                                <button className="admin-btn admin-btn-ghost" onClick={() => {
-                                                    setEditing(u.id);
-                                                    setForm({
-                                                        full_name: u.full_name || "",
-                                                        email: u.email || "",
-                                                        password: "",
-                                                        role: u.role,
-                                                        restaurante_id: u.restaurant?.id || u.restaurant_id || ""
-                                                    });
-                                                }}>Editar</button>
-                                                <button className="admin-btn admin-btn-primary" onClick={() => handleDelete(u.id, u.username)}>Eliminar</button>
-                                            </div>
-                                        </td>
+                        <div className="table-responsive">
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Sede asignada</th>
+                                        <th>Acciones</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {usuarios.map(u => (
+                                        <tr key={u.id}>
+                                            <td>
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div className="admin-user-avatar">
+                                                        {(u.full_name || u.username || "U").charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <span className="fw-semibold">{u.full_name || u.username}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`badge rounded-pill ${getBadgeColor(u.role)}`}>
+                                                    {u.role === 'admin' ? 'Super Admin' : 
+                                                     u.role === 'restaurante' ? 'Admin Restaurante' : 
+                                                     u.role === 'empleado' ? 'Empleado' : 'Cliente'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {u.role === 'cliente' ? (
+                                                    <small className="text-white-50">Acceso QR</small>
+                                                ) : u.restaurant?.name ? (
+                                                    <span className="small text-white-50">{u.restaurant.name}</span>
+                                                ) : u.restaurant_id ? (
+                                                    <span className="small text-white-50">Restaurante ID: {u.restaurant_id}</span>
+                                                ) : (
+                                                    <select
+                                                        className="form-select form-select-sm admin-select"
+                                                        onChange={(e) => handleAsignarRestaurante(u.id, e.target.value)}
+                                                        defaultValue=""
+                                                        style={{ maxWidth: '170px' }}
+                                                    >
+                                                        <option value="" className="bg-dark">Asignar...</option>
+                                                        {restaurantes.map(r => (
+                                                            <option key={r.id} value={r.id} className="bg-dark text-white">{r.name}</option>
+                                                        ))}
+                                                    </select>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <div className="d-flex gap-2">
+                                                    <button 
+                                                        className="admin-btn admin-btn-ghost" 
+                                                        onClick={() => handleOpenEditModal(u)}
+                                                    >
+                                                        Editar
+                                                    </button>
+                                                    <button 
+                                                        className="admin-btn admin-btn-primary" 
+                                                        onClick={() => handleDelete(u.id, u.username)}
+                                                    >
+                                                        Dar de Baja
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </AdminShell>
+            </AdminShell>
+
+            {/* Modal de usuario */}
+            <UsuarioModal
+                isOpen={modalOpen}
+                onClose={handleCloseModal}
+                onSubmit={handleSubmit}
+                editing={editing}
+                form={form}
+                setForm={setForm}
+                restaurantes={restaurantes}
+                loading={submitting}
+            />
+        </>
     );
 }

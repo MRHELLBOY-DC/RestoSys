@@ -1,9 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getCurrentUser, logout } from "../services/api";
 
 export default function Navbar() {
     const user = getCurrentUser();
     const navigate = useNavigate();
+    const location = useLocation();
     const displayName = user?.full_name?.trim() || user?.username || user?.email || "";
 
     const getDashboardPath = () => {
@@ -18,6 +19,9 @@ export default function Navbar() {
         navigate("/login");
     };
 
+    // Verificar si estamos en login o register
+    const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+
     return (
         <nav className="navbar navbar-expand-lg navbar-dark landing-nav py-0">
             <div className="container">
@@ -25,15 +29,17 @@ export default function Navbar() {
                     <img src="/restosyslogo.png" alt="RestoSys" style={{ width: '160px', objectFit: 'contain', mixBlendMode: 'screen' }} />
                 </Link>
 
-                <div className="d-none d-lg-flex gap-4 text-white-50">
-                    <a href="#funciones" className="nav-link">Funciones</a>
-                    <a href="#como-funciona" className="nav-link">Cómo funciona</a>
-                </div>
+                {/* Mostrar enlaces SOLO cuando NO hay usuario logueado Y NO estamos en login/register */}
+                {!user && !isAuthPage && (
+                    <div className="d-none d-lg-flex gap-4 text-white-50">
+                        <a href="#funciones" className="nav-link">Funciones</a>
+                        <a href="#como-funciona" className="nav-link">Cómo funciona</a>
+                    </div>
+                )}
 
                 <div className="d-flex gap-2 align-items-center">
                     {user ? (
                         <>
-                            <span className="text-white-50 small d-none d-md-inline">Hola, {displayName}</span>
                             <Link to={getDashboardPath()} className="btn btn-outline-light rounded-pill px-3">
                                 Mi panel
                             </Link>

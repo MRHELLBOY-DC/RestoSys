@@ -48,7 +48,7 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                         </NavLink>
                     )}
                     
-                    {/* Reportes SOLO visible para Admin Restaurante */}
+                    {/*Reportes SOLO visible para Admin Restaurante */}
                     {user?.role === 'restaurante' && (
                         <NavLink to="/restaurante/reportes" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
                             <i className="fa-solid fa-chart-bar"></i>Reportes

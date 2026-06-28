@@ -91,7 +91,6 @@ export default function AdminShell({ title, subtitle, actions, children }) {
                             <div className="admin-user-avatar">{initials}</div>
                             <div className="admin-user-meta">
                                 <span>{displayName}</span>
-                                <span className="admin-user-role">{handleLabel}</span>
                             </div>
                         </div>
                         <button type="button" className="admin-btn admin-btn-ghost" onClick={handleLogout}>

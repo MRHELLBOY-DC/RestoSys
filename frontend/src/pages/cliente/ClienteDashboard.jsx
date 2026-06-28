@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
 import { getPublicRestaurantes } from "../../services/api";
 
@@ -21,7 +21,7 @@ export default function ClienteDashboard() {
 
     if (loading) return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: bg }}>
-            <DashboardNavbar />
+            <Navbar />
             <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
                 <div className="spinner-border text-light me-3" role="status"></div>
                 <span className="h5 mb-0">Cargando...</span>
@@ -35,7 +35,7 @@ export default function ClienteDashboard() {
 
     return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: bg }}>
-            <DashboardNavbar />
+            <Navbar />
 
             <div className="container py-5 flex-grow-1">
                 {/* Bienvenida */}

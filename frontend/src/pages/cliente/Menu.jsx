@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getPublicProducts, getPublicCategories } from "../../services/menuApi";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function Menu() {
@@ -105,7 +105,7 @@ export default function Menu() {
     if (loading) {
         return (
             <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-                <DashboardNavbar />
+                <Navbar />
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
                     <div className="spinner-border text-light" role="status"></div>
                 </div>
@@ -116,7 +116,7 @@ export default function Menu() {
     if (!restaurantId) {
         return (
             <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-                <DashboardNavbar />
+                <Navbar />
                 <div className="container flex-grow-1 d-flex align-items-center justify-content-center">
                     <div className="card border-0 shadow-lg p-5 text-center bg-white bg-opacity-10 text-white" style={{ backdropFilter: 'blur(10px)', borderRadius: '20px' }}>
                         <h2 className="fw-bold">Restaurante no especificado</h2>
@@ -130,7 +130,7 @@ export default function Menu() {
 
     return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-            <DashboardNavbar />
+            <Navbar />
             
             <div className="container py-5">
                 <div className="text-center text-white mb-5">

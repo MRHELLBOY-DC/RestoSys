@@ -370,7 +370,7 @@ export default function AdminRestauranteMenu() {
                                 <div className="resto-muted">{prod.description || "Sin descripción"}</div>
                             </div>
                             <div className="resto-muted">{categoriesMap.get(prod.category_id) || "-"}</div>
-                            <div className="resto-price">S/ {Number(prod.price).toFixed(2)}</div>
+                            <div className="resto-price">USD/ {Number(prod.price).toFixed(2)}</div>
                             <div className="resto-row-actions">
                                 <button className="resto-icon-btn" type="button" onClick={() => handleEditProduct(prod)}>Editar</button>
                                 <button className="resto-icon-btn" type="button" onClick={() => openExtrasForm(prod)}>Extras</button>

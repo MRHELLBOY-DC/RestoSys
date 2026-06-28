@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import DashboardNavbar from "../../components/DashboardNavbar";
+import Navbar from "../../components/Navbar";
 import { getCurrentUser } from "../../services/api";
 import { createOrder } from "../../services/ordersApi";
 import { createPayment, simulateQrPayment, getReceiptUrl } from "../../services/paymentsApi";
@@ -134,7 +134,7 @@ export default function Carrito() {
     if (loading) {
         return (
             <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-                <DashboardNavbar />
+                <Navbar />
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
                     <div className="spinner-border text-light me-3" role="status"></div>
                     <span>Cargando tu carrito...</span>
@@ -149,12 +149,11 @@ export default function Carrito() {
     if (qrOrder) {
         return (
             <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-                <DashboardNavbar />
+                <Navbar />
                 <div className="flex-grow-1 d-flex align-items-center justify-content-center p-4">
                     <div className="text-white text-center" style={{ maxWidth: 420 }}>
                         {qrDone ? (
                             <>
-                                <div className="mb-4" style={{ fontSize: 72 }}>✅</div>
                                 <h2 className="fw-bold mb-2">¡Pago confirmado!</h2>
                                 <p className="opacity-75 mb-1">Pedido <strong style={{ color: '#f0554d' }}>{qrOrder.orderCode}</strong></p>
                                 <p className="opacity-60 small mb-4">Tu pedido está siendo procesado por el restaurante.</p>
@@ -234,20 +233,39 @@ export default function Carrito() {
     // ── Cart view ─────────────────────────────────────────────────────────────
     return (
         <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
-            <DashboardNavbar />
+            <Navbar />
 
             <div className="container py-5 flex-grow-1">
+                {/* Header mejorado */}
                 <div className="text-white mb-4">
-                    <h1 className="fw-bold">Mi Carrito</h1>
-                    <p className="opacity-75">Gestiona tus productos antes de finalizar el pedido</p>
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="rounded-circle p-3" style={{ background: 'rgba(240,85,77,0.15)' }}>
+                            <i className="fa fa-cart-shopping fa-2x" style={{ color: '#f0554d' }}></i>
+                        </div>
+                        <div>
+                            <h1 className="fw-bold mb-0">Mi Carrito</h1>
+                            <p className="opacity-75 mb-0">
+                                {carrito.length === 0 
+                                    ? 'Tu carrito está vacío' 
+                                    : `${carrito.length} producto${carrito.length > 1 ? 's' : ''} en tu carrito`}
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {carrito.length === 0 ? (
                     <div className="text-white text-center p-5" style={{ background: 'rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-                        <div className="display-1 mb-3">🛍️</div>
-                        <h3>Tu carrito está vacío</h3>
-                        <p className="text-white-50">¡Parece que aún no has elegido nada delicioso!</p>
-                        <button onClick={() => navigate("/cliente/dashboard")} className="btn btn-light mt-3 fw-bold rounded-pill px-4">
+                        <div className="mb-3" style={{ fontSize: '5rem', color: '#f0554d' }}>
+                            <i className="fa fa-cart-arrow-down" aria-hidden="true"></i>
+                        </div>
+                        <h3 className="fw-bold mb-2">Tu carrito está vacío</h3>
+                        <p className="text-white-50 mb-4">¡Parece que aún no has elegido nada delicioso!</p>
+                        <button 
+                            onClick={() => navigate("/cliente/dashboard")} 
+                            className="btn fw-bold rounded-pill px-5 py-2"
+                            style={{ background: 'linear-gradient(135deg, #f0554d 0%, #d73a35 100%)', border: 'none', color: '#fff' }}
+                        >
+                            <i className="fa fa-store me-2"></i>
                             Ver Restaurantes
                         </button>
                     </div>
@@ -276,13 +294,13 @@ export default function Carrito() {
                                                             <div className="mt-1">
                                                                 {item.extras.map(e => (
                                                                     <span key={e.id} className="badge me-1 small" style={{ background: 'rgba(240,85,77,0.2)', color: '#f0a09a', border: '1px solid rgba(240,85,77,0.3)' }}>
-                                                                        +{e.name} S/{Number(e.extra_price).toFixed(2)}
+                                                                        +{e.name} USD/{Number(e.extra_price).toFixed(2)}
                                                                     </span>
                                                                 ))}
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td className="py-3">S/ {getItemPrice(item).toFixed(2)}</td>
+                                                    <td className="py-3">USD/ {getItemPrice(item).toFixed(2)}</td>
                                                     <td className="py-3 text-center">
                                                         <div className="d-inline-flex align-items-center gap-2" style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2px 8px' }}>
                                                             <button className="btn btn-sm btn-link text-white p-0" onClick={() => handleUpdateQuantity(item.id, (item.quantity || 1) - 1)}>−</button>
@@ -290,7 +308,7 @@ export default function Carrito() {
                                                             <button className="btn btn-sm btn-link text-white p-0" onClick={() => handleUpdateQuantity(item.id, (item.quantity || 1) + 1)}>+</button>
                                                         </div>
                                                     </td>
-                                                    <td className="py-3 fw-bold">S/ {(getItemPrice(item) * (item.quantity || 1)).toFixed(2)}</td>
+                                                    <td className="py-3 fw-bold">USD/ {(getItemPrice(item) * (item.quantity || 1)).toFixed(2)}</td>
                                                     <td className="px-4 py-3 text-end">
                                                         <button className="btn btn-sm btn-outline-danger border-0 rounded-circle" onClick={() => handleRemoveFromCart(item.id)}>✕</button>
                                                     </td>
@@ -311,7 +329,7 @@ export default function Carrito() {
                                     <hr style={{ borderColor: 'rgba(255,255,255,0.15)' }} />
                                     <div className="d-flex justify-content-between mb-4 mt-2">
                                         <span className="h5 fw-bold">Total</span>
-                                        <span className="h5 fw-bold" style={{ color: '#f0554d' }}>S/ {getTotal().toFixed(2)}</span>
+                                        <span className="h5 fw-bold" style={{ color: '#f0554d' }}>USD/ {getTotal().toFixed(2)}</span>
                                     </div>
 
                                     {/* Order type */}
@@ -386,7 +404,7 @@ export default function Carrito() {
                                     >
                                         {submitting
                                             ? <><span className="spinner-border spinner-border-sm me-2" role="status" />Procesando...</>
-                                            : paymentMethod === 'QR' ? '📲 Confirmar y pagar con QR' : '✓ Confirmar pedido'}
+                                            : paymentMethod === 'QR' ? '📲 Confirmar y pagar con QR' : 'Confirmar pedido'}
                                     </button>
                                     <button onClick={() => navigate(-1)} className="btn btn-link text-white opacity-50 w-100 mt-2 small">
                                         ← Continuar comprando

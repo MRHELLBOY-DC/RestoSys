@@ -174,7 +174,7 @@ export default function RestaurantePedidos() {
                                         </div>
                                         <div className="resto-items">{formatItems(order)}</div>
                                         <div className="resto-card-footer">
-                                            <div className="resto-total">S/ {formatAmount(order.totalAmount)}</div>
+                                            <div className="resto-total">USD/ {formatAmount(order.totalAmount)}</div>
                                             <span className={`resto-pill ${order.paymentStatus === "PAGADO" ? "paid" : "cash"}`}>
                                                 {paymentBadge}
                                             </span>
@@ -238,7 +238,7 @@ export default function RestaurantePedidos() {
                                     <div className="resto-code">{order.orderCode}</div>
                                     <div className="resto-muted">{order.type} · Mesa {order.tableNumber || "-"}</div>
                                 </div>
-                                <div className="resto-muted">S/ {formatAmount(order.totalAmount)}</div>
+                                <div className="resto-muted">USD/ {formatAmount(order.totalAmount)}</div>
                                 <div className="resto-pill paid">{order.paymentStatus}</div>
                             </div>
                         ))}

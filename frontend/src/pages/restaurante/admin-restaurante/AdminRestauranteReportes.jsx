@@ -107,7 +107,7 @@ export default function AdminRestauranteReportes() {
             <div className="resto-metrics">
                 <div className="resto-metric">
                     <div className="resto-metric-label">Ventas hoy</div>
-                    <div className="resto-metric-value">S/ {formatMoney(totalPeriod)}</div>
+                    <div className="resto-metric-value">USD/ {formatMoney(totalPeriod)}</div>
                     <div className="resto-metric-sub">Ultimos 7 dias</div>
                 </div>
                 <div className="resto-metric">
@@ -117,7 +117,7 @@ export default function AdminRestauranteReportes() {
                 </div>
                 <div className="resto-metric">
                     <div className="resto-metric-label">Ticket promedio</div>
-                    <div className="resto-metric-value">S/ {formatMoney(ticketPromedio)}</div>
+                    <div className="resto-metric-value">USD/ {formatMoney(ticketPromedio)}</div>
                     <div className="resto-metric-sub">Por pedido</div>
                 </div>
                 <div className="resto-metric">
@@ -154,7 +154,7 @@ export default function AdminRestauranteReportes() {
                                     <div className="resto-rank">{index + 1}</div>
                                     <div>
                                         <div className="resto-top-name">{item.productName}</div>
-                                        <div className="resto-muted">{item.quantitySold} vendidos · S/ {formatMoney(item.totalSales)}</div>
+                                        <div className="resto-muted">{item.quantitySold} vendidos · USD/ {formatMoney(item.totalSales)}</div>
                                     </div>
                                 </div>
                             ))}
