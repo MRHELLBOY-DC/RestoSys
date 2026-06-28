@@ -1,10 +1,13 @@
 """
 Domain Exceptions - Excepciones específicas del negocio para el módulo de menú
 """
+from decimal import Decimal  # ← IMPORTANTE: Agregado para usar Decimal en excepciones
+
 
 class DomainException(Exception):
     """Excepción base para todas las excepciones de dominio"""
     pass
+
 
 # ============================================
 # Category Exceptions
@@ -38,6 +41,7 @@ class CategoryHasProductsException(CategoryException):
             f"No se puede eliminar la categoría con ID '{category_id}'. "
             f"Tiene {product_count} producto(s) asociado(s)."
         )
+
 
 # ============================================
 # Product Exceptions
@@ -83,6 +87,7 @@ class ProductHasActiveOrdersException(ProductException):
             f"Tiene {order_count} pedido(s) activo(s)."
         )
 
+
 # ============================================
 # Option Exceptions
 # ============================================
@@ -115,6 +120,7 @@ class OptionPriceExceedsProductPriceException(OptionException):
             f"El precio extra de la opción ({option_price}) "
             f"no puede exceder el precio del producto ({product_price})."
         )
+
 
 # ============================================
 # Restaurant Validation Exceptions

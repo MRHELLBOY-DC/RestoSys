@@ -124,7 +124,9 @@ class Container:
                 self.category_repo, self.event_publisher
             ),
             DeleteCategoryCommand: lambda: DeleteCategoryCommandHandler(
-                self.category_repo, self.event_publisher
+                self.category_repo,   # category_repo
+                self.product_repo,    # product_repo (FASE 1)
+                self.event_publisher  # event_publisher
             ),
             
             # Product Commands
@@ -135,7 +137,9 @@ class Container:
                 self.product_repo, self.category_repo, self.event_publisher
             ),
             DeleteProductCommand: lambda: DeleteProductCommandHandler(
-                self.product_repo, self.event_publisher
+                self.product_repo,    # product_repo
+                self.option_repo,     # option_repo (FASE 2)
+                self.event_publisher  # event_publisher
             ),
             
             # Option Commands
