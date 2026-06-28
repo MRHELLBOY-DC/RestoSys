@@ -13,6 +13,15 @@ from ...infrastructure.container import container
 # Importar BusinessRuleValidationException
 from menu.domain.shared.core import BusinessRuleValidationException
 
+# Importar excepciones de dominio
+from menu.domain.exceptions import (
+    ProductNotFoundException,
+    ProductHasOptionsException,
+    CategoryNotFoundException,
+    CategoryHasProductsException,
+    OptionNotFoundException,
+)
+
 # Importar Commands y Queries de Category
 from ...application.commands.create_category import CreateCategoryCommand
 from ...application.commands.update_category import UpdateCategoryCommand
@@ -163,6 +172,10 @@ class CategoryDetailView(APIView):
                 {'message': 'Categoría eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        except CategoryNotFoundException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except CategoryHasProductsException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except BusinessRuleValidationException as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
@@ -326,6 +339,10 @@ class ProductDetailView(APIView):
                 {'message': 'Producto eliminado correctamente'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        except ProductNotFoundException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except ProductHasOptionsException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except BusinessRuleValidationException as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
@@ -485,6 +502,8 @@ class OptionDetailView(APIView):
                 {'message': 'Opción eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        except OptionNotFoundException as e:
+            return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
         except BusinessRuleValidationException as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
