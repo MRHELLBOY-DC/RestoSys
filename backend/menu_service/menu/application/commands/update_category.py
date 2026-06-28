@@ -50,7 +50,7 @@ class UpdateCategoryCommandHandler(CommandHandler):
         
         old_data = {'name': old_category.name}
         
-        # ✅ Usar el método de la entidad para validar y actualizar
+        # Usar el método de la entidad para validar y actualizar
         # La entidad Category valida el nombre en update_name()
         old_category.update_name(command.name.strip())
         

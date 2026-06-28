@@ -50,7 +50,7 @@ export default function RestauranteDashboard() {
             )}
 
             <div className="resto-dashboard-grid">
-                {/* ✅ Gestión de productos - SOLO visible para Admin Restaurante */}
+                {/* Gestión de productos - SOLO visible para Admin Restaurante */}
                 {isAdminRestaurante && (
                     <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/menu")}>
                         <div className="resto-tile-title">Gestion de productos</div>
@@ -68,7 +68,7 @@ export default function RestauranteDashboard() {
                     <div className="resto-tile-text">Pagos en caja, QR y comprobantes.</div>
                 </button>
                 
-                {/* ✅ Reportes - SOLO visible para Admin Restaurante */}
+                {/* Reportes - SOLO visible para Admin Restaurante */}
                 {isAdminRestaurante && (
                     <button className="resto-dashboard-tile" type="button" onClick={() => navigate("/restaurante/reportes")}>
                         <div className="resto-tile-title">Reportes</div>

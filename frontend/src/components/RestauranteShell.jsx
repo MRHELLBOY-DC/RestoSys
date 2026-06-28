@@ -41,14 +41,14 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                         <i className="fa-solid fa-receipt"></i>Pedidos
                     </NavLink>
                     
-                    {/* ✅ Menú SOLO visible para Admin Restaurante */}
+                    {/* Menú SOLO visible para Admin Restaurante */}
                     {user?.role === 'restaurante' && (
                         <NavLink to="/restaurante/menu" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
                             <i className="fa-solid fa-utensils"></i>Menu
                         </NavLink>
                     )}
                     
-                    {/* ✅ Reportes SOLO visible para Admin Restaurante */}
+                    {/* Reportes SOLO visible para Admin Restaurante */}
                     {user?.role === 'restaurante' && (
                         <NavLink to="/restaurante/reportes" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
                             <i className="fa-solid fa-chart-bar"></i>Reportes

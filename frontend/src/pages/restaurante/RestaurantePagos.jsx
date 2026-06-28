@@ -72,7 +72,7 @@ export default function RestaurantePagos() {
         return payments.find((payment) => payment.orderId === orderId);
     };
 
-    // ✅ HANDLE CREATE PAYMENT - CORREGIDO
+    // HANDLE CREATE PAYMENT - CORREGIDO
     const handleCreatePayment = async (order) => {
         setBusy(true);
         setError("");

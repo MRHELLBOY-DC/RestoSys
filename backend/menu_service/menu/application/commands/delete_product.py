@@ -49,7 +49,7 @@ class DeleteProductCommandHandler(CommandHandler):
         if not product:
             raise ProductNotFoundException(command.product_id)
         
-        # 2. ✅ REGLA DE NEGOCIO: Verificar que el producto no tenga opciones asociadas
+        # 2. REGLA DE NEGOCIO: Verificar que el producto no tenga opciones asociadas
         option_count = self.option_repo.count_by_product(command.product_id, command.restaurant_id)
         if option_count > 0:
             raise ProductHasOptionsException(command.product_id, option_count)

@@ -65,7 +65,7 @@ class UpdateProductCommandHandler(CommandHandler):
             'description': existing_product.description,
         }
         
-        # ✅ Usar métodos de la entidad para actualizar con validaciones
+        # Usar métodos de la entidad para actualizar con validaciones
         if command.name is not None:
             existing_product.update_name(command.name)
         

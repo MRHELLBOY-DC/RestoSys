@@ -43,6 +43,19 @@ export default function AdminRestauranteMenu() {
     const [products, setProducts] = useState([]);
     const [options, setOptions] = useState([]);
     const [loadingData, setLoadingData] = useState(true);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+
+    // Auto-ocultar mensajes después de 4 segundos
+    useEffect(() => {
+        if (errorMessage || successMessage) {
+            const timer = setTimeout(() => {
+                setErrorMessage('');
+                setSuccessMessage('');
+            }, 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [errorMessage, successMessage]);
 
     // Estados para formularios
     const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -70,34 +83,46 @@ export default function AdminRestauranteMenu() {
         setEditingCategory(null);
         setCategoryData({ name: '' });
         setShowCategoryForm(true);
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const closeCategoryForm = () => {
         setShowCategoryForm(false);
         setEditingCategory(null);
         setCategoryData({ name: '' });
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const openProductForm = () => {
         setEditingProduct(null);
         setProductData({ name: '', price: '', description: '', category: '', image: null });
         setShowProductForm(true);
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const closeProductForm = () => {
         setShowProductForm(false);
         setEditingProduct(null);
         setProductData({ name: '', price: '', description: '', category: '', image: null });
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const openExtrasForm = (product) => {
         setSelectedProduct(product);
         setShowExtrasForm(true);
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const closeExtrasForm = () => {
         setShowExtrasForm(false);
         setSelectedProduct(null);
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const loadData = async () => {
@@ -121,6 +146,7 @@ export default function AdminRestauranteMenu() {
             setOptions(todasLasOpciones);
         } catch (error) {
             console.error('Error loading data:', error);
+            setErrorMessage(error.response?.data?.error || 'Error al cargar los datos');
         } finally {
             setLoadingData(false);
         }
@@ -135,6 +161,7 @@ export default function AdminRestauranteMenu() {
             });
         } catch (err) {
             console.error(`Error refreshing options for product ${productId}:`, err);
+            setErrorMessage(err.response?.data?.error || 'Error al cargar las opciones');
         }
     };
 
@@ -147,16 +174,16 @@ export default function AdminRestauranteMenu() {
         try {
             if (editingCategory) {
                 await updateCategory(editingCategory.id, data);
-                alert("Categoría actualizada");
+                setSuccessMessage('Categoría actualizada correctamente');
             } else {
                 await createCategory(data);
-                alert("Categoría creada");
+                setSuccessMessage('Categoría creada correctamente');
             }
             await loadData();
             closeCategoryForm();
         } catch (error) {
             console.error('Error saving category:', error);
-            alert("Error al guardar la categoría");
+            setErrorMessage(error.response?.data?.error || 'Error al guardar la categoría');
         }
     };
 
@@ -164,17 +191,19 @@ export default function AdminRestauranteMenu() {
         setEditingCategory(category);
         setCategoryData({ name: category.name });
         setShowCategoryForm(true);
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const handleDeleteCategory = async (id) => {
         if (window.confirm('¿Eliminar categoría?')) {
             try {
                 await deleteCategory(id);
-                alert("Categoría eliminada");
+                setSuccessMessage('Categoría eliminada correctamente');
                 await loadData();
             } catch (error) {
                 console.error('Error deleting category:', error);
-                alert("Error al eliminar la categoría");
+                setErrorMessage(error.response?.data?.error || 'Error: no puedes eliminar una categoria que tiene productos asociados.');
             }
         }
     };
@@ -220,17 +249,17 @@ export default function AdminRestauranteMenu() {
             
             if (editingProduct) {
                 await updateProduct(editingProduct.id, productToSend);
-                alert("Producto actualizado");
+                setSuccessMessage('Producto actualizado correctamente');
             } else {
                 await createProduct(productToSend);
-                alert("Producto creado");
+                setSuccessMessage('Producto creado correctamente');
             }
             
             await loadData();
             closeProductForm();
         } catch (error) {
             console.error('Error saving product:', error);
-            alert(error.error || "Error al guardar el producto");
+            setErrorMessage(error.response?.data?.error || 'Error al guardar el producto');
         }
     };
 
@@ -244,17 +273,21 @@ export default function AdminRestauranteMenu() {
             image: null
         });
         setShowProductForm(true);
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const handleDeleteProduct = async (id) => {
         if (window.confirm('¿Eliminar producto?')) {
             try {
                 await deleteProduct(id);
-                alert("Producto eliminado");
+                setSuccessMessage('Producto eliminado correctamente');
                 await loadData();
             } catch (error) {
                 console.error('Error deleting product:', error);
-                alert("Error al eliminar el producto");
+                const errorMsg = error.response?.data?.error || 'Error: no puedes eliminar un producto que tiene opciones asociadas.';
+                setErrorMessage(errorMsg);
+                // El mensaje se mostrará en la UI automáticamente
             }
         }
     };
@@ -296,6 +329,20 @@ export default function AdminRestauranteMenu() {
                 </div>
             }
         >
+            {/* Mostrar mensajes de éxito/error con auto-ocultamiento */}
+            {successMessage && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert" style={{ borderRadius: '12px', marginBottom: '16px' }}>
+                    {successMessage}
+                    <button type="button" className="btn-close" onClick={() => setSuccessMessage('')}></button>
+                </div>
+            )}
+            {errorMessage && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert" style={{ borderRadius: '12px', marginBottom: '16px' }}>
+                    {errorMessage}
+                    <button type="button" className="btn-close" onClick={() => setErrorMessage('')}></button>
+                </div>
+            )}
+
             <div className="resto-table">
                 <div className="resto-table-header">
                     <span></span>

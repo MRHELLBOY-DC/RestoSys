@@ -160,7 +160,7 @@ export default function AdminRestauranteUsuarios() {
         }
     };
 
-    // ✅ FILTRO - Solo muestra usuarios de su restaurante
+    // FILTRO - Solo muestra usuarios de su restaurante
     const filteredUsuarios = usuarios.filter(u => {
         // Si es el propio Admin Restaurante, siempre mostrar
         if (u.id === currentUser.id) {

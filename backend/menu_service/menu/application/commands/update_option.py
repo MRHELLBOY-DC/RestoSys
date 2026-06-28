@@ -56,7 +56,7 @@ class UpdateOptionCommandHandler(CommandHandler):
             'extra_price': str(existing_option.extra_price),
         }
         
-        # ✅ Usar métodos de la entidad para actualizar con validaciones
+        # Usar métodos de la entidad para actualizar con validaciones
         if command.name is not None:
             existing_option.update_name(command.name)
         

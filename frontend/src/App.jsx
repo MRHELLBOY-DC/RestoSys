@@ -14,17 +14,15 @@ import AdminAuditoria from "./pages/admin/AdminAuditoria";
 
 // Admin Restaurante (dentro de carpeta restaurante/admin-restaurante)
 import AdminRestauranteDashboard from "./pages/restaurante/admin-restaurante/AdminRestauranteDashboard";
-import AdminRestauranteUsuarios from "./pages/restaurante/admin-restaurante/AdminRestauranteUsuarios";  // ← NUEVO
+import AdminRestauranteUsuarios from "./pages/restaurante/admin-restaurante/AdminRestauranteUsuarios";
 import AdminRestauranteReportes from "./pages/restaurante/admin-restaurante/AdminRestauranteReportes";
 import AdminRestaurantePedidos from "./pages/restaurante/admin-restaurante/AdminRestaurantePedidos";
-import AdminRestauranteMenu from "./pages/restaurante/admin-restaurante/AdminRestauranteMenu";  // ← NUEVO
+import AdminRestauranteMenu from "./pages/restaurante/admin-restaurante/AdminRestauranteMenu";
 
-// Restaurante (Empleado)
+// Restaurante (Empleado) - SOLO pedidos y pagos
 import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
-import RestauranteMenu from "./pages/restaurante/RestauranteMenu";
 import RestaurantePedidos from "./pages/restaurante/RestaurantePedidos";
 import RestaurantePagos from "./pages/restaurante/RestaurantePagos";
-import RestauranteReportes from "./pages/restaurante/RestauranteReportes";
 
 // Cliente
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
@@ -148,16 +146,11 @@ function App() {
             } />
             
             {/* ============================================ */}
-            {/* EMPLEADO - Solo empleado */}
+            {/* EMPLEADO - Solo pedidos y pagos */}
             {/* ============================================ */}
             <Route path="/restaurante/dashboard" element={
                 <ProtectedRoute allowedRoles={['empleado']}>
                     <RestauranteDashboard />
-                </ProtectedRoute>
-            } />
-            <Route path="/restaurante/menu" element={
-                <ProtectedRoute allowedRoles={['empleado']}>
-                    <RestauranteMenu />
                 </ProtectedRoute>
             } />
             <Route path="/restaurante/pedidos" element={
@@ -168,11 +161,6 @@ function App() {
             <Route path="/restaurante/pagos" element={
                 <ProtectedRoute allowedRoles={['empleado']}>
                     <RestaurantePagos />
-                </ProtectedRoute>
-            } />
-            <Route path="/restaurante/reportes" element={
-                <ProtectedRoute allowedRoles={['empleado']}>
-                    <RestauranteReportes />
                 </ProtectedRoute>
             } />
         </Routes>

@@ -17,7 +17,7 @@ authClient.interceptors.response.use(
             const errorMessage = error.response?.data?.error || 
                                error.response?.data?.detail || 
                                'No tienes permiso para realizar esta acción';
-            console.error('🔒 Permiso denegado:', errorMessage);
+            console.error('Permiso denegado:', errorMessage);
             
             // Crear un error personalizado con el mensaje
             const customError = new Error(errorMessage);
