@@ -14,36 +14,41 @@ class ProductOption(AggregateRoot):
 
     def __post_init__(self):
         """Validaciones automáticas al crear la instancia"""
-        self._validate_name()
-        self._validate_extra_price()
-        self._validate_product_id()
+        self._domain_events = []
+        self._validate()
 
-    def _validate_name(self):
-        """Valida que el nombre no esté vacío"""
-        if not self.name or not self.name.strip():
-            raise InvalidOptionDataException('name', 'El nombre de la opción es requerido')
-    
-    def _validate_extra_price(self):
-        """Valida que el precio extra no sea negativo"""
-        if self.extra_price < 0:
-            raise InvalidOptionDataException('extra_price', 'El precio extra no puede ser negativo')
-    
-    def _validate_product_id(self):
-        """Valida que product_id esté presente"""
+    def _validate(self):
+        """
+        Valida las reglas de negocio del ProductOption.
+        Estas validaciones se ejecutan automáticamente al crear o reconstituir un ProductOption.
+        """
+        from menu.domain.shared.rules import (
+            StringNotNullOrEmptyRule,
+            OptionNameValidRule,
+            NonNegativeAmountRule
+        )
+        
+        self._check_rule(StringNotNullOrEmptyRule(self.name, "El nombre de la opción"))
+        self._check_rule(OptionNameValidRule(self.name))
+        self._check_rule(NonNegativeAmountRule(self.extra_price, "El precio extra de la opción"))
+        
         if not self.product_id:
             raise InvalidOptionDataException('product_id', 'Se requiere product_id')
-    
+
     def update_name(self, new_name: str):
         """Actualiza el nombre de la opción con validación"""
-        if not new_name or not new_name.strip():
-            raise InvalidOptionDataException('name', 'El nombre de la opción no puede estar vacío')
+        from menu.domain.shared.rules import OptionNameValidRule, StringNotNullOrEmptyRule
+        
+        self._check_rule(StringNotNullOrEmptyRule(new_name, "El nombre de la opción"))
+        self._check_rule(OptionNameValidRule(new_name))
         self.name = new_name.strip()
         return self
     
     def update_extra_price(self, new_extra_price: Decimal):
         """Actualiza el precio extra con validación"""
-        if new_extra_price < 0:
-            raise InvalidOptionDataException('extra_price', 'El precio extra no puede ser negativo')
+        from menu.domain.shared.rules import NonNegativeAmountRule
+        
+        self._check_rule(NonNegativeAmountRule(new_extra_price, "El precio extra de la opción"))
         self.extra_price = new_extra_price
         return self
 

@@ -63,7 +63,7 @@ class RegisterView(generics.CreateAPIView):
         role = 'cliente'
         
         try:
-            # 4. Crear comando con rol forzado
+            # 4. Crear comando
             command = CreateUserCommand(
                 email=validated_data['email'],
                 password=password,

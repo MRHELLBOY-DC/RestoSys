@@ -8,7 +8,6 @@ from .base_command import Command, CommandHandler
 from menu.application.ports.category_repository_port import CategoryRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.entities.category import Category
-from menu.domain.exceptions import InvalidCategoryNameException
 
 
 @dataclass
@@ -33,14 +32,11 @@ class CreateCategoryCommandHandler(CommandHandler):
     def handle(self, command: CreateCategoryCommand) -> Category:
         """Execute the command - creates a new category"""
         
-        # La validación ahora está en la entidad
-        try:
-            category_entity = Category(
-                name=command.name.strip() if command.name else None,
-                restaurant_id=command.restaurant_id
-            )
-        except InvalidCategoryNameException as e:
-            raise e
+        # LA ENTIDAD VALIDA SUS REGLAS EN __post_init__
+        category_entity = Category(
+            name=command.name.strip() if command.name else None,
+            restaurant_id=command.restaurant_id
+        )
         
         # Crear categoría usando repositorio
         category = self.category_repo.create(

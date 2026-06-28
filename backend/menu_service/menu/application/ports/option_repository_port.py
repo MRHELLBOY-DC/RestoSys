@@ -18,6 +18,14 @@ class OptionRepositoryPort(ABC):
         pass
     
     @abstractmethod
+    def count_by_product(self, product_id: int, restaurant_id: int) -> int:
+        """
+        Cuenta cuántas opciones tiene un producto.
+        Útil para validar si se puede eliminar el producto.
+        """
+        pass
+    
+    @abstractmethod
     def create(self, name: str, extra_price: Decimal, product_id: int) -> ProductOption:
         """Crea una nueva opción"""
         pass

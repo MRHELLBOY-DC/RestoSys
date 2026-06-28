@@ -10,6 +10,9 @@ from ..serializers import CategorySerializer, ProductSerializer, ProductOptionSe
 # Importar Container
 from ...infrastructure.container import container
 
+# Importar BusinessRuleValidationException
+from menu.domain.shared.core import BusinessRuleValidationException
+
 # Importar Commands y Queries de Category
 from ...application.commands.create_category import CreateCategoryCommand
 from ...application.commands.update_category import UpdateCategoryCommand
@@ -76,6 +79,8 @@ class CategoryListCreateView(APIView):
             
             serializer = CategorySerializer(category)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -132,6 +137,8 @@ class CategoryDetailView(APIView):
             
             serializer = CategorySerializer(category)
             return Response(serializer.data)
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -156,6 +163,8 @@ class CategoryDetailView(APIView):
                 {'message': 'Categoría eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -229,6 +238,8 @@ class ProductListCreateView(APIView):
             
             serializer = ProductSerializer(product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -289,6 +300,8 @@ class ProductDetailView(APIView):
             
             serializer = ProductSerializer(product)
             return Response(serializer.data)
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -313,6 +326,8 @@ class ProductDetailView(APIView):
                 {'message': 'Producto eliminado correctamente'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -384,6 +399,8 @@ class OptionListCreateView(APIView):
             
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -442,6 +459,8 @@ class OptionDetailView(APIView):
             
             serializer = ProductOptionSerializer(option)
             return Response(serializer.data)
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -466,6 +485,8 @@ class OptionDetailView(APIView):
                 {'message': 'Opción eliminada correctamente'},
                 status=status.HTTP_204_NO_CONTENT
             )
+        except BusinessRuleValidationException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

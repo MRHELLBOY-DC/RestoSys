@@ -11,8 +11,8 @@ from menu.application.ports.product_repository_port import ProductRepositoryPort
 from menu.application.ports.category_repository_port import CategoryRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.entities.product import Product
-from menu.domain.exceptions import ProductNotFoundException, CategoryNotFoundException, InvalidProductDataException
-from menu.domain.shared.domain_event import DomainEvent
+from menu.domain.exceptions import ProductNotFoundException, CategoryNotFoundException
+from menu.domain.shared import DomainEvent
 
 
 @dataclass
@@ -65,38 +65,36 @@ class UpdateProductCommandHandler(CommandHandler):
             'description': existing_product.description,
         }
         
-        # Usar métodos de la entidad para actualizar con validaciones
-        # Creamos una copia temporal para validar los cambios
-        updated_entity = Product(
-            name=command.name if command.name is not None else existing_product.name,
-            price=Decimal(str(command.price)) if command.price is not None else existing_product.price,
-            category_id=command.category_id if command.category_id is not None else existing_product.category_id,
-            restaurant_id=command.restaurant_id,
-            description=command.description if command.description is not None else existing_product.description,
-            image=existing_product.image
-        )
+        # ✅ Usar métodos de la entidad para actualizar con validaciones
+        if command.name is not None:
+            existing_product.update_name(command.name)
+        
+        if command.price is not None:
+            if isinstance(command.price, str):
+                price = Decimal(command.price)
+            elif isinstance(command.price, (int, float)):
+                price = Decimal(str(command.price))
+            else:
+                price = command.price
+            existing_product.update_price(price)
+        
+        if command.description is not None:
+            existing_product.update_description(command.description)
         
         # Verificar categoría si cambió
         if command.category_id and command.category_id != existing_product.category_id:
             category = self.category_repo.get_by_id(command.category_id, command.restaurant_id)
             if not category:
                 raise CategoryNotFoundException(command.category_id)
+            existing_product.category_id = command.category_id
         
         # Construir datos a actualizar
-        update_data = {}
-        
-        if command.name is not None:
-            # La validación ya ocurrió en updated_entity
-            update_data['name'] = updated_entity.name
-        
-        if command.price is not None:
-            update_data['price'] = updated_entity.price
-        
-        if command.category_id is not None:
-            update_data['category_id'] = updated_entity.category_id
-        
-        if command.description is not None:
-            update_data['description'] = updated_entity.description
+        update_data = {
+            'name': existing_product.name,
+            'price': existing_product.price,
+            'category_id': existing_product.category_id,
+            'description': existing_product.description,
+        }
         
         # Actualizar producto
         product = None

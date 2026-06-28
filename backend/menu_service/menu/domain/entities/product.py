@@ -17,42 +17,44 @@ class Product(AggregateRoot):
 
     def __post_init__(self):
         """Validaciones automáticas al crear la instancia"""
-        self._validate_name()
-        self._validate_price()
-        self._validate_category_id()
-        self._validate_restaurant_id()
+        self._domain_events = []
+        self._validate()
 
-    def _validate_name(self):
-        """Valida que el nombre no esté vacío"""
-        if not self.name or not self.name.strip():
-            raise InvalidProductDataException('name', 'El nombre del producto es requerido')
-    
-    def _validate_price(self):
-        """Valida que el precio sea mayor a 0"""
-        if self.price <= 0:
-            raise InvalidProductDataException('price', 'El precio debe ser mayor a 0')
-    
-    def _validate_category_id(self):
-        """Valida que category_id esté presente"""
+    def _validate(self):
+        """
+        Valida las reglas de negocio del Product.
+        Estas validaciones se ejecutan automáticamente al crear o reconstituir un Product.
+        """
+        from menu.domain.shared.rules import (
+            StringNotNullOrEmptyRule,
+            ProductNameValidRule,
+            PositiveAmountRule
+        )
+        
+        self._check_rule(StringNotNullOrEmptyRule(self.name, "El nombre del producto"))
+        self._check_rule(ProductNameValidRule(self.name))
+        self._check_rule(PositiveAmountRule(self.price, "El precio del producto"))
+        
         if not self.category_id:
             raise InvalidProductDataException('category_id', 'Se requiere category_id')
-    
-    def _validate_restaurant_id(self):
-        """Valida que restaurant_id esté presente"""
+        
         if not self.restaurant_id:
             raise InvalidProductDataException('restaurant_id', 'Se requiere restaurant_id')
-    
+
     def update_name(self, new_name: str):
         """Actualiza el nombre del producto con validación"""
-        if not new_name or not new_name.strip():
-            raise InvalidProductDataException('name', 'El nombre no puede estar vacío')
+        from menu.domain.shared.rules import ProductNameValidRule, StringNotNullOrEmptyRule
+        
+        self._check_rule(StringNotNullOrEmptyRule(new_name, "El nombre del producto"))
+        self._check_rule(ProductNameValidRule(new_name))
         self.name = new_name.strip()
         return self
     
     def update_price(self, new_price: Decimal):
         """Actualiza el precio del producto con validación"""
-        if new_price <= 0:
-            raise InvalidProductDataException('price', 'El precio debe ser mayor a 0')
+        from menu.domain.shared.rules import PositiveAmountRule
+        
+        self._check_rule(PositiveAmountRule(new_price, "El precio del producto"))
         self.price = new_price
         return self
     

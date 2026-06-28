@@ -10,7 +10,7 @@ from menu.application.ports.option_repository_port import OptionRepositoryPort
 from menu.application.ports.product_repository_port import ProductRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.entities.product_option import ProductOption
-from menu.domain.exceptions import InvalidOptionDataException, ProductNotFoundException
+from menu.domain.exceptions import ProductNotFoundException
 
 
 @dataclass
@@ -39,15 +39,12 @@ class CreateOptionCommandHandler(CommandHandler):
     def handle(self, command: CreateOptionCommand) -> ProductOption:
         """Execute the command - creates a new product option"""
         
-        # La validación ahora está en la entidad
-        try:
-            option_entity = ProductOption(
-                name=command.name.strip() if command.name else None,
-                extra_price=command.extra_price,
-                product_id=command.product_id
-            )
-        except InvalidOptionDataException as e:
-            raise e
+        # LA ENTIDAD VALIDA SUS REGLAS EN __post_init__
+        option_entity = ProductOption(
+            name=command.name.strip() if command.name else None,
+            extra_price=command.extra_price,
+            product_id=command.product_id
+        )
         
         # Verificar que el producto existe
         product = self.product_repo.get_by_id(command.product_id, command.restaurant_id)

@@ -19,15 +19,31 @@ class ProductRepositoryPort(ABC):
         pass
     
     @abstractmethod
+    def list_by_category(self, category_id: int, restaurant_id: int) -> List[Product]:
+        """
+        Obtiene todos los productos de una categoría específica.
+        Útil para verificar si una categoría tiene productos antes de eliminar.
+        """
+        pass
+    
+    @abstractmethod
+    def count_by_category(self, category_id: int, restaurant_id: int) -> int:
+        """
+        Cuenta cuántos productos tiene una categoría.
+        Útil para validar si se puede eliminar la categoría.
+        """
+        pass
+    
+    @abstractmethod
     def create(self, name: str, price: Decimal, category_id: int, restaurant_id: int,
-               image: Optional[str] = None, description: Optional[str] = None) -> Product:
+            image: Optional[str] = None, description: Optional[str] = None) -> Product:
         """Crea un nuevo producto (con URL de imagen o None)"""
         pass
     
     @abstractmethod
     def create_with_image(self, name: str, price: Decimal, category_id: int,
-                        restaurant_id: int, image_file: Any,
-                        description: Optional[str] = None) -> Product:
+        restaurant_id: int, image_file: Any,
+        description: Optional[str] = None) -> Product:
         """
         Crea un nuevo producto con un archivo de imagen subido.
         El repositorio se encarga de guardar el archivo y almacenar la URL.

@@ -10,7 +10,7 @@ from menu.application.ports.product_repository_port import ProductRepositoryPort
 from menu.application.ports.category_repository_port import CategoryRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.entities.product import Product
-from menu.domain.exceptions import CategoryNotFoundException, InvalidProductDataException
+from menu.domain.exceptions import CategoryNotFoundException
 
 
 @dataclass
@@ -54,19 +54,14 @@ class CreateProductCommandHandler(CommandHandler):
         if not category:
             raise CategoryNotFoundException(command.category_id)
         
-        # La validación de nombre y precio ahora está en la entidad
-        # Creamos la entidad (las validaciones ocurren en __post_init__)
-        try:
-            product_entity = Product(
-                name=command.name.strip() if command.name else None,
-                price=price,
-                category_id=command.category_id,
-                restaurant_id=command.restaurant_id,
-                description=command.description
-            )
-        except InvalidProductDataException as e:
-            # Re-lanzar con el mismo mensaje
-            raise e
+        # LA ENTIDAD VALIDA SUS REGLAS EN __post_init__
+        product_entity = Product(
+            name=command.name.strip() if command.name else None,
+            price=price,
+            category_id=command.category_id,
+            restaurant_id=command.restaurant_id,
+            description=command.description
+        )
         
         # Crear producto en repositorio
         product = None
@@ -90,9 +85,6 @@ class CreateProductCommandHandler(CommandHandler):
                 image=command.image if isinstance(command.image, str) else None,
                 description=product_entity.description
             )
-        
-        if not product:
-            raise InvalidProductDataException('product', 'Error al crear el producto')
         
         # Registrar evento de dominio
         product.record_created()

@@ -9,8 +9,8 @@ from .base_command import Command, CommandHandler
 from menu.application.ports.category_repository_port import CategoryRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.entities.category import Category
-from menu.domain.exceptions import CategoryNotFoundException, InvalidCategoryNameException
-from menu.domain.shared.domain_event import DomainEvent
+from menu.domain.exceptions import CategoryNotFoundException
+from menu.domain.shared import DomainEvent
 
 
 @dataclass
@@ -50,21 +50,15 @@ class UpdateCategoryCommandHandler(CommandHandler):
         
         old_data = {'name': old_category.name}
         
-        # Validar el nuevo nombre usando la entidad
-        try:
-            # Crear una entidad temporal para validar
-            Category(
-                name=command.name.strip(),
-                restaurant_id=command.restaurant_id
-            )
-        except InvalidCategoryNameException as e:
-            raise e
+        # ✅ Usar el método de la entidad para validar y actualizar
+        # La entidad Category valida el nombre en update_name()
+        old_category.update_name(command.name.strip())
         
         # Actualizar categoría
         category = self.category_repo.update(
             category_id=command.category_id,
             restaurant_id=command.restaurant_id,
-            name=command.name.strip()
+            name=old_category.name
         )
         
         if not category:

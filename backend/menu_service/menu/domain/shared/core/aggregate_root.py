@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import List, Optional
 
 from .domain_event import DomainEvent
 from .entity import Entity
@@ -7,9 +8,9 @@ from .entity import Entity
 
 @dataclass(kw_only=True)
 class AggregateRoot(Entity):
-    _domain_events: list[DomainEvent] = field(default_factory=list, init=False, repr=False)
+    _domain_events: List[DomainEvent] = field(default_factory=list, init=False, repr=False)
 
-    def add_domain_event(self, event_type, data, aggregate_type=None):
+    def add_domain_event(self, event_type: str, data: dict, aggregate_type: Optional[str] = None):
         event = DomainEvent(
             event_type=event_type,
             aggregate_id=self.identity,

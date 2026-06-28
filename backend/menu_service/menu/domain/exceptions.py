@@ -6,7 +6,6 @@ class DomainException(Exception):
     """Excepción base para todas las excepciones de dominio"""
     pass
 
-
 # ============================================
 # Category Exceptions
 # ============================================
@@ -29,6 +28,16 @@ class InvalidCategoryNameException(CategoryException):
         self.reason = reason
         super().__init__(f"Nombre de categoría inválido: {reason}")
 
+
+class CategoryHasProductsException(CategoryException):
+    """Categoría tiene productos asociados y no puede ser eliminada"""
+    def __init__(self, category_id: int, product_count: int):
+        self.category_id = category_id
+        self.product_count = product_count
+        super().__init__(
+            f"No se puede eliminar la categoría con ID '{category_id}'. "
+            f"Tiene {product_count} producto(s) asociado(s)."
+        )
 
 # ============================================
 # Product Exceptions
@@ -53,6 +62,27 @@ class InvalidProductDataException(ProductException):
         super().__init__(f"Dato inválido para '{field}': {reason}")
 
 
+class ProductHasOptionsException(ProductException):
+    """Producto tiene opciones asociadas y no puede ser eliminado"""
+    def __init__(self, product_id: int, option_count: int):
+        self.product_id = product_id
+        self.option_count = option_count
+        super().__init__(
+            f"No se puede eliminar el producto con ID '{product_id}'. "
+            f"Tiene {option_count} opción(es) asociada(s)."
+        )
+
+
+class ProductHasActiveOrdersException(ProductException):
+    """Producto tiene pedidos activos y no puede ser eliminado"""
+    def __init__(self, product_id: int, order_count: int):
+        self.product_id = product_id
+        self.order_count = order_count
+        super().__init__(
+            f"No se puede eliminar el producto con ID '{product_id}'. "
+            f"Tiene {order_count} pedido(s) activo(s)."
+        )
+
 # ============================================
 # Option Exceptions
 # ============================================
@@ -75,6 +105,16 @@ class InvalidOptionDataException(OptionException):
         self.field = field
         super().__init__(f"Dato inválido para '{field}': {reason}")
 
+
+class OptionPriceExceedsProductPriceException(OptionException):
+    """El precio extra de la opción excede el precio del producto"""
+    def __init__(self, option_price: Decimal, product_price: Decimal):
+        self.option_price = option_price
+        self.product_price = product_price
+        super().__init__(
+            f"El precio extra de la opción ({option_price}) "
+            f"no puede exceder el precio del producto ({product_price})."
+        )
 
 # ============================================
 # Restaurant Validation Exceptions

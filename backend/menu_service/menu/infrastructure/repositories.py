@@ -82,6 +82,27 @@ class ProductRepository(ProductRepositoryPort):
         return ProductMapper.to_domain_list(queryset)
     
     @staticmethod
+    def list_by_category(category_id: int, restaurant_id: int) -> List[Product]:
+        """
+        Obtiene todos los productos de una categoría específica.
+        """
+        queryset = ProductModel.objects.filter(
+            category_id=category_id,
+            restaurant_id=restaurant_id
+        )
+        return ProductMapper.to_domain_list(queryset)
+    
+    @staticmethod
+    def count_by_category(category_id: int, restaurant_id: int) -> int:
+        """
+        Cuenta cuántos productos tiene una categoría.
+        """
+        return ProductModel.objects.filter(
+            category_id=category_id,
+            restaurant_id=restaurant_id
+        ).count()
+    
+    @staticmethod
     def create(name: str, price: Decimal, category_id: int, restaurant_id: int,
                image: Optional[str] = None, description: Optional[str] = None) -> Product:
         model = ProductModel.objects.create(
@@ -185,6 +206,16 @@ class ProductOptionRepository(OptionRepositoryPort):
             product__restaurant_id=restaurant_id
         )
         return OptionMapper.to_domain_list(queryset)
+    
+    @staticmethod
+    def count_by_product(product_id: int, restaurant_id: int) -> int:
+        """
+        Cuenta cuántas opciones tiene un producto.
+        """
+        return ProductOptionModel.objects.filter(
+            product_id=product_id,
+            product__restaurant_id=restaurant_id
+        ).count()
     
     @staticmethod
     def create(name: str, extra_price: Decimal, product_id: int) -> ProductOption:

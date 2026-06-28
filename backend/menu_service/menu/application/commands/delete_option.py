@@ -9,7 +9,7 @@ from .base_command import Command, CommandHandler
 from menu.application.ports.option_repository_port import OptionRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.exceptions import OptionNotFoundException
-from menu.domain.shared.domain_event import DomainEvent
+from menu.domain.shared import DomainEvent
 
 
 @dataclass

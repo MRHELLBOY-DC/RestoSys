@@ -10,8 +10,8 @@ from .base_command import Command, CommandHandler
 from menu.application.ports.option_repository_port import OptionRepositoryPort
 from menu.application.ports.event_publisher_port import EventPublisherPort
 from menu.domain.entities.product_option import ProductOption
-from menu.domain.exceptions import OptionNotFoundException, InvalidOptionDataException
-from menu.domain.shared.domain_event import DomainEvent
+from menu.domain.exceptions import OptionNotFoundException
+from menu.domain.shared import DomainEvent
 
 
 @dataclass
@@ -56,32 +56,21 @@ class UpdateOptionCommandHandler(CommandHandler):
             'extra_price': str(existing_option.extra_price),
         }
         
-        # Validar usando la entidad
+        # ✅ Usar métodos de la entidad para actualizar con validaciones
+        if command.name is not None:
+            existing_option.update_name(command.name)
+        
+        if command.extra_price is not None:
+            existing_option.update_extra_price(command.extra_price)
+        
+        # Construir datos a actualizar
         update_data = {}
         
         if command.name is not None:
-            try:
-                # Crear entidad temporal para validar el nombre
-                ProductOption(
-                    name=command.name.strip(),
-                    extra_price=existing_option.extra_price,
-                    product_id=existing_option.product_id
-                )
-                update_data['name'] = command.name.strip()
-            except InvalidOptionDataException as e:
-                raise e
+            update_data['name'] = existing_option.name
         
         if command.extra_price is not None:
-            try:
-                # Crear entidad temporal para validar el precio
-                ProductOption(
-                    name=existing_option.name,
-                    extra_price=command.extra_price,
-                    product_id=existing_option.product_id
-                )
-                update_data['extra_price'] = command.extra_price
-            except InvalidOptionDataException as e:
-                raise e
+            update_data['extra_price'] = existing_option.extra_price
         
         # Actualizar opción
         option = self.option_repo.update(
