@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { getPublicRestaurantes } from "../../services/api";
 import Footer from "../../components/Footer";
+import { authMediaUrl } from "../../services/mediaUrl";
 
 export default function Home() {
     const [restaurantes, setRestaurantes] = useState([]);
@@ -243,7 +244,7 @@ export default function Home() {
                                             <div className="mb-3">
                                                 {rest.logo ? (
                                                     <img
-                                                        src={`http://localhost:8000${rest.logo}`}
+                                                        src={authMediaUrl(rest.logo)}
                                                         alt={`Logo de ${rest.name}`}
                                                         className="rounded-circle"
                                                         style={{ width: '80px', height: '80px', objectFit: 'cover', border: '2px solid rgba(240,85,77,0.5)' }}

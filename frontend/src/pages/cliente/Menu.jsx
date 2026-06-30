@@ -3,6 +3,7 @@ import { getPublicProducts, getPublicCategories } from "../../services/menuApi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
+import { menuMediaUrl } from "../../services/mediaUrl";
 
 export default function Menu() {
     const [products, setProducts] = useState([]);
@@ -169,7 +170,7 @@ export default function Menu() {
                                     <div className="card h-100 border-0 shadow-lg overflow-hidden" style={{ borderRadius: '20px', transition: 'transform 0.3s ease' }}>
                                         <div className="position-relative">
                                             <img 
-                                                src={product.image ? `http://localhost:8001${product.image}` : "https://via.placeholder.com/300x200?text=Sin+Imagen"} 
+                                                src={product.image ? menuMediaUrl(product.image) : "https://via.placeholder.com/300x200?text=Sin+Imagen"} 
                                                 alt={product.name}
                                                 className="card-img-top"
                                                 style={{ height: '200px', objectFit: 'cover' }}

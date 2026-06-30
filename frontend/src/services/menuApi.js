@@ -1,6 +1,7 @@
-import createApiClient, { getEnv } from "./apiClient";
+﻿import createApiClient, { getEnv } from "./apiClient";
 
-const API = getEnv("VITE_MENU_API", "http://localhost:8001");
+const API_GATEWAY = getEnv("VITE_API_GATEWAY_URL", "http://localhost:8080");
+const API = getEnv("VITE_MENU_API", API_GATEWAY);
 const client = createApiClient(API);
 
 // ========== PRODUCTOS (requieren auth) ==========

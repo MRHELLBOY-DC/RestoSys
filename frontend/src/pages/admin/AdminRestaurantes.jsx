@@ -3,6 +3,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { getAdminRestaurantes, createRestaurante, updateRestaurante, deleteRestaurante, getCurrentUser } from "../../services/api";
 import AdminShell from "../../components/AdminShell";
 import RestauranteModal from "../../components/modals/RestauranteModal";
+import { authMediaUrl } from "../../services/mediaUrl";
 
 export default function AdminRestaurantes() {
     const { loading: authLoading } = useAuth(['admin', 'restaurante']);
@@ -152,7 +153,7 @@ export default function AdminRestaurantes() {
                                                 <td>
                                                     {r.logo ? (
                                                         <img
-                                                            src={`http://localhost:8000${r.logo}`}
+                                                            src={authMediaUrl(r.logo)}
                                                             alt={r.name}
                                                             style={{ 
                                                                 width: 40, 

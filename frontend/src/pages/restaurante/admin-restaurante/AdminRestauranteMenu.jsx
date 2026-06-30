@@ -17,6 +17,7 @@ import AdminShell from "../../../components/AdminShell";
 import { CategoryModal } from "../../../components/modals/restaurantModals/CategoryModal";
 import { ProductModal } from "../../../components/modals/restaurantModals/ProductModal";
 import { ExtrasModal } from "../../../components/modals/restaurantModals/ExtrasModal";
+import { menuMediaUrl } from "../../../services/mediaUrl";
 
 const getFoodIcon = (name = '', category = '') => {
     const t = `${name} ${category}`.toLowerCase();
@@ -358,7 +359,7 @@ export default function AdminRestauranteMenu() {
                         <div key={prod.id} className="resto-row">
                             <div className="resto-thumb">
                                 {prod.image ? (
-                                    <img src={`http://localhost:8001${prod.image}`} alt={prod.name} />
+                                    <img src={menuMediaUrl(prod.image)} alt={prod.name} />
                                 ) : (
                                     <div className="resto-thumb-fallback">
                                         <i className={`fa ${getFoodIcon(prod.name, categoriesMap.get(prod.category_id))}`} />
