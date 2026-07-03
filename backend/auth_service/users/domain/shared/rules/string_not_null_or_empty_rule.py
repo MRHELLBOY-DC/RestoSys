@@ -4,11 +4,6 @@ GENERIC RULE — StringNotNullOrEmptyRule
 Valida que un String no sea nulo ni vacío.
 Reutilizable en cualquier Aggregate del dominio.
 
-Ejemplo:
-    self._check_rule(StringNotNullOrEmptyRule(username, "El nombre de usuario"))
-    self._check_rule(StringNotNullOrEmptyRule(email, "El email"))
-
-DDD Pattern: Generic Business Rule / Specification
 """
 
 from users.domain.shared.core.business_rule import BusinessRule

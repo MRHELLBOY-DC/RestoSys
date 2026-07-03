@@ -36,19 +36,49 @@ class User(AggregateRoot):
         from users.domain.shared.rules import (
             StringNotNullOrEmptyRule,
             EmailValidRule,
-            UsernameValidRule
+            UsernameValidRule,
+            RoleValidRule
         )
         
         self._check_rule(StringNotNullOrEmptyRule(self.username, "El nombre de usuario"))
         self._check_rule(UsernameValidRule(self.username))
         self._check_rule(EmailValidRule(self.email))
+        self._check_rule(RoleValidRule(self.role))
     
     @property
     def identity(self) -> Optional[int]:
         """Implementación de la propiedad abstracta"""
         return self.id
     
-    # ========== MÉTODOS DE COMPORTAMIENTO (NUEVOS) ==========
+    # ========== MÉTODOS DE COMPORTAMIENTO ==========
+    
+    # ---- Métodos de consulta de rol ----
+    
+    def is_admin(self) -> bool:
+        """Verifica si el usuario es Super Administrador."""
+        return self.role == 'admin'
+    
+    def is_restaurante(self) -> bool:
+        """Verifica si el usuario es Administrador de Restaurante."""
+        return self.role == 'restaurante'
+    
+    def is_cliente(self) -> bool:
+        """Verifica si el usuario es Cliente."""
+        return self.role == 'cliente'
+    
+    def is_empleado(self) -> bool:
+        """Verifica si el usuario es Empleado."""
+        return self.role == 'empleado'
+    
+    def has_role(self, role: str) -> bool:
+        """Verifica si el usuario tiene un rol específico."""
+        return self.role == role
+    
+    def is_active_user(self) -> bool:
+        """Verifica si el usuario está activo."""
+        return self.is_active
+    
+    # ---- Métodos de actualización ----
     
     def update_email(self, new_email: str) -> None:
         """
@@ -73,10 +103,22 @@ class User(AggregateRoot):
         self.username = new_username.strip()
         self.record_updated(old_data, {'username': self.username})
     
+    def change_role(self, new_role: str) -> None:
+        """
+        Cambia el rol del usuario con validación de negocio.
+        """
+        from users.domain.shared.rules import RoleValidRule
+        
+        self._check_rule(RoleValidRule(new_role))
+        old_data = {'role': self.role}
+        self.role = new_role
+        self.record_updated(old_data, {'role': self.role})
+    
     def activate(self) -> None:
         """Activa el usuario."""
         if not self.is_active:
             self.is_active = True
+            # No generamos evento para activación por ahora
     
     def deactivate(self) -> None:
         """Desactiva el usuario (soft delete)."""

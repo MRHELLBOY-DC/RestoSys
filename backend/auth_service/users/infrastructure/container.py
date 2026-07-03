@@ -15,7 +15,7 @@ from users.application.commands.update_restaurant import UpdateRestaurantCommand
 from users.application.commands.delete_restaurant import DeleteRestaurantCommand, DeleteRestaurantCommandHandler
 from users.application.commands.assign_restaurant import AssignRestaurantCommand, AssignRestaurantCommandHandler
 from users.application.commands.unassign_restaurant import UnassignRestaurantCommand, UnassignRestaurantCommandHandler
-from users.application.commands.login import LoginCommand, LoginCommandHandler  # ← AGREGADO
+from users.application.commands.login import LoginCommand, LoginCommandHandler
 from users.application.queries.list_users import ListUsersQuery, ListUsersQueryHandler
 from users.application.queries.get_user_details import GetUserDetailsQuery, GetUserDetailsQueryHandler
 from users.application.queries.get_event_history import (
@@ -27,6 +27,10 @@ from users.application.queries.get_restaurant_queries import (
     GetUserRestaurantQuery, GetUserRestaurantQueryHandler
 )
 from users.application.queries.get_profile import GetProfileQuery, GetProfileQueryHandler
+from users.application.queries.get_restaurant_details import (
+    GetRestaurantDetailsQuery,
+    GetRestaurantDetailsQueryHandler,
+)
 
 
 class Container:
@@ -69,9 +73,16 @@ class Container:
         
         self._command_handlers_factory = {
             CreateUserCommand: lambda: CreateUserCommandHandler(
-                self.user_repo, self.event_publisher, self.hashing_service
+                self.user_repo,
+                self.user_restaurant_repo,
+                self.event_publisher,
+                self.hashing_service
             ),
-            UpdateUserCommand: lambda: UpdateUserCommandHandler(self.user_repo, self.event_publisher),
+            UpdateUserCommand: lambda: UpdateUserCommandHandler(
+                self.user_repo,
+                self.user_restaurant_repo,
+                self.event_publisher
+            ),
             DeleteUserCommand: lambda: DeleteUserCommandHandler(self.user_repo, self.event_publisher),
             CreateRestaurantCommand: lambda: CreateRestaurantCommandHandler(self.restaurant_repo, self.event_publisher),
             UpdateRestaurantCommand: lambda: UpdateRestaurantCommandHandler(self.restaurant_repo, self.event_publisher),
@@ -86,7 +97,10 @@ class Container:
         }
         
         self._query_handlers_factory = {
-            ListUsersQuery: lambda: ListUsersQueryHandler(self.user_repo),
+            ListUsersQuery: lambda: ListUsersQueryHandler(
+                self.user_repo,
+                self.user_restaurant_repo
+            ),
             GetUserDetailsQuery: lambda: GetUserDetailsQueryHandler(
                 self.user_repo, self.user_restaurant_repo, self.restaurant_repo
             ),
@@ -95,6 +109,10 @@ class Container:
             ListRestaurantsQuery: lambda: ListRestaurantsQueryHandler(self.restaurant_repo),
             GetUserRestaurantQuery: lambda: GetUserRestaurantQueryHandler(self.user_restaurant_repo, self.restaurant_repo),
             GetProfileQuery: lambda: GetProfileQueryHandler(),
+            GetRestaurantDetailsQuery: lambda: GetRestaurantDetailsQueryHandler(
+                self.restaurant_repo,
+                self.user_restaurant_repo
+            ),
         }
         
         # Flags de registro
@@ -137,7 +155,6 @@ class Container:
             self._query_handlers_registered = True
     
     def execute_command(self, command):
-        self._ensure_query_handlers_registered()
         self._ensure_command_handlers_registered()
         return self.command_bus.execute(command)
     
@@ -145,6 +162,4 @@ class Container:
         self._ensure_query_handlers_registered()
         return self.query_bus.execute(query)
 
-
-# Instancia global
 container = Container()

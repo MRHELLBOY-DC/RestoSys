@@ -10,6 +10,10 @@ from .get_restaurant_queries import (
     ListRestaurantsQuery, ListRestaurantsQueryHandler,
     GetUserRestaurantQuery, GetUserRestaurantQueryHandler
 )
+from .get_restaurant_details import (
+    GetRestaurantDetailsQuery,
+    GetRestaurantDetailsQueryHandler,
+)
 
 __all__ = [
     'Query',
@@ -29,4 +33,6 @@ __all__ = [
     'ListRestaurantsQueryHandler',
     'GetUserRestaurantQuery',
     'GetUserRestaurantQueryHandler',
+    'GetRestaurantDetailsQuery',
+    'GetRestaurantDetailsQueryHandler',
 ]

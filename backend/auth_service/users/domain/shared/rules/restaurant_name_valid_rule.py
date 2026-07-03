@@ -5,12 +5,6 @@ Valida que el nombre de un restaurante sea válido:
     - Mínimo 3 caracteres
     - No vacío
 
-Reutilizable en creación de restaurantes, actualización de nombre, etc.
-
-Ejemplo:
-    self._check_rule(RestaurantNameValidRule(restaurant.name))
-
-DDD Pattern: Business Rule / Specification
 """
 
 from users.domain.shared.core.business_rule import BusinessRule

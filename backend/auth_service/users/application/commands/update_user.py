@@ -2,8 +2,13 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from users.domain.entities.user import User as DomainUser
 from users.application.ports.user_repository_port import UserRepositoryPort
+from users.application.ports.user_restaurant_repository_port import UserRestaurantRepositoryPort
 from users.application.ports.event_publisher_port import EventPublisherPort
-from users.domain.exceptions import UserNotFoundException, UserAlreadyExistsException
+from users.domain.exceptions import (
+    UserNotFoundException,
+    UserAlreadyExistsException,
+    RestaurantNotFoundException
+)
 from .base_command import Command, CommandHandler
 
 
@@ -16,6 +21,8 @@ class UpdateUserCommand(Command):
     role: Optional[str] = None
     full_name: Optional[str] = None
     actor_username: Optional[str] = None
+    assign_restaurant_id: Optional[int] = None
+    unassign_restaurant: bool = False
 
 
 class UpdateUserCommandHandler(CommandHandler):
@@ -24,9 +31,11 @@ class UpdateUserCommandHandler(CommandHandler):
     def __init__(
         self,
         user_repo: UserRepositoryPort,
+        user_restaurant_repo: UserRestaurantRepositoryPort,
         event_publisher: EventPublisherPort
     ):
         self.user_repo = user_repo
+        self.user_restaurant_repo = user_restaurant_repo
         self.event_publisher = event_publisher
     
     def handle(self, command: UpdateUserCommand) -> DomainUser:
@@ -48,14 +57,12 @@ class UpdateUserCommandHandler(CommandHandler):
         if command.email and command.email != existing_user.email:
             if self.user_repo.get_by_email(command.email):
                 raise UserAlreadyExistsException("email", command.email)
-
             existing_user.email = command.email
         
         # 4. Validar unicidad si cambia username (regla que necesita repositorio)
         if command.username and command.username != existing_user.username:
             if self.user_repo.get_by_username(command.username):
                 raise UserAlreadyExistsException("username", command.username)
-
             existing_user.username = command.username
         
         # 5. Actualizar otros campos
@@ -69,14 +76,28 @@ class UpdateUserCommandHandler(CommandHandler):
         # 6. Guardar cambios
         saved_user = self.user_repo.save(existing_user)
         
-        # 7. Datos nuevos para el evento
+        # 7. Asignar o desasignar restaurante (SIN CONTENEDOR)
+        if command.unassign_restaurant:
+            self.user_restaurant_repo.unassign(command.user_id)
+        elif command.assign_restaurant_id is not None:
+            # Verificar que el restaurante existe
+            from users.infrastructure.repositories import RestaurantRepository
+            restaurant_repo = RestaurantRepository()
+            restaurant = restaurant_repo.get_by_id(command.assign_restaurant_id)
+            if not restaurant:
+                raise RestaurantNotFoundException(command.assign_restaurant_id)
+            
+            # Asignar directamente
+            self.user_restaurant_repo.assign(command.user_id, command.assign_restaurant_id)
+        
+        # 8. Datos nuevos para el evento
         new_data = {
             'username': saved_user.username,
             'email': saved_user.email,
             'role': saved_user.role,
         }
         
-        # 8. Registrar evento de actualización
+        # 9. Registrar evento de actualización
         saved_user.record_updated(old_data, new_data)
         events = saved_user.pull_domain_events()
         event = events[-1]

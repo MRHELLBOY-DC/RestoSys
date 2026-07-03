@@ -34,7 +34,6 @@ class EventStore(EventStorePort):
         aggregate_type: str = 'User',
         metadata: Optional[Dict] = None
     ) -> DomainEvent:
-        """Método CORREGIDO y robusto"""
         try:
             data = EventStore._convert_decimals(data)
             if metadata:

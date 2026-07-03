@@ -6,12 +6,6 @@ Valida que un username tenga formato válido:
     - Sin espacios en blanco
     - No vacío
 
-Reutilizable en creación de usuarios, actualización de username, etc.
-
-Ejemplo:
-    self._check_rule(UsernameValidRule(user.username))
-
-DDD Pattern: Business Rule / Specification
 """
 
 from users.domain.shared.core.business_rule import BusinessRule

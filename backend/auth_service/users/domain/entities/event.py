@@ -10,11 +10,11 @@ from typing import Optional, Dict, Any
 @dataclass
 class Event:
     """
-    Entidad de dominio para eventos - NO hereda de models.Model
+    Entidad de dominio para eventos
     Representa un evento de dominio puro.
     """
     
-    # Atributos (los mismos que tenías, pero sin Django)
+    # Atributos 
     type: str
     data: Dict[str, Any]
     created_at: datetime

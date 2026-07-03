@@ -148,3 +148,51 @@ class EventNotFoundException(EventException):
             super().__init__(f"No se encontraron eventos para el agregado '{aggregate_id}'.")
         else:
             super().__init__("Evento no encontrado.")
+
+# ============================================
+# Excepciones de Autorización
+# ============================================
+
+class AuthorizationException(DomainException):
+    """Excepción base para errores de autorización"""
+    pass
+
+
+class InsufficientPermissionsException(AuthorizationException):
+    """El usuario no tiene permisos suficientes para realizar la acción"""
+    def __init__(self, user_id: int, required_role: str):
+        self.user_id = user_id
+        self.required_role = required_role
+        super().__init__(
+            f"Usuario {user_id} no tiene permisos suficientes. "
+            f"Se requiere rol: {required_role}"
+        )
+
+
+class RestaurantAccessDeniedException(AuthorizationException):
+    """El usuario no tiene acceso a este restaurante"""
+    def __init__(self, user_id: int, restaurant_id: int):
+        self.user_id = user_id
+        self.restaurant_id = restaurant_id
+        super().__init__(
+            f"Usuario {user_id} no tiene acceso al restaurante {restaurant_id}."
+        )
+
+
+class UserAccessDeniedException(AuthorizationException):
+    """El usuario no tiene acceso a este usuario"""
+    def __init__(self, user_id: int, target_user_id: int):
+        self.user_id = user_id
+        self.target_user_id = target_user_id
+        super().__init__(
+            f"Usuario {user_id} no tiene acceso al usuario {target_user_id}."
+        )
+
+
+class CannotAssignAdminRoleException(AuthorizationException):
+    """No se puede asignar el rol de Super Administrador"""
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+        super().__init__(
+            f"Usuario {user_id} no puede asignar el rol de Super Administrador."
+        )

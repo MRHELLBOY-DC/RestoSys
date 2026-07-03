@@ -3,9 +3,10 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 from users.domain.entities.user import User as DomainUser
 from users.application.ports.user_repository_port import UserRepositoryPort
+from users.application.ports.user_restaurant_repository_port import UserRestaurantRepositoryPort
 from users.application.ports.event_publisher_port import EventPublisherPort
 from users.application.ports.hashing_port import HashingPort
-from users.domain.exceptions import UserAlreadyExistsException
+from users.domain.exceptions import UserAlreadyExistsException, RestaurantNotFoundException
 from .base_command import Command, CommandHandler
 
 
@@ -18,6 +19,7 @@ class CreateUserCommand(Command):
     role: str = "cliente"
     full_name: str = ""
     actor_username: Optional[str] = None
+    assign_restaurant_id: Optional[int] = None
 
 
 class CreateUserCommandHandler(CommandHandler):
@@ -26,10 +28,12 @@ class CreateUserCommandHandler(CommandHandler):
     def __init__(
         self,
         user_repo: UserRepositoryPort,
+        user_restaurant_repo: UserRestaurantRepositoryPort,
         event_publisher: EventPublisherPort,
         hashing_service: HashingPort
     ):
         self.user_repo = user_repo
+        self.user_restaurant_repo = user_restaurant_repo
         self.event_publisher = event_publisher
         self.hashing_service = hashing_service
     
@@ -67,7 +71,19 @@ class CreateUserCommandHandler(CommandHandler):
         # 4. Guardar en repositorio
         saved_user = self.user_repo.save(domain_user)
         
-        # 5. Registrar evento de creación
+        # 5. Asignar restaurante si se proporcionó (SIN CONTENEDOR)
+        if command.assign_restaurant_id:
+            # Verificar que el restaurante existe
+            from users.infrastructure.repositories import RestaurantRepository
+            restaurant_repo = RestaurantRepository()
+            restaurant = restaurant_repo.get_by_id(command.assign_restaurant_id)
+            if not restaurant:
+                raise RestaurantNotFoundException(command.assign_restaurant_id)
+            
+            # Asignar directamente
+            self.user_restaurant_repo.assign(saved_user.id, command.assign_restaurant_id)
+        
+        # 6. Registrar evento de creación
         saved_user.record_created()
         events = saved_user.pull_domain_events()
         event = events[-1]

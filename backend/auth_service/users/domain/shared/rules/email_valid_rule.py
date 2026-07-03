@@ -4,10 +4,6 @@ BUSINESS RULE — EmailValidRule
 Valida que un email tenga formato válido.
 Reutilizable en creación de usuarios, actualización de email, etc.
 
-Ejemplo:
-    self._check_rule(EmailValidRule(user.email))
-
-DDD Pattern: Business Rule / Specification
 """
 
 import re

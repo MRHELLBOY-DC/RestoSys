@@ -56,16 +56,29 @@ class UpdateRestaurantCommandHandler(CommandHandler):
         if command.logo is not None:
             restaurant.update_logo(command.logo)
         
-        # 6. Llamar al repositorio usando el método especializado en archivos
-        saved = self.restaurant_repo.update_with_logo(
-            restaurant_id=command.restaurant_id,
-            name=restaurant.name,
-            address=restaurant.address,
-            logo_file=command.logo if hasattr(command.logo, 'read') else None,
-            actor_username=command.actor_username or ""
-        )
+        # 6. Determinar si el logo es un archivo o una URL
+        is_file = hasattr(command.logo, 'read') if command.logo is not None else False
         
-        # 7. Publicar evento de actualización
+        # 7. Guardar usando el método adecuado
+        if is_file:
+            # Si es un archivo, usar update_with_logo
+            saved = self.restaurant_repo.update_with_logo(
+                restaurant_id=command.restaurant_id,
+                name=restaurant.name,
+                address=restaurant.address,
+                logo_file=command.logo,
+                actor_username=command.actor_username or ""
+            )
+        else:
+            # Si es una URL o None, usar update normal
+            saved = self.restaurant_repo.update(
+                restaurant_id=command.restaurant_id,
+                name=restaurant.name,
+                address=restaurant.address,
+                logo=command.logo if command.logo is not None else restaurant.logo
+            )
+        
+        # 8. Publicar evento de actualización
         saved.record_updated(old_data, command.actor_username)
         events = saved.pull_domain_events()
         for event in events:

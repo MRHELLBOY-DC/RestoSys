@@ -158,6 +158,21 @@ class RestaurantRepository(RestaurantRepositoryPort):
             return True
         except DjangoRestaurant.DoesNotExist:
             return False
+    
+    @staticmethod
+    def update(restaurant_id: int, **kwargs) -> Optional[DomainRestaurant]:
+        """
+        Actualiza un restaurante existente (sin archivos)
+        """
+        try:
+            model = DjangoRestaurant.objects.get(id=restaurant_id)
+            for key, value in kwargs.items():
+                if hasattr(model, key) and value is not None:
+                    setattr(model, key, value)
+            model.save()
+            return RestaurantMapper.to_domain(model)
+        except DjangoRestaurant.DoesNotExist:
+            return None
         
     @staticmethod
     def create_with_logo(name: str, address: str, logo_file: Any, actor_username: str) -> DomainRestaurant:
