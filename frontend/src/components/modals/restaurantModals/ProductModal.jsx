@@ -1,5 +1,6 @@
 // src/pages/restaurante/modals/ProductModal.jsx
 import { useState, useEffect } from "react";
+import { menuMediaUrl } from "../../../services/mediaUrl";
 
 export const ProductModal = ({ show, onClose, onSubmit, editing, initialData, categories, adminGradient }) => {
     const [formData, setFormData] = useState({
@@ -123,7 +124,7 @@ export const ProductModal = ({ show, onClose, onSubmit, editing, initialData, ca
                                 {editing && initialData?.image && (
                                     <div className="mt-2 d-flex align-items-center gap-2">
                                         <img
-                                            src={`http://localhost:8001${initialData.image}`}
+                                            src={menuMediaUrl(initialData.image)}
                                             alt="Imagen actual"
                                             style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)' }}
                                         />

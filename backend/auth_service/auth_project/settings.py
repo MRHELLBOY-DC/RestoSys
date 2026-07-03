@@ -1,9 +1,9 @@
-import sys
+﻿import sys
 import os
 from pathlib import Path
 
 # Agregar el directorio backend al path para poder importar 'shared'
-# Esto permite que auth_service y menu_service compartan el módulo 'shared'
+# Esto permite que auth_service y menu_service compartan el mÃ³dulo 'shared'
 BASE_DIR = Path(__file__).resolve().parent.parent
 BACKEND_DIR = str(BASE_DIR.parent)  # Esto apunta a /backend/
 if BACKEND_DIR not in sys.path:
@@ -22,7 +22,7 @@ SECRET_KEY = 'django-insecure-xgp=59ff8*(y8*@k-wpr@lpsh(pxt)h9fxsew5)pa3cke0@e)z
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "auth", "api-gateway", "restosys-auth-1"]
 
 
 # Application definition
@@ -172,6 +172,6 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# Media files (imágenes subidas por usuarios)
+# Media files (imÃ¡genes subidas por usuarios)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

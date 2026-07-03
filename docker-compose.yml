@@ -258,6 +258,31 @@ services:
         condition: service_started
     restart: always
 
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/api-gateway:/app
+      - maven_cache:/root/.m2
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888
+      - EUREKA_CLIENT_ENABLED=false
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka/
+      - AUTH_SERVICE_URI=http://auth:8000
+      - MENU_SERVICE_URI=http://menu:8000
+      - ORDERS_SERVICE_URI=http://orders:8002
+      - PAYMENTS_SERVICE_URI=http://payments-billing:8003
+      - REPORTS_SERVICE_URI=http://reports:8004
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173
+    depends_on:
+      - auth
+      - menu
+      - orders
+      - payments-billing
+      - reports
+    restart: always
   frontend:
     build:
       context: ./frontend
@@ -274,6 +299,7 @@ services:
       - orders
       - payments-billing
       - reports
+      - api-gateway
     restart: always
 
 volumes:

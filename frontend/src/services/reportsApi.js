@@ -1,6 +1,7 @@
-import { createApiClient, getEnv } from "./apiClient";
+﻿import { createApiClient, getEnv } from "./apiClient";
 
-const REPORTS_API = getEnv("VITE_REPORTS_API_URL", "http://localhost:8004");
+const API_GATEWAY = getEnv("VITE_API_GATEWAY_URL", "http://localhost:8080");
+const REPORTS_API = getEnv("VITE_REPORTS_API_URL", API_GATEWAY);
 const reportsClient = createApiClient(REPORTS_API);
 
 const unwrap = (res) => res.data;

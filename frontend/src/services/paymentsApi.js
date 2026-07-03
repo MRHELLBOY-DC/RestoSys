@@ -1,6 +1,7 @@
-import createApiClient, { getEnv } from "./apiClient";
+﻿import createApiClient, { getEnv } from "./apiClient";
 
-const PAYMENTS_API = getEnv("VITE_PAYMENTS_API", "http://localhost:8003");
+const API_GATEWAY = getEnv("VITE_API_GATEWAY_URL", "http://localhost:8080");
+const PAYMENTS_API = getEnv("VITE_PAYMENTS_API", API_GATEWAY);
 const client = createApiClient(PAYMENTS_API);
 
 export const createPayment = async ({ orderId, restaurantId, clientId, amount, method }) => {

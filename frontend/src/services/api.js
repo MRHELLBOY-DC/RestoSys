@@ -1,7 +1,8 @@
-import createApiClient, { getEnv } from "./apiClient";
+﻿import createApiClient, { getEnv } from "./apiClient";
 
-const AUTH_API = getEnv("VITE_AUTH_API", "http://localhost:8000");
-const MENU_API = getEnv("VITE_MENU_API", "http://localhost:8001");
+const API_GATEWAY = getEnv("VITE_API_GATEWAY_URL", "http://localhost:8080");
+const AUTH_API = getEnv("VITE_AUTH_API", API_GATEWAY);
+const MENU_API = getEnv("VITE_MENU_API", API_GATEWAY);
 
 const authClient = createApiClient(AUTH_API);
 const menuClient = createApiClient(MENU_API);

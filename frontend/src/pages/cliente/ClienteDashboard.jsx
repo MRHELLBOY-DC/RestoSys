@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
 import { getPublicRestaurantes } from "../../services/api";
+import { authMediaUrl } from "../../services/mediaUrl";
 
 export default function ClienteDashboard() {
     const { user, loading } = useAuth(['cliente']);
@@ -92,7 +93,7 @@ export default function ClienteDashboard() {
                                          onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
                                         <div className="mb-3">
                                             {rest.logo ? (
-                                                <img src={`http://localhost:8000${rest.logo}`} alt={rest.name}
+                                                <img src={authMediaUrl(rest.logo)} alt={rest.name}
                                                      className="rounded-circle"
                                                      style={{ width: '72px', height: '72px', objectFit: 'cover', border: '2px solid rgba(240,85,77,0.5)' }}
                                                      onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<i class="fa-solid fa-store fa-2x" style="color:#f0554d"></i>'; }} />

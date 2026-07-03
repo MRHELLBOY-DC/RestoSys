@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { getPublicRestaurantes } from "../../services/api";
 import { getPublicProducts, getPublicCategories } from "../../services/menuApi";
 import Navbar from "../../components/Navbar";
+import { authMediaUrl, menuMediaUrl } from "../../services/mediaUrl";
 
 const bg = 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)';
 
@@ -131,7 +132,7 @@ export default function RestauranteMenuPage() {
                     <div className="card-body p-4 d-flex align-items-center gap-4">
                         {restaurante.logo ? (
                             <img
-                                src={`http://localhost:8000${restaurante.logo}`}
+                                src={authMediaUrl(restaurante.logo)}
                                 alt={restaurante.name}
                                 style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)' }}
                                 onError={(e) => { e.target.style.display = 'none'; }}
@@ -183,7 +184,7 @@ export default function RestauranteMenuPage() {
                                     <div className="card h-100 border-0 shadow-lg overflow-hidden" style={{ borderRadius: '20px', background: 'rgba(255,255,255,0.95)' }}>
                                         {product.image ? (
                                             <img
-                                                src={`http://localhost:8001${product.image}`}
+                                                src={menuMediaUrl(product.image)}
                                                 alt={product.name}
                                                 className="card-img-top"
                                                 style={{ height: '180px', objectFit: 'cover' }}
