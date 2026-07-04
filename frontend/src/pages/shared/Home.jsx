@@ -23,8 +23,17 @@ export default function Home() {
         loadRestaurantes();
     }, []);
 
+    // El navegador intenta hacer scroll al ancla antes de que React termine de montar
+    // el contenido, asi que lo repetimos manualmente una vez montada la pagina.
+    useEffect(() => {
+        if (window.location.hash) {
+            const el = document.getElementById(window.location.hash.substring(1));
+            el?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, []);
+
     return (
-        <div className="min-vh-100 d-flex flex-column text-white landing-root">
+        <div className="min-vh-100 d-flex flex-column landing-root">
             <Navbar />
 
             <main className="flex-grow-1">
@@ -44,25 +53,25 @@ export default function Home() {
                                 por QR simulado y siguen el estado en tiempo real. Tú controlas todo desde tu panel.
                             </p>
                             <div className="d-flex flex-wrap gap-3 mt-4">
-                                <Link to="/register" className="btn btn-primary rounded-pill px-4 hero-cta">
+                                <Link to="/register" className="btn rounded-pill px-4 hero-cta">
                                     Probar demo gratis →
                                 </Link>
-                                <a href="#como-funciona" className="btn btn-outline-light rounded-pill px-4 hero-ghost">
+                                <a href="#como-funciona" className="btn rounded-pill px-4 hero-ghost">
                                     Ver cómo funciona
                                 </a>
                             </div>
                             <div className="d-flex gap-5 mt-5 hero-stats">
                                 <div>
-                                    <div className="h3 fw-bold text-danger mb-0">2+</div>
-                                    <small className="text-white-50">Restaurantes demo</small>
+                                    <div className="h3 fw-bold mb-0 hero-accent">2+</div>
+                                    <small className="hero-stat-label">Restaurantes demo</small>
                                 </div>
                                 <div>
-                                    <div className="h3 fw-bold text-danger mb-0">15+</div>
-                                    <small className="text-white-50">Productos cargados</small>
+                                    <div className="h3 fw-bold mb-0 hero-accent">15+</div>
+                                    <small className="hero-stat-label">Productos cargados</small>
                                 </div>
                                 <div>
-                                    <div className="h3 fw-bold text-danger mb-0">4</div>
-                                    <small className="text-white-50">Estados en vivo</small>
+                                    <div className="h3 fw-bold mb-0 hero-accent">4</div>
+                                    <small className="hero-stat-label">Estados en vivo</small>
                                 </div>
                             </div>
                         </div>
@@ -80,8 +89,8 @@ export default function Home() {
                                     <div className="d-flex align-items-center gap-3">
                                         <div className="status-dot"></div>
                                         <div>
-                                            <small className="text-white-50">Pedido #A47</small>
-                                            <div className="fw-semibold">Preparando · 4 ítems</div>
+                                            <small className="hero-stat-label">Pedido #A47</small>
+                                            <div className="fw-semibold" style={{ color: '#211a15' }}>Preparando · 4 ítems</div>
                                         </div>
                                     </div>
                                     <div className="status-bars">
@@ -97,10 +106,10 @@ export default function Home() {
                 </section>
 
                 {/* Funciones */}
-                <section id="funciones" className="section-block section-block--dark">
+                <section id="funciones" className="section-block section-block--soft">
                     <div className="container py-5">
                     <div className="mb-4">
-                        <span className="text-uppercase small hero-accent">Funcionalidades</span>
+                        <span className="text-uppercase small fw-bold hero-accent">Funcionalidades</span>
                         <h2 className="section-title mt-2">
                             Todo lo que tu restaurante necesita,
                             <span className="hero-accent"> nada de delivery.</span>
@@ -163,11 +172,11 @@ export default function Home() {
                 </section>
 
                 {/* Como funciona */}
-                <section id="como-funciona" className="section-block section-block--darker">
+                <section id="como-funciona" className="section-block section-block--white">
                     <div className="container py-5">
                     <div className="row g-4 align-items-center mb-4">
                         <div className="col-12 col-lg-7">
-                            <span className="text-uppercase small hero-accent">Flujo del cliente</span>
+                            <span className="text-uppercase small fw-bold hero-accent">Flujo del cliente</span>
                             <h2 className="section-title mt-2">
                                 Del QR al plato en <span className="hero-accent">4 pasos.</span>
                             </h2>
@@ -218,22 +227,22 @@ export default function Home() {
 
 
                 {/* Restaurantes */}
-                <section id="restaurantes" className="py-5" style={{ background: 'radial-gradient(circle at 80% 30%, rgba(240,85,77,0.25) 0%, transparent 55%), radial-gradient(circle at 10% 80%, rgba(240,85,77,0.15) 0%, transparent 45%), linear-gradient(160deg, #1a0606 0%, #2a0a0a 50%, #150505 100%)', borderTop: '1px solid rgba(240,85,77,0.3)' }}>
+                <section id="restaurantes" className="py-5 section-block--soft" style={{ borderTop: '1px solid #ebe1d5' }}>
                     <div className="container">
                     <div className="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
                         <div>
                             <h2 className="section-title hero-accent">Restaurantes destacados</h2>
-                            <p className="text-white-50">Elige tu favorito y disfruta.</p>
+                            <p className="hero-stat-label">Elige tu favorito y disfruta.</p>
                         </div>
                     </div>
 
                     {loadingRestaurantes ? (
                         <div className="text-center py-4">
-                            <div className="spinner-border text-light" role="status"></div>
+                            <div className="spinner-border" style={{ color: '#e4531f' }} role="status"></div>
                         </div>
                     ) : restaurantes.length === 0 ? (
                         <div className="text-center py-4">
-                            <p className="text-white-50">No hay restaurantes disponibles</p>
+                            <p className="hero-stat-label">No hay restaurantes disponibles</p>
                         </div>
                     ) : (
                         <div className="row g-4">
@@ -247,21 +256,22 @@ export default function Home() {
                                                         src={authMediaUrl(rest.logo)}
                                                         alt={`Logo de ${rest.name}`}
                                                         className="rounded-circle"
-                                                        style={{ width: '80px', height: '80px', objectFit: 'cover', border: '2px solid rgba(240,85,77,0.5)' }}
+                                                        style={{ width: '80px', height: '80px', objectFit: 'cover', border: '2px solid #f0d8c8' }}
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
-                                                            e.target.parentElement.innerHTML = '<span style="font-size: 3rem">🏪</span>';
                                                         }}
                                                     />
                                                 ) : (
-                                                    <span style={{ fontSize: '3rem' }}></span>
+                                                    <span className="d-inline-flex align-items-center justify-content-center" style={{ width: 80, height: 80, borderRadius: '50%', background: '#ffeee4', color: '#e4531f', fontSize: '2rem' }}>
+                                                        <i className="fa-solid fa-store"></i>
+                                                    </span>
                                                 )}
                                             </div>
-                                            <h3 className="h5 fw-bold mb-2 hero-accent">{rest.name}</h3>
-                                            <p className="text-white-50 small mb-3">
+                                            <h3 className="h5 fw-bold mb-2" style={{ color: '#211a15' }}>{rest.name}</h3>
+                                            <p className="hero-stat-label small mb-3">
                                                 {rest.address || "Ubicación no especificada"}
                                             </p>
-                                            <Link to={`/restaurante/${rest.id}/menu`} className="btn rounded-pill px-4" style={{ background: 'linear-gradient(135deg, #f0554d 0%, #d73a35 100%)', color: '#fff', border: 'none' }}>
+                                            <Link to={`/restaurante/${rest.id}/menu`} className="btn rounded-pill px-4 hero-cta">
                                                 Ver Menú →
                                             </Link>
                                         </div>
@@ -275,39 +285,55 @@ export default function Home() {
 
             </main>
 
-            <Footer />
+            <Footer light />
 
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
                 .landing-root {
-                    background: radial-gradient(circle at 20% 20%, rgba(255, 64, 64, 0.35), transparent 45%),
-                        radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.08), transparent 35%),
-                        linear-gradient(180deg, #0b090a 0%, #1b0a0a 45%, #070606 100%);
+                    background: radial-gradient(900px 420px at 50% -120px, #fff2e6 0%, #faf5ee 62%, #f3ebdf 100%);
+                    color: #211a15;
                     font-family: 'Plus Jakarta Sans', sans-serif;
                 }
                 .hero-title {
                     font-family: 'Space Grotesk', sans-serif;
                     line-height: 1.05;
+                    color: #211a15;
                 }
                 .hero-accent {
-                    color: #f0554d;
+                    color: #e4531f;
                 }
                 .hero-subtitle {
-                    color: rgba(255, 255, 255, 0.75);
+                    color: #8c8178;
                     max-width: 540px;
                 }
+                .hero-stat-label {
+                    color: #8c8178;
+                }
                 .hero-pill {
-                    background: rgba(240, 85, 77, 0.15);
-                    color: #f0554d;
-                    border: 1px solid rgba(240, 85, 77, 0.35);
+                    background: #ffeee4;
+                    color: #c23d12;
+                    border: 1px solid #f0d8c8;
+                    font-weight: 700;
                 }
                 .hero-cta {
-                    background: linear-gradient(135deg, #f0554d 0%, #d73a35 100%);
+                    background: #e4531f;
+                    color: #ffffff;
                     border: none;
+                    font-weight: 700;
+                }
+                .hero-cta:hover {
+                    background: #c23d12;
+                    color: #ffffff;
                 }
                 .hero-ghost {
-                    color: #fff;
+                    color: #211a15;
+                    border: 1.5px solid #ebe1d5;
+                    font-weight: 700;
+                }
+                .hero-ghost:hover {
+                    border-color: #e4531f;
+                    color: #e4531f;
                 }
                 .hero-stats .h3 {
                     font-family: 'Space Grotesk', sans-serif;
@@ -323,7 +349,7 @@ export default function Home() {
                     width: 100%;
                     border-radius: 22px;
                     object-fit: cover;
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+                    box-shadow: 0 20px 40px -20px rgba(33,26,21,0.35);
                 }
                 .hero-main {
                     border-radius: 24px;
@@ -337,22 +363,22 @@ export default function Home() {
                     position: absolute;
                     left: 10%;
                     bottom: -20px;
-                    background: rgba(20, 20, 20, 0.85);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 18px;
                     padding: 16px 20px;
                     display: flex;
                     justify-content: space-between;
                     gap: 24px;
                     min-width: 260px;
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-                    backdrop-filter: blur(8px);
+                    box-shadow: 0 20px 40px -20px rgba(33,26,21,0.4);
                 }
                 .status-dot {
                     width: 14px;
                     height: 14px;
                     border-radius: 50%;
-                    background: #f0554d;
-                    box-shadow: 0 0 12px rgba(240, 85, 77, 0.7);
+                    background: #e4531f;
+                    box-shadow: 0 0 12px rgba(228, 83, 31, 0.5);
                 }
                 .status-bars {
                     display: grid;
@@ -363,44 +389,46 @@ export default function Home() {
                 .status-bars span {
                     height: 6px;
                     border-radius: 999px;
-                    background: rgba(255, 255, 255, 0.15);
+                    background: #ebe1d5;
                 }
                 .status-bars .active {
-                    background: #f0554d;
+                    background: #e4531f;
                 }
                 .section-title {
                     font-family: 'Space Grotesk', sans-serif;
                     font-size: 2rem;
+                    color: #211a15;
                 }
                 .section-subtitle {
-                    color: rgba(255, 255, 255, 0.65);
+                    color: #8c8178;
                 }
                 .section-block {
-                    border-top: 1px solid rgba(255, 255, 255, 0.06);
+                    border-top: 1px solid #ebe1d5;
                 }
-                .section-block--dark {
-                    background: radial-gradient(circle at 90% 50%, rgba(240, 85, 77, 0.12) 0%, transparent 60%), rgba(22, 8, 8, 0.92);
+                .section-block--soft {
+                    background: #faf5ee;
                 }
-                .section-block--darker {
-                    background: radial-gradient(circle at 10% 50%, rgba(240, 85, 77, 0.1) 0%, transparent 55%), rgba(18, 6, 6, 0.96);
+                .section-block--white {
+                    background: #ffffff;
                 }
                 .feature-tile {
-                    background: rgba(255, 255, 255, 0.04);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 18px;
                     padding: 22px;
                     height: 100%;
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
-                    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+                    box-shadow: 0 14px 30px -24px rgba(33,26,21,0.3);
                 }
                 .feature-tile h3 {
                     font-size: 1.05rem;
                     margin-bottom: 0;
+                    color: #211a15;
                 }
                 .feature-tile p {
-                    color: rgba(255, 255, 255, 0.65);
+                    color: #8c8178;
                     font-size: 0.9rem;
                     margin-bottom: 0;
                 }
@@ -408,30 +436,20 @@ export default function Home() {
                     width: 36px;
                     height: 36px;
                     border-radius: 12px;
-                    background: rgba(240, 85, 77, 0.2);
-                    color: #f0554d;
+                    background: #ffeee4;
+                    color: #e4531f;
                     display: grid;
                     place-items: center;
                     font-weight: 700;
                 }
-                .step-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    border-radius: 18px;
-                    padding: 24px;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                }
-                .step-card span {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #f0554d;
-                }
                 .flow-card {
-                    background: rgba(255, 255, 255, 0.04);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 20px;
                     padding: 24px;
                     min-height: 220px;
                     position: relative;
+                    box-shadow: 0 14px 30px -24px rgba(33,26,21,0.3);
                 }
                 .flow-step {
                     position: relative;
@@ -439,15 +457,16 @@ export default function Home() {
                 .flow-number {
                     font-size: 2rem;
                     font-weight: 700;
-                    color: #f0554d;
+                    color: #e4531f;
                     margin-bottom: 12px;
                 }
                 .flow-card h4 {
                     font-size: 1.05rem;
                     margin-bottom: 10px;
+                    color: #211a15;
                 }
                 .flow-card p {
-                    color: rgba(255, 255, 255, 0.65);
+                    color: #8c8178;
                     font-size: 0.9rem;
                 }
                 .flow-arrow {
@@ -460,41 +479,23 @@ export default function Home() {
                         top: 50%;
                         right: -12px;
                         transform: translate(50%, -50%);
-                        color: rgba(240, 85, 77, 0.6);
+                        color: #e4531f;
                         font-size: 1.3rem;
                     }
                 }
-                .arch-card {
-                    background: rgba(255, 255, 255, 0.04);
-                    border-radius: 16px;
-                    padding: 20px;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                }
                 .restaurant-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 18px;
-                    backdrop-filter: blur(10px);
+                    box-shadow: 0 18px 38px -30px rgba(33,26,21,0.36);
+                    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
                 }
-                .plan-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 18px;
-                    padding: 24px;
-                    text-align: left;
+                .restaurant-card:hover {
+                    transform: translateY(-3px);
+                    border-color: #e4531f;
+                    box-shadow: 0 22px 44px -30px rgba(228, 83, 31, 0.5);
                 }
-                .plan-card.featured {
-                    border-color: rgba(240, 85, 77, 0.6);
-                    box-shadow: 0 18px 40px rgba(240, 85, 77, 0.25);
-                }
-                .plan-price {
-                    display: inline-block;
-                    margin-top: 16px;
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #f0554d;
-                }
-               
+
                 @media (max-width: 991px) {
                     .hero-gallery {
                         grid-template-columns: 1fr;

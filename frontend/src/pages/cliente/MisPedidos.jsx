@@ -1,30 +1,33 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useOrdersSocket } from "../../hooks/useOrdersSocket";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { getOrdersByClient } from "../../services/ordersApi";
-import { getPaymentByOrder, getReceiptUrl } from "../../services/paymentsApi";
+import { getPaymentByOrder, getReceiptUrl, downloadReceiptPdf } from "../../services/paymentsApi";
+import "../../styles/client-theme.css";
 
 const toUUID = (id) => `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`;
 
 const STATUS_COLOR = {
-    RECIBIDO:   '#17a2b8',
+    RECIBIDO: '#17a2b8',
     PREPARANDO: '#fd7e14',
-    LISTO:      '#28a745',
-    ENTREGADO:  '#20c997',
-    CANCELADO:  '#dc3545',
+    LISTO: '#28a745',
+    ENTREGADO: '#20c997',
+    CANCELADO: '#dc3545',
 };
 
 const STATUS_LABEL = {
-    RECIBIDO:   'Recibido',
+    RECIBIDO: 'Recibido',
     PREPARANDO: 'Preparando',
-    LISTO:      'Listo',
-    ENTREGADO:  'Entregado',
-    CANCELADO:  'Cancelado',
+    LISTO: 'Listo',
+    ENTREGADO: 'Entregado',
+    CANCELADO: 'Cancelado',
 };
 
 const ORDER_TYPE_LABEL = { MESA: 'En mesa', PICKUP: 'Para llevar' };
 const PAYMENT_STATUS_LABEL = { PENDIENTE: 'Pendiente', PAGADO: 'Pagado' };
+const PAGE_SIZE = 6;
 
 export default function MisPedidos() {
     const { user, loading } = useAuth(['cliente']);
@@ -33,7 +36,16 @@ export default function MisPedidos() {
     const [noPaymentIds] = useState(() => new Set());
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
+
+    const totalPages = Math.max(1, Math.ceil(pedidos.length / PAGE_SIZE));
+    const pageStart = (currentPage - 1) * PAGE_SIZE;
+    const pedidosPagina = pedidos.slice(pageStart, pageStart + PAGE_SIZE);
+
+    useEffect(() => {
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [totalPages, currentPage]);
 
     const fetchPedidos = useCallback(async () => {
         if (!user) return;
@@ -42,7 +54,6 @@ export default function MisPedidos() {
             const data = await getOrdersByClient(toUUID(user.id));
             setPedidos(data);
             setError(null);
-            // fetch payments for each order — skip IDs already known to have none
             const paymentMap = { ...payments };
             await Promise.allSettled(
                 data
@@ -65,19 +76,39 @@ export default function MisPedidos() {
         }
     }, [user]);
 
+    const applyOrderUpdate = useCallback((updatedOrder) => {
+        setPedidos(prev => {
+            const idx = prev.findIndex(p => p.id === updatedOrder.id);
+            if (idx === -1) return [updatedOrder, ...prev];
+            const copy = [...prev];
+            copy[idx] = updatedOrder;
+            return copy;
+        });
+        if (updatedOrder.paymentStatus === 'PAGADO' && !noPaymentIds.has(updatedOrder.id)) {
+            getPaymentByOrder(updatedOrder.id)
+                .then(p => setPayments(prev => ({ ...prev, [updatedOrder.id]: p })))
+                .catch((e) => { if (e?.status === 404) noPaymentIds.add(updatedOrder.id); });
+        }
+    }, [noPaymentIds]);
+
     useEffect(() => {
         fetchPedidos();
-        const interval = setInterval(fetchPedidos, 15000);
-        return () => clearInterval(interval);
     }, [fetchPedidos]);
+
+    // Actualizaciones en tiempo real por WebSocket en vez de re-consultar la API cada pocos segundos.
+    useOrdersSocket({
+        enabled: !!user,
+        onConnect: fetchPedidos,
+        onOrderUpdate: applyOrderUpdate,
+    });
 
     if (loading) {
         return (
-            <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
+            <div className="client-shell d-flex flex-column">
                 <Navbar />
-                <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
-                    <div className="spinner-border text-light me-2" role="status"></div>
-                    <p className="mb-0">Cargando tus pedidos...</p>
+                <div className="flex-grow-1 d-flex align-items-center justify-content-center">
+                    <div className="spinner-border me-2" style={{ color: '#e4531f' }} role="status"></div>
+                    <p className="mb-0 client-muted fw-semibold">Cargando tus pedidos...</p>
                 </div>
             </div>
         );
@@ -86,113 +117,154 @@ export default function MisPedidos() {
     if (!user) return null;
 
     return (
-        <div className="min-vh-100 d-flex flex-column" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)' }}>
+        <div className="client-shell d-flex flex-column">
             <Navbar />
-            <div className="container py-5">
-                <div className="text-white mb-4 d-flex align-items-center justify-content-between">
-                    <div>
-                        <h1 className="fw-bold mb-1">Mis Pedidos</h1>
-                        <p className="opacity-75 mb-0 small">Se actualiza automáticamente cada 15 segundos</p>
+            <main className="container py-4 py-lg-5 flex-grow-1">
+                <section className="client-hero p-4 p-lg-5 mb-4">
+                    <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                        <div>
+                            <div className="client-kicker mb-1">Seguimiento</div>
+                            <h1 className="client-title h2 mb-1">Mis pedidos</h1>
+                            <p className="client-muted mb-0 small">Se actualiza en tiempo real.</p>
+                        </div>
+                        <button
+                            className="btn client-button px-4 py-3 d-inline-flex align-items-center gap-2"
+                            style={{ background: '#e4531f', color: '#fff', border: 'none' }}
+                            onClick={fetchPedidos}
+                            disabled={fetching}
+                        >
+                            {fetching ? <span className="spinner-border spinner-border-sm" role="status" /> : <i className="fa fa-rotate-right" />}
+                            Actualizar
+                        </button>
                     </div>
-                    <button
-                        className="btn btn-sm text-white fw-semibold"
-                        style={{ background: 'rgba(240,85,77,0.2)', border: '1px solid rgba(240,85,77,0.4)', borderRadius: '10px' }}
-                        onClick={fetchPedidos}
-                        disabled={fetching}
-                    >
-                        {fetching ? <span className="spinner-border spinner-border-sm me-1" role="status" /> : <i className="fa fa-rotate-right me-1" />}
-                        Actualizar
-                    </button>
-                </div>
+                </section>
 
                 {error && (
-                    <div className="alert text-white mb-4" style={{ background: 'rgba(220,53,69,0.2)', border: '1px solid rgba(220,53,69,0.4)', borderRadius: '12px' }}>
+                    <div className="alert mb-4" style={{ background: '#fff0ef', border: '1px solid #f5c5c1', color: '#9d221c', borderRadius: 14 }}>
                         {error}
                     </div>
                 )}
 
                 {pedidos.length === 0 && !fetching ? (
-                    <div className="card border-0 p-5 text-center text-white" style={{ background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(10px)', borderRadius: '20px' }}>
-                        <i className="fa fa-receipt display-3 mb-3 opacity-50" />
-                        <p className="fs-5 mb-3">No tienes pedidos realizados aún</p>
-                        <button onClick={() => navigate("/cliente/dashboard")} className="btn text-white rounded-pill px-4 fw-bold" style={{ background: 'linear-gradient(135deg, #f0554d 0%, #d73a35 100%)' }}>
-                            Ver Restaurantes
+                    <section className="client-empty text-center py-5 px-4">
+                        <span className="client-icon-box fs-2 mb-3">
+                            <i className="fa fa-receipt" />
+                        </span>
+                        <h2 className="client-title h3 mb-2">No tienes pedidos realizados aun</h2>
+                        <p className="client-muted mb-4">Cuando confirmes un pedido, lo veras aqui con su estado.</p>
+                        <button onClick={() => navigate('/cliente/dashboard')} className="btn client-button px-5 py-3" style={{ background: '#e4531f', color: '#fff', border: 'none' }}>
+                            Ver restaurantes
                         </button>
-                    </div>
+                    </section>
                 ) : (
                     <div className="row g-4">
-                        {pedidos.map(pedido => (
+                        {pedidosPagina.map(pedido => (
                             <div key={pedido.id} className="col-12 col-md-6 col-lg-4">
-                                <div className="card h-100 text-white" style={{ background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '18px' }}>
-                                    <div className="card-body p-4">
-                                        <div className="d-flex justify-content-between align-items-start mb-3">
-                                            <div>
-                                                <span className="small opacity-50 d-block">Pedido</span>
-                                                <span className="fw-bold fs-6" style={{ color: '#f0554d' }}>{pedido.orderCode}</span>
-                                            </div>
-                                            <span
-                                                className="badge rounded-pill px-3 py-2 small fw-semibold"
-                                                style={{ background: STATUS_COLOR[pedido.status] || '#6c757d' }}
-                                            >
-                                                {STATUS_LABEL[pedido.status] || pedido.status}
-                                            </span>
+                                <article className="client-card h-100 p-4">
+                                    <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                        <div>
+                                            <span className="client-kicker d-block mb-1">Pedido</span>
+                                            <span className="fw-bold fs-5" style={{ color: '#e4531f' }}>{pedido.orderCode}</span>
                                         </div>
+                                        <span className="badge rounded-pill px-3 py-2 small fw-semibold" style={{ background: STATUS_COLOR[pedido.status] || '#6c757d' }}>
+                                            {STATUS_LABEL[pedido.status] || pedido.status}
+                                        </span>
+                                    </div>
 
+                                    <div className="d-flex justify-content-between mb-2 small">
+                                        <span className="client-muted">Tipo</span>
+                                        <span className="fw-semibold">{ORDER_TYPE_LABEL[pedido.type] || pedido.type}</span>
+                                    </div>
+                                    {pedido.tableNumber && (
                                         <div className="d-flex justify-content-between mb-2 small">
-                                            <span className="opacity-60">Tipo</span>
-                                            <span>{ORDER_TYPE_LABEL[pedido.type] || pedido.type}</span>
+                                            <span className="client-muted">Mesa</span>
+                                            <span className="fw-semibold">{pedido.tableNumber}</span>
                                         </div>
-                                        {pedido.tableNumber && (
-                                            <div className="d-flex justify-content-between mb-2 small">
-                                                <span className="opacity-60">Mesa</span>
-                                                <span>{pedido.tableNumber}</span>
+                                    )}
+                                    <div className="d-flex justify-content-between mb-2 small">
+                                        <span className="client-muted">Pago</span>
+                                        <span className="fw-semibold" style={{ color: pedido.paymentStatus === 'PAGADO' ? '#2e7d5b' : '#b7791f' }}>
+                                            {PAYMENT_STATUS_LABEL[pedido.paymentStatus] || pedido.paymentStatus}
+                                        </span>
+                                    </div>
+                                    <div className="d-flex justify-content-between mb-3 small">
+                                        <span className="client-muted">Fecha</span>
+                                        <span className="fw-semibold text-end">{new Date(pedido.createdAt).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                    </div>
+
+                                    <hr style={{ borderColor: '#ebe1d5', opacity: 1 }} />
+
+                                    <div className="mb-3">
+                                        <p className="client-kicker mb-2">Productos</p>
+                                        {pedido.items?.map(item => (
+                                            <div key={item.id} className="d-flex justify-content-between gap-3 small mb-1">
+                                                <span>{item.quantity}x {item.productName}</span>
+                                                <span className="fw-semibold text-nowrap">Bs {Number(item.subtotal).toFixed(2)}</span>
                                             </div>
-                                        )}
-                                        <div className="d-flex justify-content-between mb-2 small">
-                                            <span className="opacity-60">Pago</span>
-                                            <span style={{ color: pedido.paymentStatus === 'PAGADO' ? '#28a745' : '#ffc107' }}>
-                                                {PAYMENT_STATUS_LABEL[pedido.paymentStatus] || pedido.paymentStatus}
-                                            </span>
-                                        </div>
-                                        <div className="d-flex justify-content-between mb-3 small">
-                                            <span className="opacity-60">Fecha</span>
-                                            <span>{new Date(pedido.createdAt).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                        </div>
+                                        ))}
+                                    </div>
 
-                                        <hr style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+                                    <div className="d-flex justify-content-between align-items-center fw-bold pt-2">
+                                        <span>Total</span>
+                                        <span className="h5 mb-0" style={{ color: '#e4531f' }}>Bs {Number(pedido.totalAmount).toFixed(2)}</span>
+                                    </div>
 
-                                        <div className="mb-3">
-                                            <p className="small opacity-60 mb-2">Productos</p>
-                                            {pedido.items?.map(item => (
-                                                <div key={item.id} className="d-flex justify-content-between small mb-1">
-                                                    <span>{item.quantity}× {item.productName}</span>
-                                                    <span>${Number(item.subtotal).toFixed(2)}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="d-flex justify-content-between fw-bold">
-                                            <span>Total</span>
-                                            <span style={{ color: '#f0554d' }}>${Number(pedido.totalAmount).toFixed(2)}</span>
-                                        </div>
-
-                                        {payments[pedido.id]?.receipt && (
+                                    {payments[pedido.id]?.receipt && (
+                                        <div className="d-flex gap-2 mt-3">
                                             <button
                                                 onClick={() => getReceiptUrl(payments[pedido.id].id)}
-                                                className="btn w-100 fw-semibold mt-3 small"
-                                                style={{ background: 'rgba(40,167,69,0.15)', border: '1px solid rgba(40,167,69,0.4)', color: '#5cb85c', borderRadius: '10px' }}
+                                                className="btn flex-fill fw-semibold small"
+                                                style={{ background: '#eaf3ee', border: '1px solid #b9dcc9', color: '#2e7d5b', borderRadius: 12 }}
                                             >
                                                 <i className="fa fa-file-invoice me-2" />
-                                                Ver Comprobante
+                                                Ver comprobante
                                             </button>
-                                        )}
-                                    </div>
-                                </div>
+                                            <button
+                                                onClick={() => downloadReceiptPdf(payments[pedido.id].id)}
+                                                className="btn flex-fill fw-semibold small"
+                                                style={{ background: '#ffeee4', border: '1px solid #f0d8c8', color: '#c23d12', borderRadius: 12 }}
+                                            >
+                                                <i className="fa fa-download me-2" />
+                                                Descargar PDF
+                                            </button>
+                                        </div>
+                                    )}
+                                </article>
                             </div>
                         ))}
                     </div>
                 )}
-            </div>
+
+                {totalPages > 1 && (
+                    <nav className="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-5">
+                        <button
+                            className="btn client-pill px-3 py-2 d-inline-flex align-items-center"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            aria-label="Página anterior"
+                        >
+                            <i className="fa fa-chevron-left" />
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                className={`btn client-pill px-3 py-2 fw-semibold ${page === currentPage ? 'client-pill-active' : ''}`}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            className="btn client-pill px-3 py-2 d-inline-flex align-items-center"
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            aria-label="Página siguiente"
+                        >
+                            <i className="fa fa-chevron-right" />
+                        </button>
+                    </nav>
+                )}
+            </main>
         </div>
     );
 }

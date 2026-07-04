@@ -68,8 +68,8 @@ export default function AdminRestauranteReportes() {
     if (loading) {
         return (
             <AdminShell title="Reportes" subtitle="Cargando reportes...">
-                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
-                    <div className="spinner-border text-light me-2" role="status"></div>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner-border me-2" style={{ color: '#e4531f' }} role="status"></div>
                     <p className="mb-0 fw-bold">Cargando reportes...</p>
                 </div>
             </AdminShell>
@@ -89,8 +89,8 @@ export default function AdminRestauranteReportes() {
             title="Reportes" 
             subtitle={new Date().toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long" })}
         >
-            {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
-            {success && <div className="alert alert-success border-0 bg-success bg-opacity-25 text-white">{success}</div>}
+            {error && <div className="alert border-0" style={{ background: '#fff0ef', color: '#9d221c', borderRadius: 12 }}>{error}</div>}
+            {success && <div className="alert border-0" style={{ background: '#eaf3ee', color: '#2e7d5b', borderRadius: 12 }}>{success}</div>}
 
             <div className="resto-filter">
                 <div>
@@ -107,7 +107,7 @@ export default function AdminRestauranteReportes() {
             <div className="resto-metrics">
                 <div className="resto-metric">
                     <div className="resto-metric-label">Ventas hoy</div>
-                    <div className="resto-metric-value">USD/ {formatMoney(totalPeriod)}</div>
+                    <div className="resto-metric-value">Bs {formatMoney(totalPeriod)}</div>
                     <div className="resto-metric-sub">Ultimos 7 dias</div>
                 </div>
                 <div className="resto-metric">
@@ -117,7 +117,7 @@ export default function AdminRestauranteReportes() {
                 </div>
                 <div className="resto-metric">
                     <div className="resto-metric-label">Ticket promedio</div>
-                    <div className="resto-metric-value">USD/ {formatMoney(ticketPromedio)}</div>
+                    <div className="resto-metric-value">Bs {formatMoney(ticketPromedio)}</div>
                     <div className="resto-metric-sub">Por pedido</div>
                 </div>
                 <div className="resto-metric">
@@ -154,7 +154,7 @@ export default function AdminRestauranteReportes() {
                                     <div className="resto-rank">{index + 1}</div>
                                     <div>
                                         <div className="resto-top-name">{item.productName}</div>
-                                        <div className="resto-muted">{item.quantitySold} vendidos · USD/ {formatMoney(item.totalSales)}</div>
+                                        <div className="resto-muted">{item.quantitySold} vendidos · Bs {formatMoney(item.totalSales)}</div>
                                     </div>
                                 </div>
                             ))}
@@ -169,27 +169,28 @@ export default function AdminRestauranteReportes() {
                     grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
                     gap: 12px;
                     align-items: end;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 16px;
                     padding: 16px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-label {
                     font-size: 0.75rem;
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     display: block;
                     margin-bottom: 6px;
                 }
                 .resto-input {
                     width: 100%;
-                    background: rgba(0, 0, 0, 0.4);
-                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    background: #faf5ee;
+                    border: 1px solid #ebe1d5;
                     border-radius: 10px;
-                    color: #fff;
+                    color: #211a15;
                     padding: 8px 10px;
                 }
                 .resto-btn {
-                    background: #d44a42;
+                    background: #e4531f;
                     color: #fff;
                     border: none;
                     border-radius: 12px;
@@ -202,22 +203,24 @@ export default function AdminRestauranteReportes() {
                     gap: 16px;
                 }
                 .resto-metric {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 16px;
                     padding: 16px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-metric-label {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     font-size: 0.8rem;
                 }
                 .resto-metric-value {
                     font-size: 1.5rem;
                     font-weight: 700;
                     margin-top: 6px;
+                    color: #211a15;
                 }
                 .resto-metric-sub {
-                    color: rgba(255, 255, 255, 0.45);
+                    color: #8c8178;
                     font-size: 0.75rem;
                 }
                 .resto-reports-grid {
@@ -227,14 +230,16 @@ export default function AdminRestauranteReportes() {
                 }
                 .resto-chart,
                 .resto-top {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 16px;
                     padding: 16px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-chart-title {
                     font-weight: 700;
                     margin-bottom: 12px;
+                    color: #211a15;
                 }
                 .resto-chart-bars {
                     display: flex;
@@ -252,12 +257,12 @@ export default function AdminRestauranteReportes() {
                 .resto-bar-value {
                     width: 100%;
                     border-radius: 10px;
-                    background: rgba(212, 74, 66, 0.8);
+                    background: #e4531f;
                     min-height: 16px;
                 }
                 .resto-bar-label {
                     font-size: 0.7rem;
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                 }
                 .resto-top-list {
                     display: grid;
@@ -268,7 +273,8 @@ export default function AdminRestauranteReportes() {
                     grid-template-columns: 28px 1fr;
                     gap: 10px;
                     align-items: center;
-                    background: rgba(0, 0, 0, 0.25);
+                    background: #faf5ee;
+                    border: 1px solid #ebe1d5;
                     padding: 10px;
                     border-radius: 12px;
                 }
@@ -276,17 +282,21 @@ export default function AdminRestauranteReportes() {
                     width: 24px;
                     height: 24px;
                     border-radius: 50%;
-                    background: rgba(212, 74, 66, 0.2);
+                    background: #ffeee4;
                     display: grid;
                     place-items: center;
-                    color: #d44a42;
+                    color: #c23d12;
                     font-weight: 700;
                 }
                 .resto-top-name {
                     font-weight: 600;
+                    color: #211a15;
+                }
+                .resto-muted {
+                    color: #8c8178;
                 }
                 .resto-empty {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                 }
                 @media (max-width: 1024px) {
                     .resto-metrics {

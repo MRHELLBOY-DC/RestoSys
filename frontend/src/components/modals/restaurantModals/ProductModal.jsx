@@ -126,7 +126,7 @@ export const ProductModal = ({ show, onClose, onSubmit, editing, initialData, ca
                                         <img
                                             src={menuMediaUrl(initialData.image)}
                                             alt="Imagen actual"
-                                            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)' }}
+                                            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, border: '1px solid #ebe1d5' }}
                                         />
                                         <small className="text-muted">Dejar vacío para mantener la imagen actual</small>
                                     </div>

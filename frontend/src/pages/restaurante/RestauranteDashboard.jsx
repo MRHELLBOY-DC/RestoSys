@@ -13,8 +13,8 @@ export default function RestauranteDashboard() {
     if (loading) {
         return (
             <RestauranteShell title="Panel del restaurante" subtitle="Cargando panel...">
-                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
-                    <div className="spinner-border text-light me-2" role="status"></div>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner-border me-2" style={{ color: '#e4531f' }} role="status"></div>
                     <p className="mb-0 fw-bold">Cargando panel...</p>
                 </div>
             </RestauranteShell>
@@ -79,14 +79,15 @@ export default function RestauranteDashboard() {
 
             <style>{`
                 .resto-dashboard-card {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 18px;
                     padding: 18px;
                     display: grid;
                     grid-template-columns: auto 1fr;
                     align-items: center;
                     gap: 16px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-qr {
                     display: flex;
@@ -97,14 +98,16 @@ export default function RestauranteDashboard() {
                 .resto-qr-label {
                     font-weight: 700;
                     font-size: 0.9rem;
+                    color: #211a15;
                 }
                 .resto-qr-box {
                     background: #fff;
                     padding: 10px;
                     border-radius: 12px;
+                    border: 1px solid #ebe1d5;
                 }
                 .resto-qr-text {
-                    color: rgba(255, 255, 255, 0.7);
+                    color: #8c8178;
                 }
                 .resto-dashboard-grid {
                     display: grid;
@@ -112,25 +115,28 @@ export default function RestauranteDashboard() {
                     gap: 12px;
                 }
                 .resto-dashboard-tile {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 16px;
                     padding: 16px;
                     text-align: left;
-                    color: #fff;
-                    transition: transform 0.2s ease, border 0.2s ease;
+                    color: #211a15;
+                    transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
                     position: relative;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-dashboard-tile:hover {
                     transform: translateY(-4px);
-                    border-color: rgba(212, 74, 66, 0.5);
+                    border-color: #e4531f;
+                    box-shadow: 0 22px 44px -30px rgba(228, 83, 31, 0.5);
                 }
                 .resto-tile-title {
                     font-weight: 700;
                     margin-bottom: 6px;
+                    color: #211a15;
                 }
                 .resto-tile-text {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     font-size: 0.85rem;
                 }
                 @media (max-width: 700px) {

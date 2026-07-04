@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders").hasAnyRole("cliente", "restaurante", "admin")
                         .requestMatchers(HttpMethod.PATCH, "/api/orders/*/status").hasAnyRole("restaurante", "admin", "empleado")
                         .requestMatchers(HttpMethod.GET, "/api/orders/client/*").hasAnyRole("cliente", "admin")

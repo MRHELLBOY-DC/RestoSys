@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars, no-undef */
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import { 
@@ -77,7 +75,7 @@ export default function AdminRestauranteMenu() {
     });
 
     // Degradado personalizado
-    const adminGradient = 'linear-gradient(135deg, #c0392b 0%, #7b1d1d 100%)';
+    const adminGradient = 'linear-gradient(135deg, #e4531f 0%, #c23d12 100%)';
 
     // Control de modales
     const openCategoryForm = () => {
@@ -300,8 +298,8 @@ export default function AdminRestauranteMenu() {
     if (loading || loadingData) {
         return (
             <AdminShell title="Gestion de menu" subtitle="Cargando gestion de menu...">
-                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
-                    <div className="spinner-border text-light me-2" role="status"></div>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner-border me-2" style={{ color: '#e4531f' }} role="status"></div>
                     <p className="mb-0 fw-bold">Cargando gestion de menu...</p>
                 </div>
             </AdminShell>
@@ -371,7 +369,7 @@ export default function AdminRestauranteMenu() {
                                 <div className="resto-muted">{prod.description || "Sin descripción"}</div>
                             </div>
                             <div className="resto-muted">{categoriesMap.get(prod.category_id) || "-"}</div>
-                            <div className="resto-price">USD/ {Number(prod.price).toFixed(2)}</div>
+                            <div className="resto-price">Bs {Number(prod.price).toFixed(2)}</div>
                             <div className="resto-row-actions">
                                 <button className="resto-icon-btn" type="button" onClick={() => handleEditProduct(prod)}>Editar</button>
                                 <button className="resto-icon-btn" type="button" onClick={() => openExtrasForm(prod)}>Extras</button>
@@ -407,7 +405,7 @@ export default function AdminRestauranteMenu() {
                     gap: 10px;
                 }
                 .resto-btn-primary {
-                    background: #d44a42;
+                    background: #e4531f;
                     color: #fff;
                     border: none;
                     border-radius: 12px;
@@ -415,9 +413,9 @@ export default function AdminRestauranteMenu() {
                     font-weight: 700;
                 }
                 .resto-btn-ghost {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: #fff;
-                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    background: #f3ebe0;
+                    color: #211a15;
+                    border: 1px solid #ebe1d5;
                     border-radius: 12px;
                     padding: 8px 14px;
                     font-weight: 600;
@@ -425,10 +423,11 @@ export default function AdminRestauranteMenu() {
                 .resto-table {
                     display: grid;
                     gap: 8px;
-                    background: rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
                     border-radius: 16px;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border: 1px solid #ebe1d5;
                     padding: 16px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-table-header,
                 .resto-row {
@@ -438,16 +437,17 @@ export default function AdminRestauranteMenu() {
                     gap: 12px;
                 }
                 .resto-table-header {
-                    color: rgba(255, 255, 255, 0.55);
+                    color: #8c8178;
                     font-size: 0.75rem;
                     text-transform: uppercase;
                     letter-spacing: 0.6px;
                     padding-bottom: 8px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                    border-bottom: 1px solid #ebe1d5;
                 }
                 .resto-row {
                     padding: 10px 0;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                    border-bottom: 1px solid #ebe1d5;
+                    color: #211a15;
                 }
                 .resto-row:last-child {
                     border-bottom: none;
@@ -458,7 +458,7 @@ export default function AdminRestauranteMenu() {
                     border-radius: 12px;
                     overflow: hidden;
                     flex-shrink: 0;
-                    background: rgba(255, 255, 255, 0.08);
+                    background: #f3ebe0;
                 }
                 .resto-thumb img {
                     width: 100%;
@@ -468,23 +468,24 @@ export default function AdminRestauranteMenu() {
                 .resto-thumb-fallback {
                     width: 100%;
                     height: 100%;
-                    background: rgba(212, 74, 66, 0.15);
+                    background: #ffeee4;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    color: #d44a42;
+                    color: #e4531f;
                     font-size: 1.1rem;
                 }
                 .resto-name {
                     font-weight: 600;
+                    color: #211a15;
                 }
                 .resto-muted {
-                    color: rgba(255, 255, 255, 0.55);
+                    color: #8c8178;
                     font-size: 0.8rem;
                 }
                 .resto-price {
                     font-weight: 700;
-                    color: #d44a42;
+                    color: #e4531f;
                 }
                 .resto-row-actions {
                     display: flex;
@@ -492,26 +493,28 @@ export default function AdminRestauranteMenu() {
                     justify-content: flex-end;
                 }
                 .resto-icon-btn {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: #fff;
+                    background: #f3ebe0;
+                    color: #211a15;
                     border: none;
                     border-radius: 10px;
                     padding: 6px 10px;
                     font-size: 0.75rem;
                 }
                 .resto-icon-btn.danger {
-                    color: #f28f8a;
+                    color: #c0392b;
                 }
                 .resto-categories {
-                    background: rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
                     border-radius: 16px;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border: 1px solid #ebe1d5;
                     padding: 16px;
                     margin-top: 24px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-section-title {
                     font-weight: 700;
                     margin-bottom: 12px;
+                    color: #211a15;
                 }
                 .resto-cat-grid {
                     display: grid;
@@ -519,77 +522,14 @@ export default function AdminRestauranteMenu() {
                     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
                 }
                 .resto-cat-card {
-                    background: rgba(0, 0, 0, 0.25);
+                    background: #faf5ee;
+                    border: 1px solid #ebe1d5;
                     border-radius: 12px;
                     padding: 12px 14px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                }
-                .modal-dark .modal-content {
-                    background: #140808;
-                    border: 1px solid rgba(212,74,66,0.25);
-                    color: #fff;
-                    border-radius: 20px;
-                }
-                .modal-dark .modal-header {
-                    border-bottom: none;
-                    border-radius: 20px 20px 0 0;
-                }
-                .modal-dark .modal-body {
-                    background: #140808;
-                    padding: 1.5rem;
-                }
-                .modal-dark .modal-footer {
-                    background: #140808;
-                    border-top: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 0 0 20px 20px;
-                    padding: 1rem 1.5rem;
-                }
-                .modal-dark .form-label {
-                    color: rgba(255,255,255,0.65);
-                    font-size: 0.8rem;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    margin-bottom: 6px;
-                }
-                .modal-dark .form-control,
-                .modal-dark .form-select {
-                    background: rgba(255,255,255,0.07);
-                    border: 1px solid rgba(255,255,255,0.15);
-                    color: #fff;
-                    border-radius: 10px;
-                }
-                .modal-dark .form-control:focus,
-                .modal-dark .form-select:focus {
-                    background: rgba(255,255,255,0.1);
-                    border-color: rgba(192,57,43,0.7);
-                    color: #fff;
-                    box-shadow: 0 0 0 3px rgba(192,57,43,0.15);
-                }
-                .modal-dark .form-control::placeholder {
-                    color: rgba(255,255,255,0.3);
-                }
-                .modal-dark .form-select option {
-                    background: #1a0a0a;
-                    color: #fff;
-                }
-                .modal-dark .text-muted {
-                    color: rgba(255,255,255,0.4) !important;
-                }
-                .modal-dark .btn-secondary {
-                    background: rgba(255,255,255,0.08);
-                    border: 1px solid rgba(255,255,255,0.15);
-                    color: #fff;
-                    border-radius: 10px;
-                    font-weight: 600;
-                }
-                .modal-dark .btn-secondary:hover {
-                    background: rgba(255,255,255,0.13);
-                    color: #fff;
-                }
-                .modal-dark .btn-close-white {
-                    filter: invert(1);
+                    color: #211a15;
                 }
                 @media (max-width: 900px) {
                     .resto-table-header,

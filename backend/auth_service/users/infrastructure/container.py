@@ -156,6 +156,7 @@ class Container:
     
     def execute_command(self, command):
         self._ensure_command_handlers_registered()
+        self._ensure_query_handlers_registered()
         return self.command_bus.execute(command)
     
     def execute_query(self, query):

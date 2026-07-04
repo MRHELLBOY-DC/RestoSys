@@ -85,12 +85,12 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                     min-height: 100vh;
                     display: grid;
                     grid-template-columns: 240px 1fr;
-                    background: #0f0b0b;
-                    color: #f5f2f2;
+                    background: #faf5ee;
+                    color: #211a15;
                 }
                 .resto-sidebar {
-                    background: #151010;
-                    border-right: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border-right: 1px solid #ebe1d5;
                     padding: 24px 18px;
                     display: flex;
                     flex-direction: column;
@@ -101,12 +101,13 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                     overflow-y: auto;
                 }
                 .resto-brand {
-                    font-weight: 700;
+                    font-weight: 800;
                     font-size: 1.1rem;
                     letter-spacing: 0.3px;
+                    color: #211a15;
                 }
                 .resto-subtitle {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     font-size: 0.85rem;
                     display: flex;
                     flex-direction: column;
@@ -115,12 +116,12 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                 .resto-role-badge {
                     display: inline-block;
                     font-size: 0.7rem;
-                    font-weight: 600;
+                    font-weight: 700;
                     padding: 2px 10px;
                     border-radius: 20px;
-                    background: rgba(212, 74, 66, 0.2);
-                    color: #d44a42;
-                    border: 1px solid rgba(212, 74, 66, 0.3);
+                    background: #ffeee4;
+                    color: #c23d12;
+                    border: 1px solid #f0d8c8;
                     width: fit-content;
                 }
                 .resto-nav {
@@ -132,22 +133,23 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                     padding: 10px 14px;
                     border-radius: 12px;
                     text-decoration: none;
-                    color: rgba(255, 255, 255, 0.75);
+                    color: #211a15;
                     background: transparent;
                     border: 1px solid transparent;
                     transition: all 0.2s ease;
                     display: flex;
                     align-items: center;
                     gap: 10px;
+                    font-weight: 600;
                 }
                 .resto-link:hover {
-                    background: rgba(255, 255, 255, 0.06);
-                    color: #fff;
+                    background: #f3ebe0;
+                    color: #211a15;
                 }
                 .resto-link.active {
-                    background: #d44a42;
-                    color: #fff;
-                    border-color: rgba(255, 255, 255, 0.1);
+                    background: #e4531f;
+                    color: #ffffff;
+                    border-color: #e4531f;
                 }
                 .resto-logout {
                     margin-top: auto;
@@ -168,10 +170,11 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                 }
                 .resto-title {
                     font-size: 1.4rem;
-                    font-weight: 700;
+                    font-weight: 800;
+                    color: #211a15;
                 }
                 .resto-meta {
-                    color: rgba(255, 255, 255, 0.55);
+                    color: #8c8178;
                     font-size: 0.9rem;
                 }
                 .resto-header-actions {
@@ -183,7 +186,7 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                     width: 36px;
                     height: 36px;
                     border-radius: 50%;
-                    background: #d44a42;
+                    background: #e4531f;
                     color: #fff;
                     font-weight: 700;
                     display: grid;

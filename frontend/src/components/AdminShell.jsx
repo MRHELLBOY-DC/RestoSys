@@ -8,7 +8,6 @@ export default function AdminShell({ title, subtitle, actions, children }) {
     const navigate = useNavigate();
     const user = getCurrentUser();
     const displayName = user?.full_name?.trim() || user?.username || user?.email || "Admin";
-    const handleLabel = user?.email || user?.username || "";
     const initials = displayName.slice(0, 2).toUpperCase();
 
     const isSuperAdmin = user?.role === 'admin';

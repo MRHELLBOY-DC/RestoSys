@@ -79,9 +79,8 @@ export default function RestaurantePagos() {
         setSuccess("");
         try {
             // 1. Verificar si el pago ya existe
-            let existingPayment;
             try {
-                existingPayment = await getPaymentByOrder(order.id);
+                await getPaymentByOrder(order.id);
                 // Si existe, mostrar mensaje y recargar
                 setSuccess("Este pedido ya tiene un pago generado");
                 await loadData();
@@ -132,8 +131,8 @@ export default function RestaurantePagos() {
     if (loading) {
         return (
             <RestauranteShell title="Pagos y facturacion" subtitle="Cargando pagos...">
-                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
-                    <div className="spinner-border text-light me-2" role="status"></div>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner-border me-2" style={{ color: '#e4531f' }} role="status"></div>
                     <p className="mb-0 fw-bold">Cargando pagos...</p>
                 </div>
             </RestauranteShell>
@@ -152,8 +151,8 @@ export default function RestaurantePagos() {
                 </button>
             }
         >
-            {error && <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">{error}</div>}
-            {success && <div className="alert alert-success border-0 bg-success bg-opacity-25 text-white">{success}</div>}
+            {error && <div className="alert border-0" style={{ background: '#fff0ef', color: '#9d221c', borderRadius: 12 }}>{error}</div>}
+            {success && <div className="alert border-0" style={{ background: '#eaf3ee', color: '#2e7d5b', borderRadius: 12 }}>{success}</div>}
 
             <div className="resto-payments-grid">
                 <div className="resto-payments-card">
@@ -175,7 +174,7 @@ export default function RestaurantePagos() {
                                                 <div className="resto-code">Pedido {order.orderCode}</div>
                                                 <div className="resto-muted">{order.type} · Mesa {order.tableNumber || "-"}</div>
                                             </div>
-                                            <div className="resto-amount">USD/ {formatAmount(order.totalAmount)}</div>
+                                            <div className="resto-amount">Bs {formatAmount(order.totalAmount)}</div>
                                         </div>
 
                                         {!payment ? (
@@ -233,7 +232,7 @@ export default function RestaurantePagos() {
                                             <div className="resto-code">{payment.method}</div>
                                             <div className="resto-muted">{payment.id}</div>
                                         </div>
-                                        <div className="resto-amount">USD/ {formatAmount(payment.amount)}</div>
+                                        <div className="resto-amount">Bs {formatAmount(payment.amount)}</div>
                                     </div>
 
                                     {payment.qrPayload && (
@@ -281,7 +280,7 @@ export default function RestaurantePagos() {
 
             <style>{`
                 .resto-btn-primary {
-                    background: #d44a42;
+                    background: #e4531f;
                     color: #fff;
                     border: none;
                     border-radius: 12px;
@@ -289,9 +288,9 @@ export default function RestaurantePagos() {
                     font-weight: 700;
                 }
                 .resto-btn-ghost {
-                    background: rgba(255, 255, 255, 0.08);
-                    color: #fff;
-                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    background: #f3ebe0;
+                    color: #211a15;
+                    border: 1px solid #ebe1d5;
                     border-radius: 12px;
                     padding: 8px 12px;
                     font-weight: 600;
@@ -302,29 +301,34 @@ export default function RestaurantePagos() {
                     gap: 18px;
                 }
                 .resto-payments-card {
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    background: #ffffff;
+                    border: 1px solid #ebe1d5;
                     border-radius: 18px;
                     padding: 16px;
                     display: flex;
                     flex-direction: column;
                     gap: 14px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-card-header {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
+                    color: #211a15;
                 }
                 .resto-card-header h2 {
                     font-size: 1rem;
                     font-weight: 700;
                     margin: 0;
+                    color: #211a15;
                 }
                 .resto-badge {
-                    background: rgba(255, 255, 255, 0.08);
+                    background: #ffeee4;
+                    color: #c23d12;
                     border-radius: 999px;
                     padding: 4px 8px;
                     font-size: 0.75rem;
+                    font-weight: 700;
                 }
                 .resto-payments-list {
                     display: flex;
@@ -332,7 +336,8 @@ export default function RestaurantePagos() {
                     gap: 12px;
                 }
                 .resto-payment-item {
-                    background: rgba(0, 0, 0, 0.3);
+                    background: #faf5ee;
+                    border: 1px solid #ebe1d5;
                     border-radius: 14px;
                     padding: 12px;
                     display: flex;
@@ -343,9 +348,11 @@ export default function RestaurantePagos() {
                     display: flex;
                     justify-content: space-between;
                     gap: 8px;
+                    color: #211a15;
                 }
                 .resto-amount {
                     font-weight: 700;
+                    color: #211a15;
                 }
                 .resto-payment-actions {
                     display: flex;
@@ -363,18 +370,20 @@ export default function RestaurantePagos() {
                     padding: 2px 8px;
                     border-radius: 999px;
                     font-size: 0.7rem;
+                    font-weight: 700;
                 }
                 .resto-pill.paid {
-                    background: rgba(76, 175, 80, 0.2);
-                    color: #9ad7a0;
+                    background: #eaf3ee;
+                    color: #2e7d5b;
                 }
                 .resto-pill.cash {
-                    background: rgba(255, 193, 7, 0.2);
-                    color: #f5d07a;
+                    background: #fff3d6;
+                    color: #b7791f;
                 }
                 .resto-qr-preview {
                     background: #fff;
                     color: #111;
+                    border: 1px solid #ebe1d5;
                     border-radius: 12px;
                     padding: 10px;
                     text-align: center;
@@ -388,14 +397,15 @@ export default function RestaurantePagos() {
                     gap: 4px;
                 }
                 .resto-empty {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                 }
                 .resto-muted {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     font-size: 0.8rem;
                 }
                 .resto-code {
                     font-weight: 700;
+                    color: #211a15;
                 }
                 @media (max-width: 1100px) {
                     .resto-payments-grid {

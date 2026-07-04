@@ -9,12 +9,16 @@ import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billin
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.exceptions.DomainException;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.model.Payment;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.model.ReceiptType;
+import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.infrastructure.pdf.ReceiptPdfRenderer;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.infrastructure.security.JwtAuthenticationFilter.AuthenticatedUserPrincipal;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.interfaces.api.dto.ConfirmPaymentRequest;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.interfaces.api.dto.CreatePaymentRequest;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.interfaces.api.dto.PaymentResponse;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -103,6 +107,21 @@ public class PaymentsController {
             throw new DomainException("El comprobante todavia no fue generado porque el pago no esta confirmado");
         }
         return payment.getReceipt().getHtmlContent();
+    }
+
+    @GetMapping("/{paymentId}/receipt.pdf")
+    public ResponseEntity<byte[]> getReceiptPdf(@PathVariable UUID paymentId, Authentication authentication) {
+        Payment payment = getPaymentQueryHandler.handle(paymentId);
+        authorizeRestaurantAccess(payment.getRestaurantId(), authentication);
+        if (payment.getReceipt() == null) {
+            throw new DomainException("El comprobante todavia no fue generado porque el pago no esta confirmado");
+        }
+        byte[] pdf = ReceiptPdfRenderer.render(payment.getReceipt());
+        String filename = "comprobante-" + payment.getReceipt().getReceiptNumber() + ".pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString())
+                .body(pdf);
     }
 
     private void authorizeRestaurantAccess(UUID restaurantId, Authentication authentication) {

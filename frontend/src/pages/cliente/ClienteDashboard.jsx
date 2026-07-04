@@ -4,12 +4,14 @@ import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
 import { getPublicRestaurantes } from "../../services/api";
 import { authMediaUrl } from "../../services/mediaUrl";
+import "../../styles/client-theme.css";
 
 export default function ClienteDashboard() {
     const { user, loading } = useAuth(['cliente']);
     const navigate = useNavigate();
     const [restaurantes, setRestaurantes] = useState([]);
     const [loadingRest, setLoadingRest] = useState(true);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         getPublicRestaurantes()
@@ -18,102 +20,138 @@ export default function ClienteDashboard() {
             .finally(() => setLoadingRest(false));
     }, []);
 
-    const bg = 'radial-gradient(circle at 20% 20%, rgba(240,85,77,0.3) 0%, transparent 50%), linear-gradient(160deg, #0b090a 0%, #1b0a0a 50%, #0a0606 100%)';
-
     if (loading) return (
-        <div className="min-vh-100 d-flex flex-column" style={{ background: bg }}>
+        <div className="client-shell d-flex flex-column">
             <Navbar />
-            <div className="flex-grow-1 d-flex align-items-center justify-content-center text-white">
-                <div className="spinner-border text-light me-3" role="status"></div>
-                <span className="h5 mb-0">Cargando...</span>
+            <div className="flex-grow-1 d-flex align-items-center justify-content-center">
+                <div className="spinner-border me-3" style={{ color: '#e4531f' }} role="status"></div>
+                <span className="fw-semibold client-muted">Cargando...</span>
             </div>
         </div>
     );
 
     if (!user) return null;
 
-    const displayName = user.full_name?.trim() || user.username || user.email || "";
+    const filteredRestaurantes = search.trim()
+        ? restaurantes.filter(r => r.name.toLowerCase().includes(search.trim().toLowerCase()))
+        : restaurantes;
 
     return (
-        <div className="min-vh-100 d-flex flex-column" style={{ background: bg }}>
+        <div className="client-shell d-flex flex-column">
             <Navbar />
 
-            <div className="container py-5 flex-grow-1">
-                {/* Bienvenida */}
-                <div className="mb-5">
-                    <h1 className="text-white fw-bold display-5 mb-1">¡Hola, {displayName}!</h1>
-                    <p className="text-white-50">Elige un restaurante y arma tu pedido</p>
-                </div>
-
-                {/* Accesos rápidos */}
-                <div className="row g-3 mb-5">
-                    {[
-                        { title: "Mi Carrito", icon: "fa-cart-shopping", path: "/carrito", desc: "Revisa tu selección" },
-                        { title: "Mis Pedidos", icon: "fa-receipt", path: "/mis-pedidos", desc: "Estado de tus órdenes" },
-                    ].map((action, i) => (
-                        <div key={i} className="col-6 col-md-3">
-                            <div className="text-center p-3 h-100"
-                                 onClick={() => navigate(action.path)}
-                                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(240,85,77,0.2)', borderRadius: '18px', cursor: 'pointer', transition: 'all 0.2s' }}
-                                 onMouseOver={e => e.currentTarget.style.background = 'rgba(240,85,77,0.1)'}
-                                 onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
-                                <i className={`fa-solid ${action.icon} fa-xl mb-2 d-block`} style={{ color: '#f0554d' }}></i>
-                                <div className="text-white fw-semibold small">{action.title}</div>
-                                <div className="text-white-50" style={{ fontSize: '0.75rem' }}>{action.desc}</div>
+            <main className="container py-4 py-lg-5 flex-grow-1">
+                <section className="client-hero p-4 p-lg-5 mb-4">
+                    <div className="row align-items-center g-4">
+                        <div className="col-12 col-lg-7">
+                            <div className="client-kicker mb-2">Cliente</div>
+                            <h1 className="client-title display-6 mb-2">Donde quieres pedir hoy?</h1>
+                            <p className="client-muted mb-0 fs-6">
+                                Elegi un restaurante, revisa su menu y arma tu pedido desde la mesa.
+                            </p>
+                        </div>
+                        <div className="col-12 col-lg-5">
+                            <div className="row g-3">
+                                {[
+                                    { title: "Mi carrito", icon: "fa-cart-shopping", path: "/carrito", desc: "Revisa tu seleccion" },
+                                    { title: "Mis pedidos", icon: "fa-receipt", path: "/mis-pedidos", desc: "Estado de tus ordenes" },
+                                ].map((action) => (
+                                    <div key={action.path} className="col-6">
+                                        <button
+                                            type="button"
+                                            className="client-action w-100 text-start p-3 h-100"
+                                            onClick={() => navigate(action.path)}
+                                        >
+                                            <span className="client-icon-box mb-3">
+                                                <i className={`fa-solid ${action.icon}`}></i>
+                                            </span>
+                                            <span className="d-block fw-bold">{action.title}</span>
+                                            <span className="d-block client-muted small">{action.desc}</span>
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                    ))}
-                </div>
+                    </div>
+                </section>
 
-                {/* Restaurantes disponibles */}
-                <div>
-                    <h4 className="text-white fw-bold mb-1">
-                        <i className="fa-solid fa-store me-2" style={{ color: '#f0554d' }}></i>
-                        Restaurantes disponibles
-                    </h4>
-                    <p className="text-white-50 small mb-4">Selecciona uno para ver su menú y hacer tu pedido</p>
+                <section>
+                    <div className="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4">
+                        <div>
+                            <div className="client-kicker mb-1">Paso 1</div>
+                            <h2 className="client-title h3 mb-1">Elegir restaurante</h2>
+                            <p className="client-muted mb-0">Selecciona uno para ver su menu y hacer tu pedido.</p>
+                        </div>
+                        <span className="client-pill px-3 py-2 align-self-start align-self-md-auto">
+                            {restaurantes.length} disponibles
+                        </span>
+                    </div>
+
+                    {restaurantes.length > 0 && (
+                        <div className="mb-4" style={{ maxWidth: 380 }}>
+                            <div className="position-relative">
+                                <i className="fa-solid fa-magnifying-glass position-absolute" style={{ left: 16, top: '50%', transform: 'translateY(-50%)', color: '#8c8178' }}></i>
+                                <input
+                                    type="text"
+                                    className="form-control py-2 ps-5"
+                                    placeholder="Buscar restaurante por nombre..."
+                                    style={{ borderColor: '#ebe1d5', borderRadius: 999 }}
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {loadingRest ? (
-                        <div className="text-center py-4">
-                            <div className="spinner-border text-light" role="status"></div>
+                        <div className="text-center py-5">
+                            <div className="spinner-border" style={{ color: '#e4531f' }} role="status"></div>
                         </div>
                     ) : restaurantes.length === 0 ? (
-                        <div className="text-center py-5 text-white-50">
+                        <div className="client-empty text-center py-5 client-muted">
                             <i className="fa-solid fa-store-slash fa-2x mb-3 d-block"></i>
                             No hay restaurantes disponibles por ahora
                         </div>
+                    ) : filteredRestaurantes.length === 0 ? (
+                        <div className="client-empty text-center py-5 client-muted">
+                            <i className="fa-solid fa-magnifying-glass fa-2x mb-3 d-block"></i>
+                            No encontramos restaurantes que coincidan con "{search}"
+                        </div>
                     ) : (
                         <div className="row g-4">
-                            {restaurantes.map(rest => (
+                            {filteredRestaurantes.map(rest => (
                                 <div key={rest.id} className="col-12 col-sm-6 col-lg-4">
-                                    <div className="h-100 p-4 text-center"
-                                         onClick={() => navigate(`/restaurante/${rest.id}/menu`)}
-                                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(240,85,77,0.2)', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.25s' }}
-                                         onMouseOver={e => { e.currentTarget.style.background = 'rgba(240,85,77,0.1)'; e.currentTarget.style.transform = 'translateY(-4px)'; }}
-                                         onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-                                        <div className="mb-3">
-                                            {rest.logo ? (
-                                                <img src={authMediaUrl(rest.logo)} alt={rest.name}
-                                                     className="rounded-circle"
-                                                     style={{ width: '72px', height: '72px', objectFit: 'cover', border: '2px solid rgba(240,85,77,0.5)' }}
-                                                     onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<i class="fa-solid fa-store fa-2x" style="color:#f0554d"></i>'; }} />
-                                            ) : (
-                                                <i className="fa-solid fa-store fa-2x" style={{ color: '#f0554d' }}></i>
-                                            )}
+                                    <button
+                                        type="button"
+                                        className="client-card h-100 w-100 p-0 text-start overflow-hidden d-flex flex-column"
+                                        onClick={() => navigate(`/restaurante/${rest.id}/menu`)}
+                                    >
+                                        {rest.logo ? (
+                                            <img
+                                                src={authMediaUrl(rest.logo)}
+                                                alt={rest.name}
+                                                style={{ height: '160px', width: '100%', objectFit: 'cover' }}
+                                                onError={e => { e.currentTarget.style.display = 'none'; }}
+                                            />
+                                        ) : (
+                                            <div style={{ height: '160px', background: '#ffeee4', color: '#e4531f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>
+                                                <i className="fa-solid fa-store"></i>
+                                            </div>
+                                        )}
+                                        <div className="p-4 flex-grow-1 d-flex flex-column">
+                                            <h3 className="h5 client-title mb-1">{rest.name}</h3>
+                                            <p className="client-muted small mb-3 flex-grow-1">{rest.address || "Menu disponible"}</p>
+                                            <span className="client-pill px-3 py-2 d-inline-flex align-items-center gap-2 align-self-start">
+                                                Ver menu <i className="fa-solid fa-arrow-right"></i>
+                                            </span>
                                         </div>
-                                        <h5 className="fw-bold mb-1" style={{ color: '#f0554d' }}>{rest.name}</h5>
-                                        <p className="text-white-50 small mb-3">{rest.address || "Ver menú"}</p>
-                                        <span className="badge rounded-pill px-3 py-2"
-                                              style={{ background: 'rgba(240,85,77,0.15)', border: '1px solid rgba(240,85,77,0.35)', color: '#f0554d' }}>
-                                            Ver Menú →
-                                        </span>
-                                    </div>
+                                    </button>
                                 </div>
                             ))}
                         </div>
                     )}
-                </div>
-            </div>
+                </section>
+            </main>
         </div>
     );
 }

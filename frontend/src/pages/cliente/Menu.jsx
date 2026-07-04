@@ -178,7 +178,7 @@ export default function Menu() {
                                             />
                                             <div className="position-absolute top-0 end-0 m-2">
                                                 <span className="badge bg-dark bg-opacity-75 rounded-pill px-3 py-2 fs-6">
-                                                    ${totalPrice.toFixed(2)}
+                                                    Bs {totalPrice.toFixed(2)}
                                                 </span>
                                             </div>
                                         </div>
@@ -205,7 +205,7 @@ export default function Menu() {
                                                                     onChange={() => handleExtraChange(product.id, opt)}
                                                                 />
                                                                 <label className="form-check-label small" htmlFor={`opt_${product.id}_${opt.id}`}>
-                                                                    {opt.name} <span className="text-primary">(+${opt.extra_price})</span>
+                                                                    {opt.name} <span className="text-primary">(+Bs {opt.extra_price})</span>
                                                                 </label>
                                                             </div>
                                                         ))}

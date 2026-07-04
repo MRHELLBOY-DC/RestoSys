@@ -36,6 +36,21 @@ export const openReceipt = async (paymentId) => {
     window.open(url, '_blank');
 };
 
+export const downloadReceiptPdf = async (paymentId) => {
+    const res = await client.get(`/api/payments/${paymentId}/receipt.pdf`, { responseType: 'blob' });
+    const disposition = res.headers['content-disposition'] || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : `comprobante-${paymentId}.pdf`;
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
 // aliases used by RestaurantePagos
 export const confirmPayment = confirmCashPayment;
 export const listPayments = listPaymentsByRestaurant;

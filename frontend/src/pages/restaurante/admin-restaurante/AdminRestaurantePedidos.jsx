@@ -6,6 +6,7 @@ import { listActiveOrders, listOrderHistory } from "../../../services/ordersApi"
 const toUUID = (id) => `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`;
 
 const STATUS_FLOW = ["RECIBIDO", "PREPARANDO", "LISTO", "ENTREGADO"];
+const THIRTY_MIN = 30 * 60 * 1000;
 
 const STATUS_LABEL = {
     RECIBIDO: "Recibido",
@@ -27,7 +28,6 @@ export default function AdminRestaurantePedidos() {
     const [activeOrders, setActiveOrders] = useState([]);
     const [historyOrders, setHistoryOrders] = useState([]);
     const [error, setError] = useState("");
-    const [busy, setBusy] = useState(false);
 
     const restaurantId = useMemo(() => {
         return user?.restaurant?.id || user?.restaurant_id || "";
@@ -35,29 +35,23 @@ export default function AdminRestaurantePedidos() {
 
     const loadActiveOrders = async () => {
         if (!restaurantId) return;
-        setBusy(true);
         setError("");
         try {
             const data = await listActiveOrders(toUUID(restaurantId));
             setActiveOrders(data);
         } catch (err) {
             setError(err?.message || "No se pudieron cargar los pedidos activos");
-        } finally {
-            setBusy(false);
         }
     };
 
     const loadHistoryOrders = async () => {
         if (!restaurantId) return;
-        setBusy(true);
         setError("");
         try {
             const data = await listOrderHistory(toUUID(restaurantId));
             setHistoryOrders(data);
         } catch (err) {
             setError(err?.message || "No se pudo cargar el historial");
-        } finally {
-            setBusy(false);
         }
     };
 
@@ -68,8 +62,6 @@ export default function AdminRestaurantePedidos() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [restaurantId]);
-
-    const THIRTY_MIN = 30 * 60 * 1000;
 
     const ordersByStatus = useMemo(() => {
         return STATUS_FLOW.reduce((acc, status) => {
@@ -92,8 +84,8 @@ export default function AdminRestaurantePedidos() {
     if (loading) {
         return (
             <AdminShell title="Supervisión de Pedidos" subtitle="Cargando pedidos...">
-                <div className="d-flex align-items-center justify-content-center text-white" style={{ minHeight: "60vh" }}>
-                    <div className="spinner-border text-light me-2" role="status"></div>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "60vh" }}>
+                    <div className="spinner-border me-2" style={{ color: '#e4531f' }} role="status"></div>
                     <p className="mb-0 fw-bold">Cargando pedidos...</p>
                 </div>
             </AdminShell>
@@ -109,7 +101,7 @@ export default function AdminRestaurantePedidos() {
         >
 
             {error && (
-                <div className="alert alert-danger border-0 bg-danger bg-opacity-25 text-white">
+                <div className="alert border-0" style={{ background: '#fff0ef', color: '#9d221c', borderRadius: 12 }}>
                     {error}
                 </div>
             )}
@@ -133,7 +125,7 @@ export default function AdminRestaurantePedidos() {
                                         </div>
                                         <div className="resto-items">{formatItems(order)}</div>
                                         <div className="resto-card-footer">
-                                            <div className="resto-total">USD/ {formatAmount(order.totalAmount)}</div>
+                                            <div className="resto-total">Bs {formatAmount(order.totalAmount)}</div>
                                             <span className={`resto-pill ${order.paymentStatus === "PAGADO" ? "paid" : "cash"}`}>
                                                 {paymentBadge}
                                             </span>
@@ -167,7 +159,7 @@ export default function AdminRestaurantePedidos() {
                                     <div className="resto-code">{order.orderCode}</div>
                                     <div className="resto-muted">{order.type} · Mesa {order.tableNumber || "-"}</div>
                                 </div>
-                                <div className="resto-muted">USD/ {formatAmount(order.totalAmount)}</div>
+                                <div className="resto-muted">Bs {formatAmount(order.totalAmount)}</div>
                                 <div className="resto-pill paid">{order.paymentStatus}</div>
                             </div>
                         ))}
@@ -177,11 +169,11 @@ export default function AdminRestaurantePedidos() {
 
             <style>{`
                 .resto-supervision-banner {
-                    background: rgba(255, 193, 7, 0.15);
-                    border: 1px solid rgba(255, 193, 7, 0.3);
+                    background: #fff3d6;
+                    border: 1px solid #f0d896;
                     border-radius: 12px;
                     padding: 12px 18px;
-                    color: #ffc107;
+                    color: #b7791f;
                     font-size: 0.9rem;
                     text-align: center;
                     margin-bottom: 16px;
@@ -192,11 +184,12 @@ export default function AdminRestaurantePedidos() {
                     gap: 18px;
                 }
                 .resto-column {
-                    background: rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
                     border-radius: 18px;
                     padding: 16px;
                     min-height: 420px;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border: 1px solid #ebe1d5;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-column-header {
                     display: flex;
@@ -204,12 +197,15 @@ export default function AdminRestaurantePedidos() {
                     align-items: center;
                     font-weight: 700;
                     margin-bottom: 12px;
+                    color: #211a15;
                 }
                 .resto-count {
-                    background: rgba(255, 255, 255, 0.08);
+                    background: #ffeee4;
+                    color: #c23d12;
                     padding: 2px 8px;
                     border-radius: 999px;
                     font-size: 0.75rem;
+                    font-weight: 700;
                 }
                 .resto-column-body {
                     display: flex;
@@ -217,28 +213,29 @@ export default function AdminRestaurantePedidos() {
                     gap: 12px;
                 }
                 .resto-card {
-                    background: rgba(0, 0, 0, 0.35);
+                    background: #faf5ee;
                     border-radius: 16px;
                     padding: 14px;
                     display: flex;
                     flex-direction: column;
                     gap: 10px;
-                    border: 1px solid rgba(255, 255, 255, 0.06);
+                    border: 1px solid #ebe1d5;
                 }
                 .resto-card-top {
                     display: flex;
                     justify-content: space-between;
                     font-weight: 700;
+                    color: #211a15;
                 }
                 .resto-code {
                     letter-spacing: 0.5px;
                 }
                 .resto-time {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     font-size: 0.75rem;
                 }
                 .resto-items {
-                    color: rgba(255, 255, 255, 0.75);
+                    color: #211a15;
                     font-size: 0.82rem;
                 }
                 .resto-card-footer {
@@ -248,43 +245,47 @@ export default function AdminRestaurantePedidos() {
                 }
                 .resto-total {
                     font-weight: 700;
+                    color: #211a15;
                 }
                 .resto-pill {
                     padding: 2px 8px;
                     border-radius: 999px;
                     font-size: 0.7rem;
+                    font-weight: 700;
                 }
                 .resto-pill.paid {
-                    background: rgba(76, 175, 80, 0.2);
-                    color: #9ad7a0;
+                    background: #eaf3ee;
+                    color: #2e7d5b;
                 }
                 .resto-pill.cash {
-                    background: rgba(255, 193, 7, 0.2);
-                    color: #f5d07a;
+                    background: #fff3d6;
+                    color: #b7791f;
                 }
                 .resto-done {
                     text-align: center;
                     font-size: 0.78rem;
-                    color: #9ad7a0;
+                    color: #2e7d5b;
                     padding: 6px 0 2px;
                 }
                 .resto-status-label {
                     text-align: center;
                     font-size: 0.78rem;
-                    color: rgba(255, 255, 255, 0.7);
+                    color: #8c8178;
                     padding: 6px 0 2px;
-                    border-top: 1px solid rgba(255, 255, 255, 0.05);
+                    border-top: 1px solid #ebe1d5;
                 }
                 .resto-history {
-                    background: rgba(255, 255, 255, 0.03);
+                    background: #ffffff;
                     border-radius: 18px;
                     padding: 16px;
-                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border: 1px solid #ebe1d5;
                     margin-top: 18px;
+                    box-shadow: 0 18px 38px -30px rgba(33, 26, 21, 0.36);
                 }
                 .resto-history-header {
                     font-weight: 700;
                     margin-bottom: 12px;
+                    color: #211a15;
                 }
                 .resto-history-list {
                     display: grid;
@@ -295,16 +296,18 @@ export default function AdminRestaurantePedidos() {
                     grid-template-columns: 1fr auto auto;
                     gap: 12px;
                     align-items: center;
-                    background: rgba(0, 0, 0, 0.25);
+                    background: #faf5ee;
+                    border: 1px solid #ebe1d5;
                     padding: 12px 14px;
                     border-radius: 12px;
+                    color: #211a15;
                 }
                 .resto-muted {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                     font-size: 0.8rem;
                 }
                 .resto-empty {
-                    color: rgba(255, 255, 255, 0.6);
+                    color: #8c8178;
                 }
                 @media (max-width: 1200px) {
                     .resto-orders-grid {

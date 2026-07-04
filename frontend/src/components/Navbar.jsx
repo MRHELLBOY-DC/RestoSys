@@ -19,44 +19,51 @@ export default function Navbar() {
         navigate("/login");
     };
 
-    // Verificar si estamos en login o register
     const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark landing-nav py-0">
+        <nav className="navbar navbar-expand-lg app-nav py-2">
             <div className="container">
-                <Link className="navbar-brand d-flex align-items-center" to="/">
-                    <img src="/restosyslogo.png" alt="RestoSys" style={{ width: '160px', objectFit: 'contain', mixBlendMode: 'screen' }} />
+                <Link className="navbar-brand d-flex align-items-center gap-2" to={user ? getDashboardPath() : "/"}>
+                    <span className="app-nav-badge">R</span>
+                    <span className="app-nav-word">RestoSys</span>
                 </Link>
 
-                {/* Mostrar enlaces SOLO cuando NO hay usuario logueado Y NO estamos en login/register */}
                 {!user && !isAuthPage && (
-                    <div className="d-none d-lg-flex gap-4 text-white-50">
-                        <a href="#funciones" className="nav-link">Funciones</a>
-                        <a href="#como-funciona" className="nav-link">Cómo funciona</a>
+                    <div className="d-none d-lg-flex gap-4">
+                        <a href="/#funciones" className="app-nav-link">Funciones</a>
+                        <a href="/#como-funciona" className="app-nav-link">Cómo funciona</a>
                     </div>
                 )}
 
                 <div className="d-flex gap-2 align-items-center">
                     {user ? (
                         <>
-                            <Link to={getDashboardPath()} className="btn btn-outline-light rounded-pill px-3">
+                            {displayName && (
+                                <span className="app-nav-greeting d-none d-md-inline">Hola, {displayName}</span>
+                            )}
+                            <Link to={getDashboardPath()} className="btn app-nav-btn rounded-pill px-3">
                                 Mi panel
                             </Link>
                             <button
                                 type="button"
-                                className="btn btn-primary rounded-pill px-4 landing-cta"
+                                className="btn app-nav-btn rounded-pill px-4"
                                 onClick={handleLogout}
                             >
                                 Salir
                             </button>
                         </>
+                    ) : isAuthPage ? (
+                        <Link to="/" className="btn app-nav-btn-outline rounded-pill px-3">
+                            <i className="fa-solid fa-arrow-left me-2"></i>
+                            Volver al inicio
+                        </Link>
                     ) : (
                         <>
-                            <Link to="/login" className="btn btn-outline-light rounded-pill px-3">
+                            <Link to="/login" className="btn app-nav-btn-outline rounded-pill px-3">
                                 Login
                             </Link>
-                            <Link to="/register" className="btn btn-primary rounded-pill px-4 landing-cta">
+                            <Link to="/register" className="btn app-nav-btn rounded-pill px-4">
                                 Empezar →
                             </Link>
                         </>
@@ -65,22 +72,60 @@ export default function Navbar() {
             </div>
 
             <style>{`
-                .landing-nav {
-                    background: rgba(5, 5, 5, 0.6);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    backdrop-filter: blur(12px);
+                .app-nav {
+                    background: #ffffff;
+                    border-bottom: 1px solid #ebe1d5;
                 }
-                .landing-nav .nav-link {
-                    color: rgba(255, 255, 255, 0.7);
+                .app-nav-badge {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 10px;
+                    background: #e4531f;
+                    color: #ffffff;
+                    font-weight: 800;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 16px;
+                }
+                .app-nav-word {
+                    color: #211a15;
+                    font-weight: 800;
+                    font-size: 19px;
+                    letter-spacing: -0.01em;
+                }
+                .app-nav-link {
+                    color: #8c8178;
                     text-decoration: none;
-                    font-weight: 500;
+                    font-weight: 600;
                 }
-                .landing-nav .nav-link:hover {
-                    color: #f0554d;
+                .app-nav-link:hover {
+                    color: #e4531f;
                 }
-                .landing-cta {
-                    background: linear-gradient(135deg, #f0554d 0%, #d73a35 100%);
+                .app-nav-greeting {
+                    color: #8c8178;
+                    font-weight: 600;
+                    font-size: 14px;
+                    margin-right: 4px;
+                }
+                .app-nav-btn {
+                    background: #e4531f;
+                    color: #ffffff;
                     border: none;
+                    font-weight: 700;
+                }
+                .app-nav-btn:hover {
+                    background: #c23d12;
+                    color: #ffffff;
+                }
+                .app-nav-btn-outline {
+                    color: #211a15;
+                    border: 1.5px solid #ebe1d5;
+                    font-weight: 700;
+                }
+                .app-nav-btn-outline:hover {
+                    border-color: #e4531f;
+                    color: #e4531f;
                 }
             `}</style>
         </nav>

@@ -96,7 +96,7 @@ export default function AdminReportes() {
             <div className="admin-grid admin-grid-3" style={{ marginBottom: "24px" }}>
                 <div className="admin-card admin-card--glass">
                     <p className="admin-stat-label">Ventas totales</p>
-                    <div className="admin-stat-value">USD/ {formatMoney(globalSales?.totalSales)}</div>
+                    <div className="admin-stat-value">Bs {formatMoney(globalSales?.totalSales)}</div>
                 </div>
                 <div className="admin-card admin-card--glass">
                     <p className="admin-stat-label">Pedidos vendidos</p>
@@ -124,7 +124,7 @@ export default function AdminReportes() {
                                         <span style={{ width: `${Math.min(100, restaurant.ordersCount || 1)}%` }} />
                                     </div>
                                 </div>
-                                <div className="admin-list-value">USD/ {formatMoney(restaurant.totalSales)}</div>
+                                <div className="admin-list-value">Bs {formatMoney(restaurant.totalSales)}</div>
                             </div>
                         ))}
                     </div>

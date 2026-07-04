@@ -133,11 +133,11 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                     <div className="modal-body">
                         {/* Extras existentes */}
                         <div className="mb-4">
-                            <label className="form-label fw-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                            <label className="form-label fw-bold" style={{ color: '#8c8178' }}>
                                 Extras actuales
                             </label>
                             {productOptions.length === 0 ? (
-                                <div className="text-muted" style={{ padding: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
+                                <div className="text-muted" style={{ padding: '12px', background: '#faf5ee', border: '1px solid #ebe1d5', borderRadius: '10px' }}>
                                     No hay extras para este producto
                                 </div>
                             ) : (
@@ -175,7 +175,7 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                                             ) : (
                                                 <div className="display-mode">
                                                     <span className="option-name">{opt.name}</span>
-                                                    <span className="option-price">+ USD/ {parseFloat(opt.extra_price).toFixed(2)}</span>
+                                                    <span className="option-price">+ Bs {parseFloat(opt.extra_price).toFixed(2)}</span>
                                                     <div className="option-actions">
                                                         <button className="btn-icon-edit" onClick={() => handleEditOption(opt)} title="Editar">✏️</button>
                                                         <button className="btn-icon-delete" onClick={() => handleDeleteOption(opt.id)} title="Eliminar">🗑️</button>
@@ -188,11 +188,11 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                             )}
                         </div>
                         
-                        <hr style={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-                        
+                        <hr style={{ borderColor: '#ebe1d5' }} />
+
                         {/* Nuevos extras */}
                         <div className="mb-3">
-                            <label className="form-label fw-bold" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                            <label className="form-label fw-bold" style={{ color: '#8c8178' }}>
                                 Agregar nuevos extras
                             </label>
                             
@@ -253,7 +253,8 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                     overflow-y: auto;
                 }
                 .existing-option-item {
-                    background: rgba(255, 255, 255, 0.05);
+                    background: #faf5ee;
+                    border: 1px solid #ebe1d5;
                     border-radius: 10px;
                     padding: 10px;
                     margin-bottom: 8px;
@@ -264,13 +265,14 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                     justify-content: space-between;
                     flex-wrap: wrap;
                     gap: 8px;
+                    color: #211a15;
                 }
                 .option-name {
                     font-weight: 600;
                     flex: 2;
                 }
                 .option-price {
-                    color: #d44a42;
+                    color: #e4531f;
                     font-weight: 600;
                     flex: 1;
                 }
@@ -279,7 +281,7 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                     gap: 8px;
                 }
                 .btn-icon-edit, .btn-icon-delete {
-                    background: rgba(255, 255, 255, 0.08);
+                    background: #f3ebe0;
                     border: none;
                     border-radius: 8px;
                     padding: 4px 8px;
@@ -288,11 +290,11 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                     transition: all 0.2s;
                 }
                 .btn-icon-edit:hover {
-                    background: rgba(255, 255, 255, 0.2);
+                    background: #ebe1d5;
                     transform: scale(1.05);
                 }
                 .btn-icon-delete:hover {
-                    background: rgba(231, 76, 60, 0.3);
+                    background: #fddede;
                     transform: scale(1.05);
                 }
                 .new-extra-row {
@@ -303,7 +305,7 @@ export const ExtrasModal = ({ show, onClose, product, productOptions, onOptionsC
                     gap: 8px;
                 }
                 .btn-icon-add, .btn-icon-remove {
-                    background: rgba(255, 255, 255, 0.08);
+                    background: #f3ebe0;
                     border: none;
                     border-radius: 8px;
                     padding: 6px 10px;

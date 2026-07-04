@@ -6,6 +6,7 @@ import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.d
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.model.Order;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.model.OrderItem;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.model.OrderItemOption;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.infrastructure.websocket.OrderNotifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +16,12 @@ import java.util.List;
 public class CreateOrderCommandHandler {
     private final OrderRepository orderRepository;
     private final DomainEventPublisher eventPublisher;
+    private final OrderNotifier orderNotifier;
 
-    public CreateOrderCommandHandler(OrderRepository orderRepository, DomainEventPublisher eventPublisher) {
+    public CreateOrderCommandHandler(OrderRepository orderRepository, DomainEventPublisher eventPublisher, OrderNotifier orderNotifier) {
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
+        this.orderNotifier = orderNotifier;
     }
 
     @Transactional
@@ -38,6 +41,7 @@ public class CreateOrderCommandHandler {
         List<DomainEvent> events = order.pullDomainEvents();
         Order savedOrder = orderRepository.save(order);
         events.forEach(eventPublisher::publish);
+        orderNotifier.notifyOrderUpdate(savedOrder);
         return savedOrder;
     }
 
