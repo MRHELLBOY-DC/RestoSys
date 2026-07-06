@@ -55,6 +55,9 @@ class GetRestaurantDetailsQueryHandler(QueryHandler):
                 id=restaurant.id,
                 name=restaurant.name,
                 address=restaurant.address,
+                phone=restaurant.phone,
+                lat=restaurant.lat,
+                lng=restaurant.lng,
                 logo=restaurant.logo,
             )
         
@@ -70,6 +73,9 @@ class GetRestaurantDetailsQueryHandler(QueryHandler):
                 id=restaurant.id,
                 name=restaurant.name,
                 address=restaurant.address,
+                phone=restaurant.phone,
+                lat=restaurant.lat,
+                lng=restaurant.lng,
                 logo=restaurant.logo,
             )
         
@@ -85,6 +91,9 @@ class GetRestaurantDetailsQueryHandler(QueryHandler):
                 id=restaurant.id,
                 name=restaurant.name,
                 address=restaurant.address,
+                phone=restaurant.phone,
+                lat=restaurant.lat,
+                lng=restaurant.lng,
                 logo=restaurant.logo,
             )
         

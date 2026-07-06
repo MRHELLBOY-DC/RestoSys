@@ -17,6 +17,7 @@ export default function AdminShell({ title, subtitle, actions, children }) {
     const navItems = isSuperAdmin ? [
         { to: "/admin/dashboard", label: "Dashboard", meta: "Inicio" },
         { to: "/admin/restaurantes", label: "Restaurantes", meta: "Red" },
+        { to: "/admin/wizard-restaurante", label: "Registro asistido", meta: "Wizard", icon: "🪄" },
         { to: "/admin/usuarios", label: "Usuarios", meta: "Roles" },
         { to: "/admin/reportes", label: "Reportes", meta: "Global" },
         { to: "/admin/auditoria", label: "Auditoria", meta: "Logs" }
@@ -62,7 +63,7 @@ export default function AdminShell({ title, subtitle, actions, children }) {
                             onClick={() => setSidebarOpen(false)}
                         >
                             <span className="admin-nav-label">
-                                <span className="admin-nav-icon">{item.label.slice(0, 1)}</span>
+                                <span className="admin-nav-icon">{item.icon || item.label.slice(0, 1)}</span>
                                 {item.label}
                             </span>
                             <span className="admin-nav-meta">{item.meta}</span>

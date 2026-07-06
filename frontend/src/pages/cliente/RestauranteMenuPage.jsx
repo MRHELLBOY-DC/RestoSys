@@ -181,7 +181,21 @@ export default function RestauranteMenuPage() {
                         )}
                         <div>
                             <h1 className="client-title h5 mb-0">{restaurante.name}</h1>
-                            <p className="client-muted mb-0 small">{restaurante.address || "Selecciona tus productos favoritos"}</p>
+                            <p className="client-muted mb-0 small">
+                                {restaurante.address || "Selecciona tus productos favoritos"}
+                                {restaurante.address && restaurante.lat != null && restaurante.lng != null && (
+                                    <a
+                                        href={`https://www.google.com/maps?q=${restaurante.lat},${restaurante.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ms-2"
+                                        style={{ color: '#e4531f', fontWeight: 600 }}
+                                    >
+                                        <i className="fa-solid fa-location-dot me-1"></i>
+                                        Ver en Google Maps
+                                    </a>
+                                )}
+                            </p>
                         </div>
                     </div>
                     <div className="d-flex align-items-center gap-3">
@@ -200,6 +214,17 @@ export default function RestauranteMenuPage() {
                         </button>
                     </div>
                 </header>
+
+                {restaurante.lat != null && restaurante.lng != null && (
+                    <div className="px-3 px-lg-4 pb-3">
+                        <iframe
+                            title="Ubicacion del restaurante"
+                            src={`https://maps.google.com/maps?q=${restaurante.lat},${restaurante.lng}&z=16&output=embed`}
+                            style={{ width: '100%', height: 220, border: 0, borderRadius: 12 }}
+                            loading="lazy"
+                        />
+                    </div>
+                )}
 
                 <div className="client-menu-panel client-menu-panel-flush d-flex flex-column flex-lg-row flex-grow-1">
                     {categories.length > 0 && (

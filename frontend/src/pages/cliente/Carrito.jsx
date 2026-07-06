@@ -93,6 +93,7 @@ export default function Carrito() {
                 clientId: toUUID(currentUser.id),
                 amount: total,
                 method: paymentMethod === 'QR' ? 'QR_ONLINE' : 'CASH',
+                items,
             });
 
             localStorage.removeItem(getCartKey(currentUser));

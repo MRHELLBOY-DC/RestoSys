@@ -58,6 +58,19 @@ public class ReportQueriesHandler {
                 .toList();
     }
 
+    public RestaurantSalesReport restaurantSales(UUID restaurantId, Instant from, Instant to) {
+        List<SaleRecord> sales = saleRecordRepository.findByRestaurantIdAndSoldAtBetween(restaurantId, from, to);
+        long productsSoldCount = sales.stream()
+                .flatMap(sale -> sale.getItems().stream())
+                .mapToLong(SaleItem::getQuantity)
+                .sum();
+        return new RestaurantSalesReport(
+                sales.size(),
+                sales.stream().map(SaleRecord::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add),
+                productsSoldCount
+        );
+    }
+
     public GlobalSalesReport globalSales(Instant from, Instant to) {
         List<SaleRecord> sales = saleRecordRepository.findBySoldAtBetween(from, to);
         return new GlobalSalesReport(
@@ -93,6 +106,9 @@ public class ReportQueriesHandler {
     }
 
     public record GlobalSalesReport(long ordersCount, long restaurantsCount, BigDecimal totalSales) {
+    }
+
+    public record RestaurantSalesReport(long ordersCount, BigDecimal totalSales, long productsSoldCount) {
     }
 
     public record TopRestaurantReport(UUID restaurantId, long ordersCount, BigDecimal totalSales) {

@@ -43,7 +43,7 @@ public class RabbitMqDomainEventPublisher implements DomainEventPublisher {
     private String toJson(DomainEvent event) {
         if (event instanceof PaymentConfirmedEvent paymentConfirmedEvent) {
             return """
-                    {"event_type":"%s","aggregate_id":"%s","timestamp":"%s","order_id":"%s","restaurant_id":"%s","client_id":"%s","payment_method":"%s","amount":%s,"data":"%s"}
+                    {"event_type":"%s","aggregate_id":"%s","timestamp":"%s","order_id":"%s","restaurant_id":"%s","client_id":"%s","payment_method":"%s","amount":%s,"items":%s,"data":"%s"}
                     """.formatted(
                     escape(event.eventType()),
                     event.aggregateId(),
@@ -53,12 +53,28 @@ public class RabbitMqDomainEventPublisher implements DomainEventPublisher {
                     paymentConfirmedEvent.clientId(),
                     paymentConfirmedEvent.method(),
                     paymentConfirmedEvent.amount(),
+                    itemsToJson(paymentConfirmedEvent.items()),
                     escape(event.toString())
             ).trim();
         }
         return """
                 {"event_type":"%s","aggregate_id":"%s","timestamp":"%s","data":"%s"}
                 """.formatted(escape(event.eventType()), event.aggregateId(), event.occurredAt(), escape(event.toString())).trim();
+    }
+
+    private String itemsToJson(java.util.List<com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.model.PaymentItem> items) {
+        if (items == null || items.isEmpty()) {
+            return "[]";
+        }
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < items.size(); i++) {
+            var item = items.get(i);
+            if (i > 0) json.append(",");
+            json.append("{\"product_id\":\"%s\",\"product_name\":\"%s\",\"quantity\":%d,\"unit_price\":%s}".formatted(
+                    item.productId(), escape(item.productName()), item.quantity(), item.unitPrice()));
+        }
+        json.append("]");
+        return json.toString();
     }
 
     private String escape(String value) {

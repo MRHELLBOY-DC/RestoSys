@@ -141,9 +141,9 @@ export default function UsuarioModal({
                             className="form-select admin-select"
                             value={form.role}
                             onChange={e => setForm({
-                                ...form, 
-                                role: e.target.value, 
-                                restaurante_id: e.target.value === 'cliente' ? "" : form.restaurante_id
+                                ...form,
+                                role: e.target.value,
+                                restaurante_id: (e.target.value === 'cliente' || e.target.value === 'admin') ? "" : form.restaurante_id
                             })}
                         >
                             <option value="cliente" className="bg-dark text-white">Cliente</option>
@@ -153,7 +153,7 @@ export default function UsuarioModal({
                         </select>
                     </div>
 
-                    {form.role !== 'cliente' && (
+                    {form.role !== 'cliente' && form.role !== 'admin' && (
                         <div className="mb-4">
                             <label className="form-label small fw-bold text-white">Asignar sede</label>
                             <select

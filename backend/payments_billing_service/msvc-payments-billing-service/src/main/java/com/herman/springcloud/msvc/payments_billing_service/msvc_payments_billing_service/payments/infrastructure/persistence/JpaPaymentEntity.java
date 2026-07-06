@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -35,6 +37,8 @@ public class JpaPaymentEntity {
     private Instant paidAt;
     @OneToOne(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     private JpaReceiptEntity receipt;
+    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JpaPaymentItemEntity> items = new ArrayList<>();
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -58,4 +62,6 @@ public class JpaPaymentEntity {
     public void setPaidAt(Instant paidAt) { this.paidAt = paidAt; }
     public JpaReceiptEntity getReceipt() { return receipt; }
     public void setReceipt(JpaReceiptEntity receipt) { this.receipt = receipt; }
+    public List<JpaPaymentItemEntity> getItems() { return items; }
+    public void setItems(List<JpaPaymentItemEntity> items) { this.items = items; }
 }

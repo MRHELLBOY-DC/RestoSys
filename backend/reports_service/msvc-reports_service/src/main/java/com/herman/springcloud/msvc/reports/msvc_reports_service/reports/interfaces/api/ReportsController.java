@@ -63,6 +63,15 @@ public class ReportsController {
         return reportQueriesHandler.salesByDay(restaurantId, from, to);
     }
 
+    @GetMapping("/restaurants/{restaurantId}/sales-summary")
+    public ReportQueriesHandler.RestaurantSalesReport salesSummary(@PathVariable UUID restaurantId,
+                                                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+                                                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+                                                                   Authentication authentication) {
+        authorizeRestaurantAccess(restaurantId, authentication);
+        return reportQueriesHandler.restaurantSales(restaurantId, from, to);
+    }
+
     @GetMapping("/restaurants/{restaurantId}/top-products")
     public List<ReportQueriesHandler.TopProductReport> topProducts(@PathVariable UUID restaurantId,
                                                                    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,

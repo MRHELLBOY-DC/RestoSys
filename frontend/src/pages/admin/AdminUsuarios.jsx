@@ -255,12 +255,12 @@ export default function AdminUsuarios() {
                                                 </span>
                                             </td>
                                             <td>
-                                                {u.role === 'cliente' ? (
-                                                    <small className="text-white-50">Acceso QR</small>
+                                                {(u.role === 'cliente' || u.role === 'admin') ? (
+                                                    <small style={{ color: 'var(--admin-muted)' }}>No aplica</small>
                                                 ) : u.restaurant?.name ? (
-                                                    <span className="small text-white-50">{u.restaurant.name}</span>
+                                                    <span className="small" style={{ color: 'var(--admin-muted)' }}>{u.restaurant.name}</span>
                                                 ) : u.restaurant_id ? (
-                                                    <span className="small text-white-50">Restaurante ID: {u.restaurant_id}</span>
+                                                    <span className="small" style={{ color: 'var(--admin-muted)' }}>Restaurante ID: {u.restaurant_id}</span>
                                                 ) : (
                                                     <select
                                                         className="form-select form-select-sm admin-select"

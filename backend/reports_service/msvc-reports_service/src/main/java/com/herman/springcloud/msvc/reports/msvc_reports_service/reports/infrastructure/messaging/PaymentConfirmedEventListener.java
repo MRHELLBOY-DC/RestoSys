@@ -22,6 +22,12 @@ public class PaymentConfirmedEventListener {
     private static final Pattern CLIENT_ID_PATTERN = Pattern.compile("\"client_id\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern AMOUNT_PATTERN = Pattern.compile("\"amount\"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)");
     private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("\"timestamp\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern ITEMS_ARRAY_PATTERN = Pattern.compile("\"items\"\\s*:\\s*\\[(.*?)]", Pattern.DOTALL);
+    private static final Pattern ITEM_OBJECT_PATTERN = Pattern.compile("\\{[^{}]*}");
+    private static final Pattern ITEM_PRODUCT_ID_PATTERN = Pattern.compile("\"product_id\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern ITEM_PRODUCT_NAME_PATTERN = Pattern.compile("\"product_name\"\\s*:\\s*\"([^\"]*)\"");
+    private static final Pattern ITEM_QUANTITY_PATTERN = Pattern.compile("\"quantity\"\\s*:\\s*([0-9]+)");
+    private static final Pattern ITEM_UNIT_PRICE_PATTERN = Pattern.compile("\"unit_price\"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)");
 
     private final RecordSaleCommandHandler recordSaleHandler;
     private final RecordAuditLogCommandHandler recordAuditLogHandler;
@@ -42,8 +48,54 @@ public class PaymentConfirmedEventListener {
         if (orderId == null || restaurantId == null || amount == null) {
             return;
         }
-        recordSaleHandler.handle(new RecordSaleCommand(restaurantId, orderId, paymentId, clientId, amount, occurredAt, List.of()));
+        List<RecordSaleCommand.RecordSaleItemCommand> items = extractItems(payload);
+        recordSaleHandler.handle(new RecordSaleCommand(restaurantId, orderId, paymentId, clientId, amount, occurredAt, items));
         recordAuditLogHandler.handle(new RecordAuditLogCommand(restaurantId, "payments-billing", "PAYMENT_CONFIRMED", payload, occurredAt));
+    }
+
+    private List<RecordSaleCommand.RecordSaleItemCommand> extractItems(String payload) {
+        Matcher arrayMatcher = ITEMS_ARRAY_PATTERN.matcher(payload);
+        if (!arrayMatcher.find()) {
+            return List.of();
+        }
+        String itemsArray = arrayMatcher.group(1);
+        List<RecordSaleCommand.RecordSaleItemCommand> items = new java.util.ArrayList<>();
+        Matcher objectMatcher = ITEM_OBJECT_PATTERN.matcher(itemsArray);
+        while (objectMatcher.find()) {
+            String itemJson = objectMatcher.group();
+            UUID productId = extractUuid(ITEM_PRODUCT_ID_PATTERN, itemJson);
+            String productName = extractString(ITEM_PRODUCT_NAME_PATTERN, itemJson);
+            Integer quantity = extractInt(itemJson);
+            BigDecimal unitPrice = extractDecimal(ITEM_UNIT_PRICE_PATTERN, itemJson);
+            if (productId == null || productName == null || quantity == null || unitPrice == null) {
+                continue;
+            }
+            items.add(new RecordSaleCommand.RecordSaleItemCommand(productId, productName, quantity, unitPrice));
+        }
+        return items;
+    }
+
+    private String extractString(Pattern pattern, String payload) {
+        Matcher matcher = pattern.matcher(payload);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private Integer extractInt(String payload) {
+        Matcher matcher = ITEM_QUANTITY_PATTERN.matcher(payload);
+        try {
+            return matcher.find() ? Integer.parseInt(matcher.group(1)) : null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private BigDecimal extractDecimal(Pattern pattern, String payload) {
+        Matcher matcher = pattern.matcher(payload);
+        try {
+            return matcher.find() ? new BigDecimal(matcher.group(1)) : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private UUID extractUuid(Pattern pattern, String payload) {

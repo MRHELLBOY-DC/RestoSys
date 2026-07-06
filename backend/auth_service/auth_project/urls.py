@@ -15,7 +15,8 @@ from users.interfaces.api.views import (
     admin_usuarios,
     admin_usuario_detail,
     admin_asignar_restaurante,
-    public_restaurantes,  
+    public_restaurantes,
+    wizard_restaurante,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.conf.urls.static import static
@@ -65,6 +66,11 @@ urlpatterns = [
     # ADMIN - ASIGNAR RESTAURANTE A USUARIO
     # ============================================
     path('api/admin/usuarios/<int:usuario_id>/asignar-restaurante/', admin_asignar_restaurante, name='admin_asignar_restaurante'),
+
+    # ============================================
+    # WIZARD - REGISTRO GUIADO DE RESTAURANTE (usuario + restaurante)
+    # ============================================
+    path('api/wizard/restaurante/', wizard_restaurante, name='wizard_restaurante'),
 ]
 
 if settings.DEBUG:

@@ -59,8 +59,11 @@ public class PaymentsController {
         UUID clientId = isRole(authentication, "cliente")
                 ? numericIdToUuid(authenticatedUser(authentication).id())
                 : request.clientId();
+        List<CreatePaymentCommand.CreatePaymentItemCommand> items = request.items() == null ? List.of() : request.items().stream()
+                .map(item -> new CreatePaymentCommand.CreatePaymentItemCommand(item.productId(), item.productName(), item.quantity(), item.unitPrice()))
+                .toList();
         return PaymentResponse.fromDomain(createPaymentHandler.handle(
-                new CreatePaymentCommand(request.orderId(), request.restaurantId(), clientId, request.amount(), request.method())
+                new CreatePaymentCommand(request.orderId(), request.restaurantId(), clientId, request.amount(), request.method(), items)
         ));
     }
 

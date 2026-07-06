@@ -13,6 +13,9 @@ class RestaurantSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(max_length=100)
     address = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=30, required=False, allow_blank=True, allow_null=True)
+    lat = serializers.FloatField(required=False, allow_null=True)
+    lng = serializers.FloatField(required=False, allow_null=True)
     logo = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
 
     def create(self, validated_data):
@@ -21,6 +24,9 @@ class RestaurantSerializer(serializers.Serializer):
             id=None,
             name=validated_data['name'],
             address=validated_data.get('address', ''),
+            phone=validated_data.get('phone'),
+            lat=validated_data.get('lat'),
+            lng=validated_data.get('lng'),
             logo=validated_data.get('logo'),
         )
 
@@ -28,6 +34,9 @@ class RestaurantSerializer(serializers.Serializer):
         """Actualiza un restaurante - solo valida, no guarda"""
         instance.name = validated_data.get('name', instance.name)
         instance.address = validated_data.get('address', instance.address)
+        instance.phone = validated_data.get('phone', instance.phone)
+        instance.lat = validated_data.get('lat', instance.lat)
+        instance.lng = validated_data.get('lng', instance.lng)
         instance.logo = validated_data.get('logo', instance.logo)
         return instance
 

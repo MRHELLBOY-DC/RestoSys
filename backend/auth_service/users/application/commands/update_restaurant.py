@@ -14,7 +14,10 @@ class UpdateRestaurantCommand(Command):
     restaurant_id: int
     name: Optional[str] = None
     address: Optional[str] = None
-    logo: Optional[Any] = None  
+    phone: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    logo: Optional[Any] = None
     actor_username: Optional[str] = None
 
 
@@ -41,18 +44,29 @@ class UpdateRestaurantCommandHandler(CommandHandler):
         old_data = {
             'name': restaurant.name,
             'address': restaurant.address,
+            'phone': restaurant.phone,
+            'lat': restaurant.lat,
+            'lng': restaurant.lng,
             'logo': restaurant.logo,
         }
-        
+
         # 3. Actualizar nombre si se proporciona (LA ENTIDAD VALIDA)
         if command.name is not None:
             restaurant.update_name(command.name)
-        
+
         # 4. Actualizar dirección si se proporciona (LA ENTIDAD VALIDA)
         if command.address is not None:
             restaurant.update_address(command.address)
-        
-        # 5. Actualizar logo si se proporciona
+
+        # 5. Actualizar telefono si se proporciona
+        if command.phone is not None:
+            restaurant.update_phone(command.phone)
+
+        # 6. Actualizar coordenadas si se proporcionan
+        if command.lat is not None or command.lng is not None:
+            restaurant.update_location(command.lat, command.lng)
+
+        # 7. Actualizar logo si se proporciona
         if command.logo is not None:
             restaurant.update_logo(command.logo)
         
@@ -67,7 +81,10 @@ class UpdateRestaurantCommandHandler(CommandHandler):
                 name=restaurant.name,
                 address=restaurant.address,
                 logo_file=command.logo,
-                actor_username=command.actor_username or ""
+                actor_username=command.actor_username or "",
+                phone=restaurant.phone,
+                lat=restaurant.lat,
+                lng=restaurant.lng
             )
         else:
             # Si es una URL o None, usar update normal
@@ -75,6 +92,9 @@ class UpdateRestaurantCommandHandler(CommandHandler):
                 restaurant_id=command.restaurant_id,
                 name=restaurant.name,
                 address=restaurant.address,
+                phone=restaurant.phone,
+                lat=restaurant.lat,
+                lng=restaurant.lng,
                 logo=command.logo if command.logo is not None else restaurant.logo
             )
         

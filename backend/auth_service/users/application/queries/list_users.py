@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 from users.application.ports.user_repository_port import UserRepositoryPort
 from users.application.ports.user_restaurant_repository_port import UserRestaurantRepositoryPort
+from users.application.ports.restaurant_repository_port import RestaurantRepositoryPort
 from users.application.dtos import UserListDTO
 from users.domain.entities.user import User as DomainUser
 from users.domain.exceptions import (
@@ -29,11 +30,25 @@ class ListUsersQueryHandler(QueryHandler):
     def __init__(
         self,
         user_repo: UserRepositoryPort,
-        user_restaurant_repo: UserRestaurantRepositoryPort
+        user_restaurant_repo: UserRestaurantRepositoryPort,
+        restaurant_repo: RestaurantRepositoryPort
     ):
         self.user_repo = user_repo
         self.user_restaurant_repo = user_restaurant_repo
-    
+        self.restaurant_repo = restaurant_repo
+
+    def _get_restaurant_info(self, user_id: int, role: str) -> Optional[dict]:
+        """Obtiene {id, name} del restaurante asignado a un usuario (si aplica)"""
+        if role == 'cliente':
+            return None
+        user_restaurant = self.user_restaurant_repo.get_by_user_id(user_id)
+        if not user_restaurant:
+            return None
+        restaurant = self.restaurant_repo.get_by_id(user_restaurant.restaurant_id)
+        if not restaurant:
+            return None
+        return {'id': restaurant.id, 'name': restaurant.name}
+
     def handle(self, query: ListUsersQuery) -> List[UserListDTO]:
         """Execute the query - lista usuarios según permisos del usuario autenticado"""
         
@@ -53,6 +68,7 @@ class ListUsersQueryHandler(QueryHandler):
                     role=u.role,
                     full_name=u.full_name,
                     date_joined=u.date_joined,
+                    restaurant=self._get_restaurant_info(u.id, u.role),
                 )
                 for u in users
             ]
@@ -77,6 +93,7 @@ class ListUsersQueryHandler(QueryHandler):
                     role=u.role,
                     full_name=u.full_name,
                     date_joined=u.date_joined,
+                    restaurant=self._get_restaurant_info(u.id, u.role),
                 )
                 for u in users
             ]
@@ -101,6 +118,7 @@ class ListUsersQueryHandler(QueryHandler):
                     role=u.role,
                     full_name=u.full_name,
                     date_joined=u.date_joined,
+                    restaurant=self._get_restaurant_info(u.id, u.role),
                 )
                 for u in users
             ]
@@ -123,6 +141,7 @@ class ListUsersQueryHandler(QueryHandler):
                     role=user.role,
                     full_name=user.full_name,
                     date_joined=user.date_joined,
+                    restaurant=None,
                 )
             ]
         

@@ -89,11 +89,18 @@ export default function RestaurantePagos() {
                 // 2. Si no existe (404), CREAR el pago
                 if (err?.status === 404 || err?.response?.status === 404) {
                     const method = selectedMethodByOrder[order.id] || "CASH";
+                    const items = (order.items || []).map(item => ({
+                        productId: item.productId,
+                        productName: item.productName,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice,
+                    }));
                     await createPayment({
                         orderId: order.id,
                         restaurantId: toUUID(restaurantId),
                         amount: order.totalAmount,
-                        method
+                        method,
+                        items
                     });
                     setSuccess("Pago creado correctamente");
                     await loadData();

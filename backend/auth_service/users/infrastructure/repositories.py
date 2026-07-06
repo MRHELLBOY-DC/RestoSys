@@ -133,6 +133,9 @@ class RestaurantRepository(RestaurantRepositoryPort):
                 existing = DjangoRestaurant.objects.get(id=domain_restaurant.id)
                 existing.name = domain_restaurant.name
                 existing.address = domain_restaurant.address
+                existing.phone = domain_restaurant.phone
+                existing.lat = domain_restaurant.lat
+                existing.lng = domain_restaurant.lng
                 existing.logo = domain_restaurant.logo
                 django_restaurant = existing
             except DjangoRestaurant.DoesNotExist:
@@ -175,9 +178,10 @@ class RestaurantRepository(RestaurantRepositoryPort):
             return None
         
     @staticmethod
-    def create_with_logo(name: str, address: str, logo_file: Any, actor_username: str) -> DomainRestaurant:
+    def create_with_logo(name: str, address: str, logo_file: Any, actor_username: str, phone: Optional[str] = None,
+                          lat: Optional[float] = None, lng: Optional[float] = None) -> DomainRestaurant:
             # 1. Crear instancia base en Django
-            model = DjangoRestaurant.objects.create(name=name, address=address)
+            model = DjangoRestaurant.objects.create(name=name, address=address, phone=phone, lat=lat, lng=lng)
             
             # 2. Lógica de almacenamiento
             ext = os.path.splitext(logo_file.name)[1]
@@ -190,11 +194,15 @@ class RestaurantRepository(RestaurantRepositoryPort):
             return RestaurantMapper.to_domain(model)
     
     @staticmethod
-    def update_with_logo(restaurant_id: int, name: str, address: str, logo_file: Any, actor_username: str) -> DomainRestaurant:
+    def update_with_logo(restaurant_id: int, name: str, address: str, logo_file: Any, actor_username: str, phone: Optional[str] = None,
+                         lat: Optional[float] = None, lng: Optional[float] = None) -> DomainRestaurant:
         """Nuevo método para actualizar con archivo opcional"""
         model = DjangoRestaurant.objects.get(id=restaurant_id)
         model.name = name
         model.address = address
+        model.phone = phone
+        model.lat = lat
+        model.lng = lng
         
         # Solo actualizamos el logo si viene un archivo nuevo
         if logo_file:

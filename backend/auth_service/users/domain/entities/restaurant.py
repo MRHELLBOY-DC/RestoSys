@@ -14,6 +14,9 @@ class Restaurant(AggregateRoot):
     id: Optional[int]
     name: str
     address: str
+    phone: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     logo: Optional[str] = None
     
     def __post_init__(self):
@@ -72,6 +75,23 @@ class Restaurant(AggregateRoot):
         old_data = {'logo': self.logo}
         self.logo = new_logo
         self.record_updated(old_data, {'logo': self.logo})
+
+    def update_phone(self, new_phone: Optional[str]) -> None:
+        """
+        Actualiza el telefono del restaurante.
+        """
+        old_data = {'phone': self.phone}
+        self.phone = new_phone
+        self.record_updated(old_data, {'phone': self.phone})
+
+    def update_location(self, new_lat: Optional[float], new_lng: Optional[float]) -> None:
+        """
+        Actualiza las coordenadas del restaurante.
+        """
+        old_data = {'lat': self.lat, 'lng': self.lng}
+        self.lat = new_lat
+        self.lng = new_lng
+        self.record_updated(old_data, {'lat': self.lat, 'lng': self.lng})
     
     # ========== MÉTODOS DE EVENTOS DE DOMINIO ==========
     
@@ -81,6 +101,9 @@ class Restaurant(AggregateRoot):
             'restaurant_id': self.id,
             'name': self.name,
             'address': self.address,
+            'phone': self.phone,
+            'lat': self.lat,
+            'lng': self.lng,
             'logo': self.logo,
         }
         if actor_username:
@@ -96,6 +119,9 @@ class Restaurant(AggregateRoot):
             'new_data': {
                 'name': self.name,
                 'address': self.address,
+                'phone': self.phone,
+                'lat': self.lat,
+                'lng': self.lng,
                 'logo': self.logo,
             },
         }

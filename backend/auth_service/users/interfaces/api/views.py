@@ -37,7 +37,8 @@ from users.application.commands.update_restaurant import UpdateRestaurantCommand
 from users.application.commands.delete_restaurant import DeleteRestaurantCommand
 from users.application.commands.assign_restaurant import AssignRestaurantCommand
 from users.application.commands.unassign_restaurant import UnassignRestaurantCommand
-from users.application.commands.login import LoginCommand 
+from users.application.commands.login import LoginCommand
+from users.application.commands.create_restaurant_wizard import CreateRestaurantWizardCommand
 from users.application.queries import (
     ListUsersQuery,
     GetUserDetailsQuery,
@@ -357,23 +358,32 @@ def admin_restaurantes(request):
         if request.method == 'POST':
             name = request.data.get('name')
             address = request.data.get('address')
+            phone = request.data.get('phone')
+            lat = request.data.get('lat')
+            lng = request.data.get('lng')
             logo = request.FILES.get('logo')
-            
+
             if not name:
                 return Response({'error': 'El nombre es obligatorio'}, status=400)
 
             command = CreateRestaurantCommand(
                 name=name,
                 address=address if address else '',
+                phone=phone if phone else None,
+                lat=float(lat) if lat else None,
+                lng=float(lng) if lng else None,
                 logo=logo,
                 actor_username=request.user.username
             )
             saved = container.execute_command(command)
-            
+
             return Response({
                 'id': saved.id,
                 'name': saved.name,
                 'address': saved.address,
+                'phone': saved.phone,
+                'lat': saved.lat,
+                'lng': saved.lng,
                 'logo': saved.logo,
             }, status=status.HTTP_201_CREATED)
         
@@ -423,23 +433,31 @@ def admin_restaurante_detail(request, restaurante_id):
             
             name = request.data.get('name')
             address = request.data.get('address')
+            phone = request.data.get('phone')
+            lat = request.data.get('lat')
+            lng = request.data.get('lng')
             logo_file = request.FILES.get('logo')
             logo = logo_file if logo_file else request.data.get('logo')
 
-            
             command = UpdateRestaurantCommand(
                 restaurant_id=int(restaurante_id),
                 name=name,
                 address=address or '',
+                phone=phone if phone else None,
+                lat=float(lat) if lat else None,
+                lng=float(lng) if lng else None,
                 logo=logo,
                 actor_username=request.user.username
             )
             saved = container.execute_command(command)
-            
+
             return Response({
                 'id': saved.id,
                 'name': saved.name,
                 'address': saved.address,
+                'phone': saved.phone,
+                'lat': saved.lat,
+                'lng': saved.lng,
                 'logo': saved.logo,
             })
         
@@ -655,6 +673,66 @@ def admin_asignar_restaurante(request, usuario_id):
         
     except UserNotFoundException as e:
         return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    except RestaurantNotFoundException as e:
+        return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
+    except UserRestaurantException as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ============================================
+# WIZARD DE REGISTRO - USUARIO + RESTAURANTE EN UN SOLO PASO
+# ============================================
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def wizard_restaurante(request):
+    """
+    Recibe los datos de los 2 pasos del wizard y ejecuta CreateRestaurantWizardCommand,
+    que a su vez orquesta (sin duplicar logica): CreateUserCommand -> CreateRestaurantCommand
+    -> AssignRestaurantCommand.
+    """
+    try:
+        lat = request.data.get('restaurant_lat')
+        lng = request.data.get('restaurant_lng')
+        command = CreateRestaurantWizardCommand(
+            user_email=request.data.get('user_email'),
+            user_password=request.data.get('user_password'),
+            user_full_name=request.data.get('user_full_name', ''),
+            user_username=request.data.get('user_username') or None,
+            restaurant_name=request.data.get('restaurant_name'),
+            restaurant_address=request.data.get('restaurant_address', ''),
+            restaurant_phone=request.data.get('restaurant_phone') or None,
+            restaurant_lat=float(lat) if lat else None,
+            restaurant_lng=float(lng) if lng else None,
+            restaurant_logo=request.FILES.get('restaurant_logo'),
+            actor_username=request.user.username,
+        )
+        saved_user, saved_restaurant = container.execute_command(command)
+
+        return Response({
+            'user': {
+                'id': saved_user.id,
+                'username': saved_user.username,
+                'email': saved_user.email,
+                'full_name': saved_user.full_name,
+                'role': saved_user.role,
+            },
+            'restaurant': {
+                'id': saved_restaurant.id,
+                'name': saved_restaurant.name,
+                'address': saved_restaurant.address,
+                'phone': saved_restaurant.phone,
+                'lat': saved_restaurant.lat,
+                'lng': saved_restaurant.lng,
+                'logo': saved_restaurant.logo,
+            },
+        }, status=status.HTTP_201_CREATED)
+
+    except UserAlreadyExistsException as e:
+        return Response({'error': str(e)}, status=status.HTTP_409_CONFLICT)
+    except BusinessRuleValidationException as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except RestaurantNotFoundException as e:
         return Response({'error': str(e)}, status=status.HTTP_404_NOT_FOUND)
     except UserRestaurantException as e:

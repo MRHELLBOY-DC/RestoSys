@@ -16,6 +16,7 @@ from users.application.commands.delete_restaurant import DeleteRestaurantCommand
 from users.application.commands.assign_restaurant import AssignRestaurantCommand, AssignRestaurantCommandHandler
 from users.application.commands.unassign_restaurant import UnassignRestaurantCommand, UnassignRestaurantCommandHandler
 from users.application.commands.login import LoginCommand, LoginCommandHandler
+from users.application.commands.create_restaurant_wizard import CreateRestaurantWizardCommand, CreateRestaurantWizardCommandHandler
 from users.application.queries.list_users import ListUsersQuery, ListUsersQueryHandler
 from users.application.queries.get_user_details import GetUserDetailsQuery, GetUserDetailsQueryHandler
 from users.application.queries.get_event_history import (
@@ -94,12 +95,14 @@ class Container:
             LoginCommand: lambda: LoginCommandHandler(
                 self.user_repo, self.auth_service, self.event_publisher, self.query_bus
             ),
+            CreateRestaurantWizardCommand: lambda: CreateRestaurantWizardCommandHandler(self.command_bus),
         }
         
         self._query_handlers_factory = {
             ListUsersQuery: lambda: ListUsersQueryHandler(
                 self.user_repo,
-                self.user_restaurant_repo
+                self.user_restaurant_repo,
+                self.restaurant_repo
             ),
             GetUserDetailsQuery: lambda: GetUserDetailsQueryHandler(
                 self.user_repo, self.user_restaurant_repo, self.restaurant_repo

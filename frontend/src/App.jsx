@@ -11,6 +11,7 @@ import AdminRestaurantes from "./pages/admin/AdminRestaurantes";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminReportes from "./pages/admin/AdminReportes";
 import AdminAuditoria from "./pages/admin/AdminAuditoria";
+import AdminWizardRestaurante from "./pages/admin/AdminWizardRestaurante";
 
 // Admin Restaurante (dentro de carpeta restaurante/admin-restaurante)
 import AdminRestauranteDashboard from "./pages/restaurante/admin-restaurante/AdminRestauranteDashboard";
@@ -114,6 +115,11 @@ function App() {
             <Route path="/admin/auditoria" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                     <AdminAuditoria />
+                </ProtectedRoute>
+            } />
+            <Route path="/admin/wizard-restaurante" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminWizardRestaurante />
                 </ProtectedRoute>
             } />
             

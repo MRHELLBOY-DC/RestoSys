@@ -47,6 +47,9 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     id=r.id,
                     name=r.name,
                     address=r.address,
+                    phone=r.phone,
+                    lat=r.lat,
+                    lng=r.lng,
                     logo=r.logo,
                 )
                 for r in restaurants
@@ -62,6 +65,9 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     id=r.id,
                     name=r.name,
                     address=r.address,
+                    phone=r.phone,
+                    lat=r.lat,
+                    lng=r.lng,
                     logo=r.logo,
                 )
                 for r in restaurants
@@ -87,6 +93,9 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     id=restaurant.id,
                     name=restaurant.name,
                     address=restaurant.address,
+                    phone=restaurant.phone,
+                    lat=restaurant.lat,
+                    lng=restaurant.lng,
                     logo=restaurant.logo,
                 )
             ]
@@ -111,6 +120,9 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     id=restaurant.id,
                     name=restaurant.name,
                     address=restaurant.address,
+                    phone=restaurant.phone,
+                    lat=restaurant.lat,
+                    lng=restaurant.lng,
                     logo=restaurant.logo,
                 )
             ]
@@ -155,6 +167,9 @@ class GetUserRestaurantQueryHandler(QueryHandler):
                     id=restaurant.id,
                     name=restaurant.name,
                     address=restaurant.address,
+                    phone=restaurant.phone,
+                    lat=restaurant.lat,
+                    lng=restaurant.lng,
                     logo=restaurant.logo,
                 )
         return None

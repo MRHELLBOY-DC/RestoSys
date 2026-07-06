@@ -4,6 +4,7 @@ import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billin
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.application.ports.PaymentRepository;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.events.DomainEvent;
 import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.model.Payment;
+import com.herman.springcloud.msvc.payments_billing_service.msvc_payments_billing_service.payments.domain.model.PaymentItem;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +22,10 @@ public class CreatePaymentCommandHandler {
 
     @Transactional
     public Payment handle(CreatePaymentCommand command) {
-        Payment payment = Payment.createPending(command.orderId(), command.restaurantId(), command.clientId(), command.amount(), command.method());
+        List<PaymentItem> items = command.items() == null ? List.of() : command.items().stream()
+                .map(item -> new PaymentItem(item.productId(), item.productName(), item.quantity(), item.unitPrice()))
+                .toList();
+        Payment payment = Payment.createPending(command.orderId(), command.restaurantId(), command.clientId(), command.amount(), command.method(), items);
         List<DomainEvent> events = payment.pullDomainEvents();
         Payment savedPayment = paymentRepository.save(payment);
         events.forEach(eventPublisher::publish);

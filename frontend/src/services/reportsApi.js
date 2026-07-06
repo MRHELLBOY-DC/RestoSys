@@ -12,6 +12,12 @@ export const getSalesByDay = async (restaurantId, from, to) => {
     }));
 };
 
+export const getRestaurantSalesSummary = async (restaurantId, from, to) => {
+    return unwrap(await reportsClient.get(`/api/reports/restaurants/${restaurantId}/sales-summary`, {
+        params: { from, to }
+    }));
+};
+
 export const getTopProducts = async (restaurantId, from, to, limit = 5) => {
     return unwrap(await reportsClient.get(`/api/reports/restaurants/${restaurantId}/top-products`, {
         params: { from, to, limit }

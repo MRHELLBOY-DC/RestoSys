@@ -35,6 +35,9 @@ class Restaurant(models.Model):
     """Modelo ORM para restaurantes - Django REAL"""
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=200)
+    phone = models.CharField(max_length=30, blank=True, null=True)
+    lat = models.FloatField(blank=True, null=True)
+    lng = models.FloatField(blank=True, null=True)
     logo = models.CharField(max_length=500, blank=True, null=True)
 
     class Meta:

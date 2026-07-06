@@ -17,6 +17,9 @@ class RestaurantMapper(BaseMapper[DomainRestaurant, DjangoRestaurant]):
             id=django_restaurant.id,
             name=django_restaurant.name,
             address=django_restaurant.address,
+            phone=django_restaurant.phone,
+            lat=django_restaurant.lat,
+            lng=django_restaurant.lng,
             logo=django_restaurant.logo,
         )
     
@@ -29,5 +32,8 @@ class RestaurantMapper(BaseMapper[DomainRestaurant, DjangoRestaurant]):
             id=domain_restaurant.id,
             name=domain_restaurant.name,
             address=domain_restaurant.address,
+            phone=domain_restaurant.phone,
+            lat=domain_restaurant.lat,
+            lng=domain_restaurant.lng,
             logo=domain_restaurant.logo,
         )

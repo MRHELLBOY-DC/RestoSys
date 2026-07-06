@@ -10,6 +10,9 @@ from .base_command import Command, CommandHandler
 class CreateRestaurantCommand(Command):
     name: str
     address: str
+    phone: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     logo: Optional[Any] = None  # Permitimos archivo o string
     actor_username: Optional[str] = None
 
@@ -35,14 +38,20 @@ class CreateRestaurantCommandHandler(CommandHandler):
                 name=command.name,
                 address=command.address,
                 logo_file=command.logo,
-                actor_username=command.actor_username
+                actor_username=command.actor_username,
+                phone=command.phone,
+                lat=command.lat,
+                lng=command.lng
             )
         else:
 
             restaurant = DomainRestaurant(
-                id=None, 
-                name=command.name, 
-                address=command.address, 
+                id=None,
+                name=command.name,
+                address=command.address,
+                phone=command.phone,
+                lat=command.lat,
+                lng=command.lng,
                 logo=command.logo
             )
 

@@ -143,6 +143,22 @@ export const createRestaurante = async (data) => {
     }
 };
 
+export const createRestauranteWizard = async (formData) => {
+    try {
+        const res = await authClient.post('/api/wizard/restaurante/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return res.data;
+    } catch (err) {
+        if (err.response?.data) {
+            throw err.response.data;
+        }
+        throw err;
+    }
+};
+
 export const createAdminUsuario = async (data) => {
     try {
         const res = await authClient.post('/api/admin/usuarios/', data);

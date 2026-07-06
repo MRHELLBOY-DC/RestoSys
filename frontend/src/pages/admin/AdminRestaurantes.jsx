@@ -15,6 +15,9 @@ export default function AdminRestaurantes() {
     const [form, setForm] = useState({
         name: "",
         address: "",
+        phone: "",
+        lat: null,
+        lng: null,
         logo: null
     });
 
@@ -51,17 +54,20 @@ export default function AdminRestaurantes() {
         const formData = new FormData();
         formData.append("name", form.name);
         formData.append("address", form.address);
+        formData.append("phone", form.phone);
+        if (form.lat != null) formData.append("lat", form.lat);
+        if (form.lng != null) formData.append("lng", form.lng);
         if (form.logo) {
             formData.append("logo", form.logo);
         }
-        
+
         try {
             if (editing) {
                 await updateRestaurante(editing, formData);
             } else {
                 await createRestaurante(formData);
             }
-            setForm({ name: "", address: "", logo: null });
+            setForm({ name: "", address: "", phone: "", lat: null, lng: null, logo: null });
             setEditing(null);
             setIsModalOpen(false);
             loadData();
@@ -85,14 +91,14 @@ export default function AdminRestaurantes() {
 
     const handleNew = () => {
         setEditing(null);
-        setForm({ name: "", address: "", logo: null });
+        setForm({ name: "", address: "", phone: "", lat: null, lng: null, logo: null });
         setIsModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditing(null);
-        setForm({ name: "", address: "", logo: null });
+        setForm({ name: "", address: "", phone: "", lat: null, lng: null, logo: null });
     };
 
     // Filtrar restaurantes si es Admin Restaurante (solo ve su restaurante)
@@ -143,6 +149,7 @@ export default function AdminRestaurantes() {
                                             <th>Logo</th>
                                             <th>Nombre</th>
                                             <th>Direccion</th>
+                                            <th>Telefono</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -172,13 +179,14 @@ export default function AdminRestaurantes() {
                                                     )}
                                                 </td>
                                                 <td>{r.name}</td>
-                                                <td className="text-white-50">{r.address || "Sin direccion"}</td>
+                                                <td style={{ color: 'var(--admin-muted)' }}>{r.address || "Sin direccion"}</td>
+                                                <td style={{ color: 'var(--admin-muted)' }}>{r.phone || "Sin telefono"}</td>
                                                 <td>
                                                     <div className="d-flex gap-2">
                                                         {(isSuperAdmin || (isAdminRestaurante && r.id === currentUser.restaurant_id)) && (
                                                             <button className="admin-btn admin-btn-ghost" onClick={() => {
                                                                 setEditing(r.id);
-                                                                setForm({ name: r.name, address: r.address || "", logo: null });
+                                                                setForm({ name: r.name, address: r.address || "", phone: r.phone || "", lat: r.lat ?? null, lng: r.lng ?? null, logo: null });
                                                                 setIsModalOpen(true);
                                                             }}>Editar</button>
                                                         )}

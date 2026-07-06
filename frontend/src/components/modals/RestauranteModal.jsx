@@ -1,5 +1,6 @@
 // src/components/modals/RestauranteModal.jsx
 import { useEffect, useRef } from "react";
+import AddressAutocompleteMap from "../AddressAutocompleteMap";
 
 export default function RestauranteModal({ 
     isOpen, 
@@ -108,12 +109,21 @@ export default function RestauranteModal({
                     </div>
                     <div className="mb-3">
                         <label className="form-label small fw-bold text-white">Direccion</label>
+                        <AddressAutocompleteMap
+                            address={form.address}
+                            lat={form.lat}
+                            lng={form.lng}
+                            onChange={(partial) => setForm(prev => ({ ...prev, ...partial }))}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label small fw-bold text-white">Telefono</label>
                         <input
                             type="text"
                             className="form-control admin-input"
-                            placeholder="Ej: Av. Principal 123"
-                            value={form.address}
-                            onChange={e => setForm({...form, address: e.target.value})}
+                            placeholder="Ej: 70000000"
+                            value={form.phone}
+                            onChange={e => setForm({...form, phone: e.target.value})}
                         />
                     </div>
                     <div className="mb-4">

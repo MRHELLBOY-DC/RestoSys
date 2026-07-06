@@ -59,7 +59,8 @@ class UserListDTO:
     role: str
     full_name: str
     date_joined: datetime
-    
+    restaurant: Optional[Dict[str, Any]] = None
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'id': self.id,
@@ -68,6 +69,7 @@ class UserListDTO:
             'role': self.role,
             'full_name': self.full_name,
             'date_joined': self.date_joined.isoformat() if hasattr(self.date_joined, 'isoformat') else str(self.date_joined),
+            'restaurant': self.restaurant,
         }
 
 
