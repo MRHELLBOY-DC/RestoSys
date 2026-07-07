@@ -40,6 +40,18 @@ public class JpaOrderEntity {
     @Column(name = "table_number")
     private String tableNumber;
 
+    @Column(name = "delivery_address")
+    private String deliveryAddress;
+
+    @Column(name = "delivery_lat")
+    private Double deliveryLat;
+
+    @Column(name = "delivery_lng")
+    private Double deliveryLng;
+
+    @Column(name = "delivery_fee", precision = 12, scale = 2)
+    private BigDecimal deliveryFee;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
@@ -106,6 +118,38 @@ public class JpaOrderEntity {
 
     public void setTableNumber(String tableNumber) {
         this.tableNumber = tableNumber;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public Double getDeliveryLat() {
+        return deliveryLat;
+    }
+
+    public void setDeliveryLat(Double deliveryLat) {
+        this.deliveryLat = deliveryLat;
+    }
+
+    public Double getDeliveryLng() {
+        return deliveryLng;
+    }
+
+    public void setDeliveryLng(Double deliveryLng) {
+        this.deliveryLng = deliveryLng;
+    }
+
+    public BigDecimal getDeliveryFee() {
+        return deliveryFee;
+    }
+
+    public void setDeliveryFee(BigDecimal deliveryFee) {
+        this.deliveryFee = deliveryFee;
     }
 
     public OrderStatus getStatus() {

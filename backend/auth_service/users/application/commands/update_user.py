@@ -7,9 +7,12 @@ from users.application.ports.event_publisher_port import EventPublisherPort
 from users.domain.exceptions import (
     UserNotFoundException,
     UserAlreadyExistsException,
-    RestaurantNotFoundException
+    RestaurantNotFoundException,
+    InsufficientPermissionsException,
 )
 from .base_command import Command, CommandHandler
+
+ROLES_ASIGNABLES_POR_RESTAURANTE = ('empleado', 'repartidor')
 
 
 @dataclass
@@ -45,7 +48,32 @@ class UpdateUserCommandHandler(CommandHandler):
         existing_user = self.user_repo.get_by_id(command.user_id)
         if not existing_user:
             raise UserNotFoundException(command.user_id)
-        
+
+        # 1.1 Un Admin Restaurante solo puede administrar empleados/repartidores de su propio restaurante
+        actor = self.user_repo.get_by_username(command.actor_username) if command.actor_username else None
+        assign_restaurant_id = command.assign_restaurant_id
+        unassign_restaurant = command.unassign_restaurant
+        if actor and actor.is_restaurante():
+            target_role = command.role or existing_user.role
+            if target_role not in ROLES_ASIGNABLES_POR_RESTAURANTE:
+                raise InsufficientPermissionsException(actor.id, 'empleado o repartidor')
+            actor_restaurant = self.user_restaurant_repo.get_by_user_id(actor.id)
+            if not actor_restaurant:
+                raise RestaurantNotFoundException(actor.id)
+            existing_restaurant = self.user_restaurant_repo.get_by_user_id(existing_user.id)
+            if existing_restaurant and existing_restaurant.restaurant_id != actor_restaurant.restaurant_id:
+                raise InsufficientPermissionsException(actor.id, 'empleado o repartidor de tu restaurante')
+            assign_restaurant_id = actor_restaurant.restaurant_id
+            unassign_restaurant = False
+
+        # 1.2 Validar que el restaurante a asignar exista ANTES de guardar cambios
+        # (evita dejar al usuario con datos parcialmente actualizados si el restaurante no existe)
+        if not unassign_restaurant and assign_restaurant_id is not None:
+            from users.infrastructure.repositories import RestaurantRepository
+            restaurant_repo = RestaurantRepository()
+            if not restaurant_repo.get_by_id(assign_restaurant_id):
+                raise RestaurantNotFoundException(assign_restaurant_id)
+
         # 2. Guardar datos viejos para el evento
         old_data = {
             'username': existing_user.username,
@@ -76,19 +104,11 @@ class UpdateUserCommandHandler(CommandHandler):
         # 6. Guardar cambios
         saved_user = self.user_repo.save(existing_user)
         
-        # 7. Asignar o desasignar restaurante (SIN CONTENEDOR)
-        if command.unassign_restaurant:
+        # 7. Asignar o desasignar restaurante (ya validado que existe)
+        if unassign_restaurant:
             self.user_restaurant_repo.unassign(command.user_id)
-        elif command.assign_restaurant_id is not None:
-            # Verificar que el restaurante existe
-            from users.infrastructure.repositories import RestaurantRepository
-            restaurant_repo = RestaurantRepository()
-            restaurant = restaurant_repo.get_by_id(command.assign_restaurant_id)
-            if not restaurant:
-                raise RestaurantNotFoundException(command.assign_restaurant_id)
-            
-            # Asignar directamente
-            self.user_restaurant_repo.assign(command.user_id, command.assign_restaurant_id)
+        elif assign_restaurant_id is not None:
+            self.user_restaurant_repo.assign(command.user_id, assign_restaurant_id)
         
         # 8. Datos nuevos para el evento
         new_data = {

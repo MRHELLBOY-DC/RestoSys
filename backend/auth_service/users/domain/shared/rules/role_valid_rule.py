@@ -11,7 +11,7 @@ from users.domain.shared.core.business_rule import BusinessRule
 class RoleValidRule(BusinessRule):
     """Regla de negocio: el rol debe ser válido."""
 
-    VALID_ROLES = ['cliente', 'restaurante', 'admin', 'empleado']
+    VALID_ROLES = ['cliente', 'restaurante', 'admin', 'empleado', 'repartidor']
 
     def __init__(self, role: str):
         self._role = role

@@ -28,6 +28,8 @@ export const useAuth = (allowedRoles = []) => {
                     navigate("/admin-restaurante/dashboard");  // ← Admin Restaurante a su panel
                 } else if (currentUser.role === 'empleado') {
                     navigate("/restaurante/dashboard");  // ← Empleado al panel RESTAURANTE
+                } else if (currentUser.role === 'repartidor') {
+                    navigate("/repartidor/pedidos");  // ← Repartidor a su panel de entregas
                 } else {
                     navigate("/cliente/dashboard");
                 }

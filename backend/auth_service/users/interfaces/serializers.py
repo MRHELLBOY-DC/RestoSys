@@ -16,6 +16,7 @@ class RestaurantSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=30, required=False, allow_blank=True, allow_null=True)
     lat = serializers.FloatField(required=False, allow_null=True)
     lng = serializers.FloatField(required=False, allow_null=True)
+    delivery_fee = serializers.FloatField(required=False, allow_null=True)
     logo = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
 
     def create(self, validated_data):
@@ -27,6 +28,7 @@ class RestaurantSerializer(serializers.Serializer):
             phone=validated_data.get('phone'),
             lat=validated_data.get('lat'),
             lng=validated_data.get('lng'),
+            delivery_fee=validated_data.get('delivery_fee'),
             logo=validated_data.get('logo'),
         )
 
@@ -37,6 +39,7 @@ class RestaurantSerializer(serializers.Serializer):
         instance.phone = validated_data.get('phone', instance.phone)
         instance.lat = validated_data.get('lat', instance.lat)
         instance.lng = validated_data.get('lng', instance.lng)
+        instance.delivery_fee = validated_data.get('delivery_fee', instance.delivery_fee)
         instance.logo = validated_data.get('logo', instance.logo)
         return instance
 
@@ -48,7 +51,7 @@ class UserSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, min_length=6, max_length=128)
     email = serializers.EmailField(required=True)
-    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante', 'empleado'], default='cliente')
+    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante', 'empleado', 'repartidor'], default='cliente')
     full_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
     
     # Campos para creación de restaurante
@@ -96,7 +99,7 @@ class UserSerializer(serializers.Serializer):
 
     def validate_role(self, value):
         """Validar rol"""
-        valid_roles = ['cliente', 'restaurante', 'admin', 'empleado']
+        valid_roles = ['cliente', 'restaurante', 'admin', 'empleado', 'repartidor']
         if value not in valid_roles:
             raise serializers.ValidationError(f"Rol inválido. Opciones: {', '.join(valid_roles)}")
         return value
@@ -153,7 +156,7 @@ class UserUpdateSerializer(serializers.Serializer):
     
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     email = serializers.EmailField(required=False)
-    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante', 'empleado'], required=False)
+    role = serializers.ChoiceField(choices=['cliente', 'admin', 'restaurante', 'empleado', 'repartidor'], required=False)
     full_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     def validate_username(self, value):

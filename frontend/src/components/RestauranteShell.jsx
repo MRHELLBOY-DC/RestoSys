@@ -13,8 +13,10 @@ export default function RestauranteShell({ title, subtitle, actions, children })
         .toUpperCase();
 
     // Determinar el rol del usuario para mostrar en el subtítulo
-    const roleLabel = user?.role === 'restaurante' ? 'Administrador' : 
-                      user?.role === 'empleado' ? 'Empleado' : '';
+    const roleLabel = user?.role === 'restaurante' ? 'Administrador' :
+                      user?.role === 'empleado' ? 'Empleado' :
+                      user?.role === 'repartidor' ? 'Repartidor' : '';
+    const isRepartidor = user?.role === 'repartidor';
 
     const handleLogout = () => {
         logout();
@@ -37,27 +39,35 @@ export default function RestauranteShell({ title, subtitle, actions, children })
                 </div>
 
                 <nav className="resto-nav">
-                    <NavLink to="/restaurante/pedidos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                        <i className="fa-solid fa-receipt"></i>Pedidos
-                    </NavLink>
-                    
-                    {/* Menú SOLO visible para Admin Restaurante */}
-                    {user?.role === 'restaurante' && (
-                        <NavLink to="/restaurante/menu" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                            <i className="fa-solid fa-utensils"></i>Menu
+                    {isRepartidor ? (
+                        <NavLink to="/repartidor/pedidos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
+                            <i className="fa-solid fa-motorcycle"></i>Entregas
                         </NavLink>
+                    ) : (
+                        <>
+                            <NavLink to="/restaurante/pedidos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
+                                <i className="fa-solid fa-receipt"></i>Pedidos
+                            </NavLink>
+
+                            {/* Menú SOLO visible para Admin Restaurante */}
+                            {user?.role === 'restaurante' && (
+                                <NavLink to="/restaurante/menu" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
+                                    <i className="fa-solid fa-utensils"></i>Menu
+                                </NavLink>
+                            )}
+
+                            {/*Reportes SOLO visible para Admin Restaurante */}
+                            {user?.role === 'restaurante' && (
+                                <NavLink to="/restaurante/reportes" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
+                                    <i className="fa-solid fa-chart-bar"></i>Reportes
+                                </NavLink>
+                            )}
+
+                            <NavLink to="/restaurante/pagos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
+                                <i className="fa-solid fa-credit-card"></i>Pagos
+                            </NavLink>
+                        </>
                     )}
-                    
-                    {/*Reportes SOLO visible para Admin Restaurante */}
-                    {user?.role === 'restaurante' && (
-                        <NavLink to="/restaurante/reportes" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                            <i className="fa-solid fa-chart-bar"></i>Reportes
-                        </NavLink>
-                    )}
-                    
-                    <NavLink to="/restaurante/pagos" className={({ isActive }) => `resto-link ${isActive ? "active" : ""}`}>
-                        <i className="fa-solid fa-credit-card"></i>Pagos
-                    </NavLink>
                 </nav>
 
                 <button type="button" className="resto-link resto-logout" onClick={handleLogout}>

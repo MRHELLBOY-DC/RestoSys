@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import AdminShell from "../../../components/AdminShell";
 import { useAuth } from "../../../hooks/useAuth";
 import { getSalesByDay, getTopProducts } from "../../../services/reportsApi";
@@ -106,14 +107,14 @@ export default function AdminRestauranteReportes() {
 
             <div className="resto-metrics">
                 <div className="resto-metric">
-                    <div className="resto-metric-label">Ventas hoy</div>
+                    <div className="resto-metric-label">Ventas del periodo</div>
                     <div className="resto-metric-value">Bs {formatMoney(totalPeriod)}</div>
-                    <div className="resto-metric-sub">Ultimos 7 dias</div>
+                    <div className="resto-metric-sub">{fromDate} a {toDate}</div>
                 </div>
                 <div className="resto-metric">
-                    <div className="resto-metric-label">Pedidos hoy</div>
+                    <div className="resto-metric-label">Pedidos del periodo</div>
                     <div className="resto-metric-value">{totalOrders}</div>
-                    <div className="resto-metric-sub">Ultimos 7 dias</div>
+                    <div className="resto-metric-sub">{fromDate} a {toDate}</div>
                 </div>
                 <div className="resto-metric">
                     <div className="resto-metric-label">Ticket promedio</div>
@@ -133,14 +134,19 @@ export default function AdminRestauranteReportes() {
                     {salesSummary.length === 0 ? (
                         <div className="resto-empty">No hay ventas en el periodo.</div>
                     ) : (
-                        <div className="resto-chart-bars">
-                            {salesSummary.map((item) => (
-                                <div key={item.date} className="resto-bar">
-                                    <div className="resto-bar-value" style={{ height: `${Math.min(80, Number(item.totalSales || 0) / 20)}px` }}></div>
-                                    <div className="resto-bar-label">{item.date.slice(5)}</div>
-                                </div>
-                            ))}
-                        </div>
+                        <ResponsiveContainer width="100%" height={260}>
+                            <BarChart data={salesSummary} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ebe1d5" vertical={false} />
+                                <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 12, fill: '#8c8178' }} axisLine={{ stroke: '#ebe1d5' }} tickLine={false} />
+                                <YAxis tick={{ fontSize: 12, fill: '#8c8178' }} axisLine={false} tickLine={false} width={40} />
+                                <Tooltip
+                                    formatter={(value) => [`Bs ${formatMoney(value)}`, "Ventas"]}
+                                    labelFormatter={(label) => `Fecha: ${label}`}
+                                    contentStyle={{ background: '#ffffff', border: '1px solid #ebe1d5', borderRadius: 12 }}
+                                />
+                                <Bar dataKey="totalSales" fill="#e4531f" radius={[8, 8, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
                     )}
                 </div>
                 <div className="resto-top">
@@ -240,29 +246,6 @@ export default function AdminRestauranteReportes() {
                     font-weight: 700;
                     margin-bottom: 12px;
                     color: #211a15;
-                }
-                .resto-chart-bars {
-                    display: flex;
-                    align-items: flex-end;
-                    gap: 12px;
-                    height: 180px;
-                }
-                .resto-bar {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 8px;
-                    flex: 1;
-                }
-                .resto-bar-value {
-                    width: 100%;
-                    border-radius: 10px;
-                    background: #e4531f;
-                    min-height: 16px;
-                }
-                .resto-bar-label {
-                    font-size: 0.7rem;
-                    color: #8c8178;
                 }
                 .resto-top-list {
                     display: grid;

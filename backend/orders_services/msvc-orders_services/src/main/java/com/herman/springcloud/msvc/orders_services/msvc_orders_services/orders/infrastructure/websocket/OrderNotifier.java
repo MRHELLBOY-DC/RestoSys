@@ -20,4 +20,15 @@ public class OrderNotifier {
                 OrderResponse.fromDomain(order)
         );
     }
+
+    public void notifyArrival(Order order) {
+        messagingTemplate.convertAndSendToUser(
+                order.getClientId().toString(),
+                "/queue/notifications",
+                new ArrivalNotification(order.getId().toString(), order.getOrderCode(), "Tu repartidor ha llegado a tu direccion")
+        );
+    }
+
+    public record ArrivalNotification(String orderId, String orderCode, String message) {
+    }
 }

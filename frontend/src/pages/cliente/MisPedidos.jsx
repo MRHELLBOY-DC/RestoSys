@@ -13,6 +13,7 @@ const STATUS_COLOR = {
     RECIBIDO: '#17a2b8',
     PREPARANDO: '#fd7e14',
     LISTO: '#28a745',
+    EN_CAMINO: '#6f42c1',
     ENTREGADO: '#20c997',
     CANCELADO: '#dc3545',
 };
@@ -21,11 +22,12 @@ const STATUS_LABEL = {
     RECIBIDO: 'Recibido',
     PREPARANDO: 'Preparando',
     LISTO: 'Listo',
+    EN_CAMINO: 'En camino',
     ENTREGADO: 'Entregado',
     CANCELADO: 'Cancelado',
 };
 
-const ORDER_TYPE_LABEL = { MESA: 'En mesa', PICKUP: 'Para llevar' };
+const ORDER_TYPE_LABEL = { MESA: 'En mesa', PICKUP: 'Para llevar', DELIVERY: 'Delivery' };
 const PAYMENT_STATUS_LABEL = { PENDIENTE: 'Pendiente', PAGADO: 'Pagado' };
 const PAGE_SIZE = 6;
 
@@ -37,6 +39,7 @@ export default function MisPedidos() {
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [arrivalNotice, setArrivalNotice] = useState(null);
     const navigate = useNavigate();
 
     const totalPages = Math.max(1, Math.ceil(pedidos.length / PAGE_SIZE));
@@ -100,6 +103,7 @@ export default function MisPedidos() {
         enabled: !!user,
         onConnect: fetchPedidos,
         onOrderUpdate: applyOrderUpdate,
+        onNotification: (notification) => setArrivalNotice(notification),
     });
 
     if (loading) {
@@ -138,6 +142,16 @@ export default function MisPedidos() {
                         </button>
                     </div>
                 </section>
+
+                {arrivalNotice && (
+                    <div
+                        className="alert border-0 mb-4 d-flex align-items-center justify-content-between gap-3"
+                        style={{ background: '#f1e9fb', color: '#6f42c1', borderRadius: 14 }}
+                    >
+                        <span><i className="fa-solid fa-bell me-2" />{arrivalNotice.message} ({arrivalNotice.orderCode})</span>
+                        <button type="button" className="btn-close" onClick={() => setArrivalNotice(null)} aria-label="Cerrar" />
+                    </div>
+                )}
 
                 {error && (
                     <div className="alert mb-4" style={{ background: '#fff0ef', border: '1px solid #f5c5c1', color: '#9d221c', borderRadius: 14 }}>
@@ -204,10 +218,28 @@ export default function MisPedidos() {
                                         ))}
                                     </div>
 
+                                    {pedido.type === 'DELIVERY' && (
+                                        <div className="d-flex justify-content-between mb-2 small">
+                                            <span className="client-muted">Direccion</span>
+                                            <span className="fw-semibold text-end">{pedido.deliveryAddress || '-'}</span>
+                                        </div>
+                                    )}
+
                                     <div className="d-flex justify-content-between align-items-center fw-bold pt-2">
                                         <span>Total</span>
                                         <span className="h5 mb-0" style={{ color: '#e4531f' }}>Bs {Number(pedido.totalAmount).toFixed(2)}</span>
                                     </div>
+
+                                    {pedido.type === 'DELIVERY' && pedido.status === 'EN_CAMINO' && (
+                                        <button
+                                            onClick={() => navigate(`/mis-pedidos/${pedido.id}/ruta`)}
+                                            className="btn w-100 mt-3 fw-semibold small"
+                                            style={{ background: '#f1e9fb', border: '1px solid #d9c6f2', color: '#6f42c1', borderRadius: 12 }}
+                                        >
+                                            <i className="fa fa-route me-2" />
+                                            Ver ruta en vivo
+                                        </button>
+                                    )}
 
                                     {payments[pedido.id]?.receipt && (
                                         <div className="d-flex gap-2 mt-3">

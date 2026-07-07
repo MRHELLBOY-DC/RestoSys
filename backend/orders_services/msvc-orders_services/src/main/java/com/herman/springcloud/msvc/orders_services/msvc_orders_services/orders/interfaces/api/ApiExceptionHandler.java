@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -14,6 +15,14 @@ public class ApiExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         problemDetail.setTitle("Regla de negocio invalida");
         problemDetail.setDetail(exception.getMessage());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ProblemDetail handleResponseStatusException(ResponseStatusException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(exception.getStatusCode());
+        problemDetail.setTitle(exception.getReason());
+        problemDetail.setDetail(exception.getReason());
         return problemDetail;
     }
 

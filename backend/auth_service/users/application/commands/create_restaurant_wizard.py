@@ -21,6 +21,7 @@ class CreateRestaurantWizardCommand(Command):
     restaurant_phone: Optional[str] = None
     restaurant_lat: Optional[float] = None
     restaurant_lng: Optional[float] = None
+    restaurant_delivery_fee: Optional[float] = None
     restaurant_logo: Optional[Any] = None
     actor_username: Optional[str] = None
 
@@ -54,6 +55,7 @@ class CreateRestaurantWizardCommandHandler(CommandHandler):
                 phone=command.restaurant_phone,
                 lat=command.restaurant_lat,
                 lng=command.restaurant_lng,
+                delivery_fee=command.restaurant_delivery_fee,
                 logo=command.restaurant_logo,
                 actor_username=command.actor_username,
             ))

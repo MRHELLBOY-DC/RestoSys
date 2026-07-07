@@ -37,7 +37,8 @@ public class CreateOrderCommandHandler {
                 ))
                 .toList();
 
-        Order order = Order.create(command.restaurantId(), command.clientId(), command.type(), command.tableNumber(), items);
+        Order order = Order.create(command.restaurantId(), command.clientId(), command.type(), command.tableNumber(),
+                command.deliveryAddress(), command.deliveryLat(), command.deliveryLng(), command.deliveryFee(), items);
         List<DomainEvent> events = order.pullDomainEvents();
         Order savedOrder = orderRepository.save(order);
         events.forEach(eventPublisher::publish);

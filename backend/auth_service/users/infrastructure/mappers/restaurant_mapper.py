@@ -20,6 +20,7 @@ class RestaurantMapper(BaseMapper[DomainRestaurant, DjangoRestaurant]):
             phone=django_restaurant.phone,
             lat=django_restaurant.lat,
             lng=django_restaurant.lng,
+            delivery_fee=float(django_restaurant.delivery_fee) if django_restaurant.delivery_fee is not None else None,
             logo=django_restaurant.logo,
         )
     
@@ -35,5 +36,6 @@ class RestaurantMapper(BaseMapper[DomainRestaurant, DjangoRestaurant]):
             phone=domain_restaurant.phone,
             lat=domain_restaurant.lat,
             lng=domain_restaurant.lng,
+            delivery_fee=domain_restaurant.delivery_fee,
             logo=domain_restaurant.logo,
         )

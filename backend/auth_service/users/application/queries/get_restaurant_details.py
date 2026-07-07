@@ -58,6 +58,7 @@ class GetRestaurantDetailsQueryHandler(QueryHandler):
                 phone=restaurant.phone,
                 lat=restaurant.lat,
                 lng=restaurant.lng,
+                delivery_fee=restaurant.delivery_fee,
                 logo=restaurant.logo,
             )
         
@@ -76,6 +77,7 @@ class GetRestaurantDetailsQueryHandler(QueryHandler):
                 phone=restaurant.phone,
                 lat=restaurant.lat,
                 lng=restaurant.lng,
+                delivery_fee=restaurant.delivery_fee,
                 logo=restaurant.logo,
             )
         
@@ -94,6 +96,7 @@ class GetRestaurantDetailsQueryHandler(QueryHandler):
                 phone=restaurant.phone,
                 lat=restaurant.lat,
                 lng=restaurant.lng,
+                delivery_fee=restaurant.delivery_fee,
                 logo=restaurant.logo,
             )
         

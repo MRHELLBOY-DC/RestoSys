@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { useAuth } from "../../hooks/useAuth";
+import { useOrdersSocket } from "../../hooks/useOrdersSocket";
 import { getPublicRestaurantes } from "../../services/api";
+import { getOrdersByClient } from "../../services/ordersApi";
 import { authMediaUrl } from "../../services/mediaUrl";
 import "../../styles/client-theme.css";
+
+const toUUID = (id) => `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`;
 
 export default function ClienteDashboard() {
     const { user, loading } = useAuth(['cliente']);
@@ -12,6 +16,8 @@ export default function ClienteDashboard() {
     const [restaurantes, setRestaurantes] = useState([]);
     const [loadingRest, setLoadingRest] = useState(true);
     const [search, setSearch] = useState("");
+    const [enCaminoOrder, setEnCaminoOrder] = useState(null);
+    const [arrivalNotice, setArrivalNotice] = useState(null);
 
     useEffect(() => {
         getPublicRestaurantes()
@@ -19,6 +25,31 @@ export default function ClienteDashboard() {
             .catch(() => {})
             .finally(() => setLoadingRest(false));
     }, []);
+
+    const fetchEnCaminoOrder = () => {
+        if (!user) return;
+        getOrdersByClient(toUUID(user.id))
+            .then(data => setEnCaminoOrder((data || []).find(p => p.type === 'DELIVERY' && p.status === 'EN_CAMINO') || null))
+            .catch(() => {});
+    };
+
+    useEffect(() => {
+        fetchEnCaminoOrder();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user]);
+
+    useOrdersSocket({
+        enabled: !!user,
+        onConnect: fetchEnCaminoOrder,
+        onOrderUpdate: (updated) => {
+            setEnCaminoOrder(prev => {
+                if (updated.type === 'DELIVERY' && updated.status === 'EN_CAMINO') return updated;
+                if (prev?.id === updated.id) return null;
+                return prev;
+            });
+        },
+        onNotification: (notification) => setArrivalNotice(notification),
+    });
 
     if (loading) return (
         <div className="client-shell d-flex flex-column">
@@ -41,6 +72,16 @@ export default function ClienteDashboard() {
             <Navbar />
 
             <main className="container py-4 py-lg-5 flex-grow-1">
+                {arrivalNotice && (
+                    <div
+                        className="alert border-0 mb-4 d-flex align-items-center justify-content-between gap-3"
+                        style={{ background: '#f1e9fb', color: '#6f42c1', borderRadius: 14 }}
+                    >
+                        <span><i className="fa-solid fa-bell me-2" />{arrivalNotice.message} ({arrivalNotice.orderCode})</span>
+                        <button type="button" className="btn-close" onClick={() => setArrivalNotice(null)} aria-label="Cerrar" />
+                    </div>
+                )}
+
                 <section className="client-hero p-4 p-lg-5 mb-4">
                     <div className="row align-items-center g-4">
                         <div className="col-12 col-lg-7">
@@ -74,6 +115,27 @@ export default function ClienteDashboard() {
                         </div>
                     </div>
                 </section>
+
+                {enCaminoOrder && (
+                    <section
+                        className="client-card p-4 mb-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
+                        style={{ background: '#f1e9fb', border: '1px solid #d9c6f2' }}
+                    >
+                        <div>
+                            <div className="client-kicker mb-1" style={{ color: '#6f42c1' }}>Delivery en camino</div>
+                            <h2 className="h5 mb-1" style={{ color: '#6f42c1' }}>Tu pedido {enCaminoOrder.orderCode} va en camino</h2>
+                            <p className="client-muted mb-0 small">{enCaminoOrder.deliveryAddress}</p>
+                        </div>
+                        <button
+                            onClick={() => navigate(`/mis-pedidos/${enCaminoOrder.id}/ruta`)}
+                            className="btn fw-semibold px-4 py-2 d-inline-flex align-items-center gap-2"
+                            style={{ background: '#6f42c1', color: '#fff', border: 'none', borderRadius: 12 }}
+                        >
+                            <i className="fa fa-route" />
+                            Ver ruta en vivo
+                        </button>
+                    </section>
+                )}
 
                 <section>
                     <div className="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4">

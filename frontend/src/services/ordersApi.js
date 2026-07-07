@@ -29,6 +29,11 @@ export const changeOrderStatus = async (orderId, status) => {
     return res.data;
 };
 
+export const notifyArrival = async (orderId) => {
+    const res = await client.patch(`/api/orders/${orderId}/notify-arrival`);
+    return res.data;
+};
+
 export const getOrdersByClient = async (clientId) => {
     const res = await client.get(`/api/orders/client/${clientId}`);
     return res.data;

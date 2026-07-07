@@ -6,14 +6,16 @@ import { getEnv } from "../services/apiClient";
 const API_GATEWAY = getEnv("VITE_API_GATEWAY_URL", "http://localhost:8080");
 
 // Subscribes to real-time order updates for the logged-in client instead of polling the REST API.
-export function useOrdersSocket({ enabled, onConnect, onOrderUpdate }) {
+export function useOrdersSocket({ enabled, onConnect, onOrderUpdate, onNotification }) {
     const onConnectRef = useRef(onConnect);
     const onOrderUpdateRef = useRef(onOrderUpdate);
+    const onNotificationRef = useRef(onNotification);
 
     useEffect(() => {
         onConnectRef.current = onConnect;
         onOrderUpdateRef.current = onOrderUpdate;
-    }, [onConnect, onOrderUpdate]);
+        onNotificationRef.current = onNotification;
+    }, [onConnect, onOrderUpdate, onNotification]);
 
     useEffect(() => {
         if (!enabled) return undefined;
@@ -28,6 +30,13 @@ export function useOrdersSocket({ enabled, onConnect, onOrderUpdate }) {
                 client.subscribe("/user/queue/orders", (message) => {
                     try {
                         onOrderUpdateRef.current(JSON.parse(message.body));
+                    } catch {
+                        // ignore malformed payload
+                    }
+                });
+                client.subscribe("/user/queue/notifications", (message) => {
+                    try {
+                        onNotificationRef.current?.(JSON.parse(message.body));
                     } catch {
                         // ignore malformed payload
                     }

@@ -13,6 +13,7 @@ class CreateRestaurantCommand(Command):
     phone: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    delivery_fee: Optional[float] = None
     logo: Optional[Any] = None  # Permitimos archivo o string
     actor_username: Optional[str] = None
 
@@ -41,7 +42,8 @@ class CreateRestaurantCommandHandler(CommandHandler):
                 actor_username=command.actor_username,
                 phone=command.phone,
                 lat=command.lat,
-                lng=command.lng
+                lng=command.lng,
+                delivery_fee=command.delivery_fee
             )
         else:
 
@@ -52,6 +54,7 @@ class CreateRestaurantCommandHandler(CommandHandler):
                 phone=command.phone,
                 lat=command.lat,
                 lng=command.lng,
+                delivery_fee=command.delivery_fee,
                 logo=command.logo
             )
 

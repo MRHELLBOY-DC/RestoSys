@@ -25,11 +25,15 @@ import RestauranteDashboard from "./pages/restaurante/RestauranteDashboard";
 import RestaurantePedidos from "./pages/restaurante/RestaurantePedidos";
 import RestaurantePagos from "./pages/restaurante/RestaurantePagos";
 
+// Repartidor
+import RepartidorPedidos from "./pages/repartidor/RepartidorPedidos";
+
 // Cliente
 import ClienteDashboard from "./pages/cliente/ClienteDashboard";
 import Menu from "./pages/cliente/Menu";
 import Carrito from "./pages/cliente/Carrito";
 import MisPedidos from "./pages/cliente/MisPedidos";
+import SeguimientoPedido from "./pages/cliente/SeguimientoPedido";
 import RestauranteMenuPage from "./pages/cliente/RestauranteMenuPage";
 
 // Shared
@@ -48,6 +52,7 @@ function ProtectedRoute({ children, allowedRoles }) {
         if (user.role === 'admin') return <Navigate to="/admin/dashboard" />;
         if (user.role === 'restaurante') return <Navigate to="/admin-restaurante/dashboard" />;
         if (user.role === 'empleado') return <Navigate to="/restaurante/dashboard" />;
+        if (user.role === 'repartidor') return <Navigate to="/repartidor/pedidos" />;
         return <Navigate to="/cliente/dashboard" />;
     }
     
@@ -86,6 +91,11 @@ function App() {
             <Route path="/mis-pedidos" element={
                 <ProtectedRoute allowedRoles={['cliente']}>
                     <MisPedidos />
+                </ProtectedRoute>
+            } />
+            <Route path="/mis-pedidos/:orderId/ruta" element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                    <SeguimientoPedido />
                 </ProtectedRoute>
             } />
             
@@ -168,6 +178,15 @@ function App() {
             <Route path="/restaurante/pagos" element={
                 <ProtectedRoute allowedRoles={['empleado']}>
                     <RestaurantePagos />
+                </ProtectedRoute>
+            } />
+
+            {/* ============================================ */}
+            {/* REPARTIDOR - Solo entregas delivery */}
+            {/* ============================================ */}
+            <Route path="/repartidor/pedidos" element={
+                <ProtectedRoute allowedRoles={['repartidor']}>
+                    <RepartidorPedidos />
                 </ProtectedRoute>
             } />
         </Routes>

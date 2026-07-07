@@ -361,6 +361,7 @@ def admin_restaurantes(request):
             phone = request.data.get('phone')
             lat = request.data.get('lat')
             lng = request.data.get('lng')
+            delivery_fee = request.data.get('delivery_fee')
             logo = request.FILES.get('logo')
 
             if not name:
@@ -372,6 +373,7 @@ def admin_restaurantes(request):
                 phone=phone if phone else None,
                 lat=float(lat) if lat else None,
                 lng=float(lng) if lng else None,
+                delivery_fee=float(delivery_fee) if delivery_fee else None,
                 logo=logo,
                 actor_username=request.user.username
             )
@@ -384,6 +386,7 @@ def admin_restaurantes(request):
                 'phone': saved.phone,
                 'lat': saved.lat,
                 'lng': saved.lng,
+                'delivery_fee': saved.delivery_fee,
                 'logo': saved.logo,
             }, status=status.HTTP_201_CREATED)
         
@@ -436,6 +439,7 @@ def admin_restaurante_detail(request, restaurante_id):
             phone = request.data.get('phone')
             lat = request.data.get('lat')
             lng = request.data.get('lng')
+            delivery_fee = request.data.get('delivery_fee')
             logo_file = request.FILES.get('logo')
             logo = logo_file if logo_file else request.data.get('logo')
 
@@ -446,6 +450,7 @@ def admin_restaurante_detail(request, restaurante_id):
                 phone=phone if phone else None,
                 lat=float(lat) if lat else None,
                 lng=float(lng) if lng else None,
+                delivery_fee=float(delivery_fee) if delivery_fee else None,
                 logo=logo,
                 actor_username=request.user.username
             )
@@ -458,6 +463,7 @@ def admin_restaurante_detail(request, restaurante_id):
                 'phone': saved.phone,
                 'lat': saved.lat,
                 'lng': saved.lng,
+                'delivery_fee': saved.delivery_fee,
                 'logo': saved.logo,
             })
         
@@ -695,6 +701,7 @@ def wizard_restaurante(request):
     try:
         lat = request.data.get('restaurant_lat')
         lng = request.data.get('restaurant_lng')
+        delivery_fee = request.data.get('restaurant_delivery_fee')
         command = CreateRestaurantWizardCommand(
             user_email=request.data.get('user_email'),
             user_password=request.data.get('user_password'),
@@ -705,6 +712,7 @@ def wizard_restaurante(request):
             restaurant_phone=request.data.get('restaurant_phone') or None,
             restaurant_lat=float(lat) if lat else None,
             restaurant_lng=float(lng) if lng else None,
+            restaurant_delivery_fee=float(delivery_fee) if delivery_fee else None,
             restaurant_logo=request.FILES.get('restaurant_logo'),
             actor_username=request.user.username,
         )
@@ -725,6 +733,7 @@ def wizard_restaurante(request):
                 'phone': saved_restaurant.phone,
                 'lat': saved_restaurant.lat,
                 'lng': saved_restaurant.lng,
+                'delivery_fee': saved_restaurant.delivery_fee,
                 'logo': saved_restaurant.logo,
             },
         }, status=status.HTTP_201_CREATED)

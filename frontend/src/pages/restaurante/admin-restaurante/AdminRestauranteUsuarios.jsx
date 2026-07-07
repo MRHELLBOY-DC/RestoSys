@@ -24,7 +24,7 @@ export default function AdminRestauranteUsuarios() {
         full_name: "",
         email: "",
         password: "",
-        role: "cliente",
+        role: "empleado",
         restaurante_id: ""
     });
 
@@ -350,6 +350,7 @@ export default function AdminRestauranteUsuarios() {
                 setForm={setForm}
                 restaurantes={restaurantes}
                 loading={submitting}
+                restrictToEmpleadoRepartidor
             />
         </>
     );

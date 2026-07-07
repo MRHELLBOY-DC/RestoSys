@@ -18,13 +18,18 @@ public class Order extends AggregateRoot {
     private final String orderCode;
     private final OrderType type;
     private final String tableNumber;
+    private final String deliveryAddress;
+    private final Double deliveryLat;
+    private final Double deliveryLng;
+    private final BigDecimal deliveryFee;
     private final List<OrderItem> items;
     private final Instant createdAt;
     private OrderStatus status;
     private PaymentStatus paymentStatus;
     private Instant updatedAt;
 
-    private Order(UUID id, UUID restaurantId, UUID clientId, String orderCode, OrderType type, String tableNumber, List<OrderItem> items,
+    private Order(UUID id, UUID restaurantId, UUID clientId, String orderCode, OrderType type, String tableNumber,
+                  String deliveryAddress, Double deliveryLat, Double deliveryLng, BigDecimal deliveryFee, List<OrderItem> items,
                   OrderStatus status, PaymentStatus paymentStatus, Instant createdAt, Instant updatedAt) {
         super(id);
         if (restaurantId == null) {
@@ -39,6 +44,9 @@ public class Order extends AggregateRoot {
         if (type == OrderType.MESA && (tableNumber == null || tableNumber.isBlank())) {
             throw new DomainException("El numero de mesa es obligatorio para pedidos en mesa");
         }
+        if (type == OrderType.DELIVERY && (deliveryAddress == null || deliveryAddress.isBlank() || deliveryLat == null || deliveryLng == null)) {
+            throw new DomainException("La direccion de entrega (con coordenadas) es obligatoria para pedidos delivery");
+        }
         if (items == null || items.isEmpty()) {
             throw new DomainException("El pedido debe tener al menos un producto");
         }
@@ -47,6 +55,10 @@ public class Order extends AggregateRoot {
         this.orderCode = orderCode;
         this.type = type;
         this.tableNumber = tableNumber;
+        this.deliveryAddress = deliveryAddress;
+        this.deliveryLat = deliveryLat;
+        this.deliveryLng = deliveryLng;
+        this.deliveryFee = deliveryFee == null ? BigDecimal.ZERO : deliveryFee;
         this.items = new ArrayList<>(items);
         this.status = status == null ? OrderStatus.RECIBIDO : status;
         this.paymentStatus = paymentStatus == null ? PaymentStatus.PENDIENTE : paymentStatus;
@@ -54,16 +66,20 @@ public class Order extends AggregateRoot {
         this.updatedAt = updatedAt == null ? this.createdAt : updatedAt;
     }
 
-    public static Order create(UUID restaurantId, UUID clientId, OrderType type, String tableNumber, List<OrderItem> items) {
-        Order order = new Order(UUID.randomUUID(), restaurantId, clientId, generateOrderCode(), type, tableNumber, items,
+    public static Order create(UUID restaurantId, UUID clientId, OrderType type, String tableNumber,
+                                String deliveryAddress, Double deliveryLat, Double deliveryLng, BigDecimal deliveryFee, List<OrderItem> items) {
+        Order order = new Order(UUID.randomUUID(), restaurantId, clientId, generateOrderCode(), type, tableNumber,
+                deliveryAddress, deliveryLat, deliveryLng, deliveryFee, items,
                 OrderStatus.RECIBIDO, PaymentStatus.PENDIENTE, Instant.now(), Instant.now());
         order.addDomainEvent(new OrderCreatedEvent(order.getId(), order.restaurantId, order.clientId, order.orderCode, order.totalAmount(), Instant.now()));
         return order;
     }
 
-    public static Order restore(UUID id, UUID restaurantId, UUID clientId, String orderCode, OrderType type, String tableNumber, List<OrderItem> items,
+    public static Order restore(UUID id, UUID restaurantId, UUID clientId, String orderCode, OrderType type, String tableNumber,
+                                String deliveryAddress, Double deliveryLat, Double deliveryLng, BigDecimal deliveryFee, List<OrderItem> items,
                                 OrderStatus status, PaymentStatus paymentStatus, Instant createdAt, Instant updatedAt) {
-        return new Order(id, restaurantId, clientId, orderCode, type, tableNumber, items, status, paymentStatus, createdAt, updatedAt);
+        return new Order(id, restaurantId, clientId, orderCode, type, tableNumber, deliveryAddress, deliveryLat, deliveryLng, deliveryFee,
+                items, status, paymentStatus, createdAt, updatedAt);
     }
 
     public void changeStatus(OrderStatus newStatus) {
@@ -73,7 +89,7 @@ public class Order extends AggregateRoot {
         if (status == OrderStatus.CANCELADO || status == OrderStatus.ENTREGADO) {
             throw new DomainException("No se puede cambiar un pedido finalizado");
         }
-        if (!isValidTransition(status, newStatus)) {
+        if (!isValidTransition(type, status, newStatus)) {
             throw new DomainException("Transicion de estado invalida: " + status + " -> " + newStatus);
         }
         OrderStatus previousStatus = status;
@@ -92,16 +108,18 @@ public class Order extends AggregateRoot {
     }
 
     public BigDecimal totalAmount() {
-        return items.stream()
+        BigDecimal itemsTotal = items.stream()
                 .map(OrderItem::subtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return itemsTotal.add(deliveryFee);
     }
 
-    private static boolean isValidTransition(OrderStatus currentStatus, OrderStatus newStatus) {
+    private static boolean isValidTransition(OrderType type, OrderStatus currentStatus, OrderStatus newStatus) {
         return switch (currentStatus) {
             case RECIBIDO -> newStatus == OrderStatus.PREPARANDO || newStatus == OrderStatus.CANCELADO;
             case PREPARANDO -> newStatus == OrderStatus.LISTO || newStatus == OrderStatus.CANCELADO;
-            case LISTO -> newStatus == OrderStatus.ENTREGADO;
+            case LISTO -> type == OrderType.DELIVERY ? newStatus == OrderStatus.EN_CAMINO : newStatus == OrderStatus.ENTREGADO;
+            case EN_CAMINO -> newStatus == OrderStatus.ENTREGADO;
             case ENTREGADO, CANCELADO -> false;
         };
     }
@@ -128,6 +146,22 @@ public class Order extends AggregateRoot {
 
     public String getTableNumber() {
         return tableNumber;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public Double getDeliveryLat() {
+        return deliveryLat;
+    }
+
+    public Double getDeliveryLng() {
+        return deliveryLng;
+    }
+
+    public BigDecimal getDeliveryFee() {
+        return deliveryFee;
     }
 
     public List<OrderItem> getItems() {

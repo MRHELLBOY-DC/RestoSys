@@ -136,6 +136,7 @@ class RestaurantRepository(RestaurantRepositoryPort):
                 existing.phone = domain_restaurant.phone
                 existing.lat = domain_restaurant.lat
                 existing.lng = domain_restaurant.lng
+                existing.delivery_fee = domain_restaurant.delivery_fee
                 existing.logo = domain_restaurant.logo
                 django_restaurant = existing
             except DjangoRestaurant.DoesNotExist:
@@ -179,9 +180,9 @@ class RestaurantRepository(RestaurantRepositoryPort):
         
     @staticmethod
     def create_with_logo(name: str, address: str, logo_file: Any, actor_username: str, phone: Optional[str] = None,
-                          lat: Optional[float] = None, lng: Optional[float] = None) -> DomainRestaurant:
+                          lat: Optional[float] = None, lng: Optional[float] = None, delivery_fee: Optional[float] = None) -> DomainRestaurant:
             # 1. Crear instancia base en Django
-            model = DjangoRestaurant.objects.create(name=name, address=address, phone=phone, lat=lat, lng=lng)
+            model = DjangoRestaurant.objects.create(name=name, address=address, phone=phone, lat=lat, lng=lng, delivery_fee=delivery_fee)
             
             # 2. Lógica de almacenamiento
             ext = os.path.splitext(logo_file.name)[1]
@@ -195,7 +196,7 @@ class RestaurantRepository(RestaurantRepositoryPort):
     
     @staticmethod
     def update_with_logo(restaurant_id: int, name: str, address: str, logo_file: Any, actor_username: str, phone: Optional[str] = None,
-                         lat: Optional[float] = None, lng: Optional[float] = None) -> DomainRestaurant:
+                         lat: Optional[float] = None, lng: Optional[float] = None, delivery_fee: Optional[float] = None) -> DomainRestaurant:
         """Nuevo método para actualizar con archivo opcional"""
         model = DjangoRestaurant.objects.get(id=restaurant_id)
         model.name = name
@@ -203,6 +204,7 @@ class RestaurantRepository(RestaurantRepositoryPort):
         model.phone = phone
         model.lat = lat
         model.lng = lng
+        model.delivery_fee = delivery_fee
         
         # Solo actualizamos el logo si viene un archivo nuevo
         if logo_file:

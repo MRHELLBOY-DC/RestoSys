@@ -15,6 +15,10 @@ public class OrderMapper {
         entity.setOrderCode(order.getOrderCode());
         entity.setType(order.getType());
         entity.setTableNumber(order.getTableNumber());
+        entity.setDeliveryAddress(order.getDeliveryAddress());
+        entity.setDeliveryLat(order.getDeliveryLat());
+        entity.setDeliveryLng(order.getDeliveryLng());
+        entity.setDeliveryFee(order.getDeliveryFee());
         entity.setStatus(order.getStatus());
         entity.setPaymentStatus(order.getPaymentStatus());
         entity.setTotalAmount(order.totalAmount());
@@ -40,6 +44,10 @@ public class OrderMapper {
                 entity.getOrderCode(),
                 entity.getType(),
                 entity.getTableNumber(),
+                entity.getDeliveryAddress(),
+                entity.getDeliveryLat(),
+                entity.getDeliveryLng(),
+                entity.getDeliveryFee(),
                 items,
                 entity.getStatus(),
                 entity.getPaymentStatus(),

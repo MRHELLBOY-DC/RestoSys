@@ -6,8 +6,14 @@ from users.application.ports.user_repository_port import UserRepositoryPort
 from users.application.ports.user_restaurant_repository_port import UserRestaurantRepositoryPort
 from users.application.ports.event_publisher_port import EventPublisherPort
 from users.application.ports.hashing_port import HashingPort
-from users.domain.exceptions import UserAlreadyExistsException, RestaurantNotFoundException
+from users.domain.exceptions import (
+    UserAlreadyExistsException,
+    RestaurantNotFoundException,
+    InsufficientPermissionsException,
+)
 from .base_command import Command, CommandHandler
+
+ROLES_ASIGNABLES_POR_RESTAURANTE = ('empleado', 'repartidor')
 
 
 @dataclass
@@ -39,7 +45,26 @@ class CreateUserCommandHandler(CommandHandler):
     
     def handle(self, command: CreateUserCommand) -> DomainUser:
         """Execute the command - creates a new user"""
-        
+
+        # 0. Un Admin Restaurante solo puede crear empleados/repartidores de su propio restaurante
+        actor = self.user_repo.get_by_username(command.actor_username) if command.actor_username else None
+        assign_restaurant_id = command.assign_restaurant_id
+        if actor and actor.is_restaurante():
+            if command.role not in ROLES_ASIGNABLES_POR_RESTAURANTE:
+                raise InsufficientPermissionsException(actor.id, 'empleado o repartidor')
+            actor_restaurant = self.user_restaurant_repo.get_by_user_id(actor.id)
+            if not actor_restaurant:
+                raise RestaurantNotFoundException(actor.id)
+            assign_restaurant_id = actor_restaurant.restaurant_id
+
+        # 0.1 Validar que el restaurante a asignar exista ANTES de crear el usuario
+        # (evita dejar un usuario huerfano si el restaurante no existe)
+        if assign_restaurant_id:
+            from users.infrastructure.repositories import RestaurantRepository
+            restaurant_repo = RestaurantRepository()
+            if not restaurant_repo.get_by_id(assign_restaurant_id):
+                raise RestaurantNotFoundException(assign_restaurant_id)
+
         # 1. Validar unicidad (regla que necesita repositorio)
         if self.user_repo.get_by_email(command.email):
             raise UserAlreadyExistsException("email", command.email)
@@ -71,17 +96,9 @@ class CreateUserCommandHandler(CommandHandler):
         # 4. Guardar en repositorio
         saved_user = self.user_repo.save(domain_user)
         
-        # 5. Asignar restaurante si se proporcionó (SIN CONTENEDOR)
-        if command.assign_restaurant_id:
-            # Verificar que el restaurante existe
-            from users.infrastructure.repositories import RestaurantRepository
-            restaurant_repo = RestaurantRepository()
-            restaurant = restaurant_repo.get_by_id(command.assign_restaurant_id)
-            if not restaurant:
-                raise RestaurantNotFoundException(command.assign_restaurant_id)
-            
-            # Asignar directamente
-            self.user_restaurant_repo.assign(saved_user.id, command.assign_restaurant_id)
+        # 5. Asignar restaurante si se proporcionó (ya validado que existe)
+        if assign_restaurant_id:
+            self.user_restaurant_repo.assign(saved_user.id, assign_restaurant_id)
         
         # 6. Registrar evento de creación
         saved_user.record_created()

@@ -114,7 +114,8 @@ export default function RestauranteMenuPage() {
                 totalPrice: Number(product.price) + extrasTotal,
                 quantity: 1,
                 restaurant_id: parseInt(id),
-                restaurant_name: restaurante?.name
+                restaurant_name: restaurante?.name,
+                restaurant_delivery_fee: restaurante?.delivery_fee ?? null
             });
         }
 

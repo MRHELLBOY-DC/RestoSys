@@ -19,7 +19,7 @@ public class ListActiveOrdersQueryHandler {
     public List<Order> handle(UUID restaurantId) {
         return orderRepository.findByRestaurantIdAndStatusIn(
                 restaurantId,
-                List.of(OrderStatus.RECIBIDO, OrderStatus.PREPARANDO, OrderStatus.LISTO, OrderStatus.ENTREGADO)
+                List.of(OrderStatus.RECIBIDO, OrderStatus.PREPARANDO, OrderStatus.LISTO, OrderStatus.EN_CAMINO, OrderStatus.ENTREGADO)
         );
     }
 }

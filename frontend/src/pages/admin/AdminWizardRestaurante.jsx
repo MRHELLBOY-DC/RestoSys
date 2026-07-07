@@ -14,6 +14,7 @@ const initialForm = {
     restaurant_phone: "",
     restaurant_lat: null,
     restaurant_lng: null,
+    restaurant_delivery_fee: "",
     restaurant_logo: null,
 };
 
@@ -54,6 +55,7 @@ export default function AdminWizardRestaurante() {
             formData.append("restaurant_phone", form.restaurant_phone);
             if (form.restaurant_lat != null) formData.append("restaurant_lat", form.restaurant_lat);
             if (form.restaurant_lng != null) formData.append("restaurant_lng", form.restaurant_lng);
+            if (form.restaurant_delivery_fee !== "") formData.append("restaurant_delivery_fee", form.restaurant_delivery_fee);
             if (form.restaurant_logo) {
                 formData.append("restaurant_logo", form.restaurant_logo);
             }
@@ -185,6 +187,18 @@ export default function AdminWizardRestaurante() {
                             placeholder="Ej: 70000000"
                             value={form.restaurant_phone}
                             onChange={(e) => setForm({ ...form, restaurant_phone: e.target.value })}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label small text-white-50">Costo de envío (delivery)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="form-control admin-input"
+                            placeholder="Ej: 5.00"
+                            value={form.restaurant_delivery_fee}
+                            onChange={(e) => setForm({ ...form, restaurant_delivery_fee: e.target.value })}
                         />
                     </div>
                     <div className="mb-4">

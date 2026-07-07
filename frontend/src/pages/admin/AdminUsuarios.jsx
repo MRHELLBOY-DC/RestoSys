@@ -189,6 +189,7 @@ export default function AdminUsuarios() {
             case 'admin': return 'bg-danger';
             case 'restaurante': return 'bg-warning text-dark';
             case 'empleado': return 'bg-success';
+            case 'repartidor': return 'bg-primary';
             default: return 'bg-info text-dark';
         }
     };
@@ -249,9 +250,10 @@ export default function AdminUsuarios() {
                                             </td>
                                             <td>
                                                 <span className={`badge rounded-pill ${getBadgeColor(u.role)}`}>
-                                                    {u.role === 'admin' ? 'Super Admin' : 
-                                                     u.role === 'restaurante' ? 'Admin Restaurante' : 
-                                                     u.role === 'empleado' ? 'Empleado' : 'Cliente'}
+                                                    {u.role === 'admin' ? 'Super Admin' :
+                                                     u.role === 'restaurante' ? 'Admin Restaurante' :
+                                                     u.role === 'empleado' ? 'Empleado' :
+                                                     u.role === 'repartidor' ? 'Repartidor' : 'Cliente'}
                                                 </span>
                                             </td>
                                             <td>

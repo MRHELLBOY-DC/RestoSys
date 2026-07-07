@@ -18,6 +18,7 @@ export default function AdminRestaurantes() {
         phone: "",
         lat: null,
         lng: null,
+        delivery_fee: "",
         logo: null
     });
 
@@ -57,6 +58,7 @@ export default function AdminRestaurantes() {
         formData.append("phone", form.phone);
         if (form.lat != null) formData.append("lat", form.lat);
         if (form.lng != null) formData.append("lng", form.lng);
+        if (form.delivery_fee !== "") formData.append("delivery_fee", form.delivery_fee);
         if (form.logo) {
             formData.append("logo", form.logo);
         }
@@ -67,7 +69,7 @@ export default function AdminRestaurantes() {
             } else {
                 await createRestaurante(formData);
             }
-            setForm({ name: "", address: "", phone: "", lat: null, lng: null, logo: null });
+            setForm({ name: "", address: "", phone: "", lat: null, lng: null, delivery_fee: "", logo: null });
             setEditing(null);
             setIsModalOpen(false);
             loadData();
@@ -91,14 +93,14 @@ export default function AdminRestaurantes() {
 
     const handleNew = () => {
         setEditing(null);
-        setForm({ name: "", address: "", phone: "", lat: null, lng: null, logo: null });
+        setForm({ name: "", address: "", phone: "", lat: null, lng: null, delivery_fee: "", logo: null });
         setIsModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditing(null);
-        setForm({ name: "", address: "", phone: "", lat: null, lng: null, logo: null });
+        setForm({ name: "", address: "", phone: "", lat: null, lng: null, delivery_fee: "", logo: null });
     };
 
     // Filtrar restaurantes si es Admin Restaurante (solo ve su restaurante)
@@ -150,6 +152,7 @@ export default function AdminRestaurantes() {
                                             <th>Nombre</th>
                                             <th>Direccion</th>
                                             <th>Telefono</th>
+                                            <th>Costo envio</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -181,12 +184,13 @@ export default function AdminRestaurantes() {
                                                 <td>{r.name}</td>
                                                 <td style={{ color: 'var(--admin-muted)' }}>{r.address || "Sin direccion"}</td>
                                                 <td style={{ color: 'var(--admin-muted)' }}>{r.phone || "Sin telefono"}</td>
+                                                <td style={{ color: 'var(--admin-muted)' }}>{r.delivery_fee != null ? `Bs ${Number(r.delivery_fee).toFixed(2)}` : "Sin costo"}</td>
                                                 <td>
                                                     <div className="d-flex gap-2">
                                                         {(isSuperAdmin || (isAdminRestaurante && r.id === currentUser.restaurant_id)) && (
                                                             <button className="admin-btn admin-btn-ghost" onClick={() => {
                                                                 setEditing(r.id);
-                                                                setForm({ name: r.name, address: r.address || "", phone: r.phone || "", lat: r.lat ?? null, lng: r.lng ?? null, logo: null });
+                                                                setForm({ name: r.name, address: r.address || "", phone: r.phone || "", lat: r.lat ?? null, lng: r.lng ?? null, delivery_fee: r.delivery_fee ?? "", logo: null });
                                                                 setIsModalOpen(true);
                                                             }}>Editar</button>
                                                         )}

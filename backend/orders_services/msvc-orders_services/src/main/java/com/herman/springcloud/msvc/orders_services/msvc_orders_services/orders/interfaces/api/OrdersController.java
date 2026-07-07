@@ -8,7 +8,12 @@ import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.a
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListActiveOrdersQueryHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListClientOrdersQueryHandler;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.application.queries.ListOrderHistoryQueryHandler;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.exceptions.DomainException;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.model.Order;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.model.OrderStatus;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.domain.model.OrderType;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.infrastructure.security.JwtAuthenticationFilter.AuthenticatedUserPrincipal;
+import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.infrastructure.websocket.OrderNotifier;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.ChangeOrderStatusRequest;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.CreateOrderRequest;
 import com.herman.springcloud.msvc.orders_services.msvc_orders_services.orders.interfaces.api.dto.OrderResponse;
@@ -39,19 +44,22 @@ public class OrdersController {
     private final ListActiveOrdersQueryHandler listActiveOrdersQueryHandler;
     private final ListOrderHistoryQueryHandler listOrderHistoryQueryHandler;
     private final ListClientOrdersQueryHandler listClientOrdersQueryHandler;
+    private final OrderNotifier orderNotifier;
 
     public OrdersController(CreateOrderCommandHandler createOrderHandler,
                             ChangeOrderStatusCommandHandler changeOrderStatusHandler,
                             GetOrderQueryHandler getOrderQueryHandler,
                             ListActiveOrdersQueryHandler listActiveOrdersQueryHandler,
                             ListOrderHistoryQueryHandler listOrderHistoryQueryHandler,
-                            ListClientOrdersQueryHandler listClientOrdersQueryHandler) {
+                            ListClientOrdersQueryHandler listClientOrdersQueryHandler,
+                            OrderNotifier orderNotifier) {
         this.createOrderHandler = createOrderHandler;
         this.changeOrderStatusHandler = changeOrderStatusHandler;
         this.getOrderQueryHandler = getOrderQueryHandler;
         this.listActiveOrdersQueryHandler = listActiveOrdersQueryHandler;
         this.listOrderHistoryQueryHandler = listOrderHistoryQueryHandler;
         this.listClientOrdersQueryHandler = listClientOrdersQueryHandler;
+        this.orderNotifier = orderNotifier;
     }
 
     @PostMapping
@@ -104,6 +112,16 @@ public class OrdersController {
         return OrderResponse.fromDomain(changeOrderStatusHandler.handle(new ChangeOrderStatusCommand(orderId, request.status())));
     }
 
+    @PatchMapping("/{orderId}/notify-arrival")
+    public void notifyArrival(@PathVariable UUID orderId, Authentication authentication) {
+        Order order = getOrderQueryHandler.handle(orderId);
+        authorizeRestaurantAccess(order.getRestaurantId(), authentication);
+        if (order.getType() != OrderType.DELIVERY || order.getStatus() != OrderStatus.EN_CAMINO) {
+            throw new DomainException("El pedido no esta en camino");
+        }
+        orderNotifier.notifyArrival(order);
+    }
+
     private CreateOrderCommand toCommand(CreateOrderRequest request, UUID clientId) {
         List<CreateOrderCommand.CreateOrderItemCommand> items = (request.items() == null ? List.<CreateOrderRequest.CreateOrderItemRequest>of() : request.items()).stream()
                 .map(item -> new CreateOrderCommand.CreateOrderItemCommand(
@@ -120,7 +138,8 @@ public class OrdersController {
                                 .toList()
                 ))
                 .toList();
-        return new CreateOrderCommand(request.restaurantId(), clientId, request.type(), request.tableNumber(), items);
+        return new CreateOrderCommand(request.restaurantId(), clientId, request.type(), request.tableNumber(),
+                request.deliveryAddress(), request.deliveryLat(), request.deliveryLng(), request.deliveryFee(), items);
     }
 
     private UUID authenticatedClientId(UUID requestedClientId, Authentication authentication) {
@@ -169,7 +188,7 @@ public class OrdersController {
             return;
         }
         
-        if ("empleado".equals(role) || "restaurante".equals(role)) {
+        if ("empleado".equals(role) || "restaurante".equals(role) || "repartidor".equals(role)) {
             if (userRestaurantId == null) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes restaurante asignado");
             }
@@ -178,7 +197,7 @@ public class OrdersController {
             }
             return;
         }
-        
+
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para acceder a pedidos");
     }
 

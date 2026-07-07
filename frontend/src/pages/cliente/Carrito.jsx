@@ -6,6 +6,7 @@ import Navbar from "../../components/Navbar";
 import { getCurrentUser } from "../../services/api";
 import { createOrder } from "../../services/ordersApi";
 import { createPayment, simulateQrPayment, getReceiptUrl } from "../../services/paymentsApi";
+import AddressAutocompleteMap from "../../components/AddressAutocompleteMap";
 import "../../styles/client-theme.css";
 
 const toUUID = (id) => `00000000-0000-0000-0000-${String(id).padStart(12, '0')}`;
@@ -24,6 +25,9 @@ export default function Carrito() {
 
     const [orderType, setOrderType] = useState('MESA');
     const [tableNumber, setTableNumber] = useState('');
+    const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [deliveryLat, setDeliveryLat] = useState(null);
+    const [deliveryLng, setDeliveryLng] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('CAJA');
     const [submitting, setSubmitting] = useState(false);
 
@@ -54,13 +58,17 @@ export default function Carrito() {
         const extrasTotal = (item.extras || []).reduce((s, e) => s + Number(e.extra_price || 0), 0);
         return Number(item.price) + extrasTotal;
     };
-    const getTotal = () => carrito.reduce((t, item) => t + getItemPrice(item) * (item.quantity || 1), 0);
+    const getDeliveryFee = () => orderType === 'DELIVERY' ? Number(carrito[0]?.restaurant_delivery_fee || 0) : 0;
+    const getTotal = () => carrito.reduce((t, item) => t + getItemPrice(item) * (item.quantity || 1), 0) + getDeliveryFee();
 
     const handleCheckout = async () => {
         const currentUser = getCurrentUser();
         if (!currentUser) { navigate('/login'); return; }
         if (carrito.length === 0) { alert('Tu carrito esta vacio'); return; }
         if (orderType === 'MESA' && !tableNumber.trim()) { alert('Ingresa el número de mesa'); return; }
+        if (orderType === 'DELIVERY' && (!deliveryAddress.trim() || deliveryLat == null || deliveryLng == null)) {
+            alert('Marca tu dirección de entrega en el mapa'); return;
+        }
 
         const items = carrito.map(item => ({
             productId: toUUID(item.id),
@@ -84,6 +92,10 @@ export default function Carrito() {
                 clientId: toUUID(currentUser.id),
                 type: orderType,
                 tableNumber: orderType === 'MESA' ? tableNumber.trim() : null,
+                deliveryAddress: orderType === 'DELIVERY' ? deliveryAddress.trim() : null,
+                deliveryLat: orderType === 'DELIVERY' ? deliveryLat : null,
+                deliveryLng: orderType === 'DELIVERY' ? deliveryLng : null,
+                deliveryFee: orderType === 'DELIVERY' ? getDeliveryFee() : null,
                 items,
             });
 
@@ -305,6 +317,7 @@ export default function Carrito() {
                                         {[
                                             ['MESA', 'En mesa', 'fa-chair'],
                                             ['PICKUP', 'Para llevar', 'fa-bag-shopping'],
+                                            ['DELIVERY', 'Delivery', 'fa-motorcycle'],
                                         ].map(([value, label, icon]) => (
                                             <button
                                                 key={value}
@@ -330,6 +343,27 @@ export default function Carrito() {
                                             value={tableNumber}
                                             onChange={e => setTableNumber(e.target.value)}
                                         />
+                                    </div>
+                                )}
+
+                                {orderType === 'DELIVERY' && (
+                                    <div className="mt-3">
+                                        <label className="client-kicker mb-2 d-block">Dirección de entrega</label>
+                                        <AddressAutocompleteMap
+                                            address={deliveryAddress}
+                                            lat={deliveryLat}
+                                            lng={deliveryLng}
+                                            onChange={(partial) => {
+                                                if (partial.address !== undefined) setDeliveryAddress(partial.address);
+                                                if (partial.lat !== undefined) setDeliveryLat(partial.lat);
+                                                if (partial.lng !== undefined) setDeliveryLng(partial.lng);
+                                            }}
+                                        />
+                                        {getDeliveryFee() > 0 && (
+                                            <p className="client-muted small mt-2 mb-0">
+                                                Costo de envío: Bs {getDeliveryFee().toFixed(2)}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 

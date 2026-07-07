@@ -50,6 +50,7 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     phone=r.phone,
                     lat=r.lat,
                     lng=r.lng,
+                    delivery_fee=r.delivery_fee,
                     logo=r.logo,
                 )
                 for r in restaurants
@@ -68,6 +69,7 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     phone=r.phone,
                     lat=r.lat,
                     lng=r.lng,
+                    delivery_fee=r.delivery_fee,
                     logo=r.logo,
                 )
                 for r in restaurants
@@ -96,6 +98,7 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     phone=restaurant.phone,
                     lat=restaurant.lat,
                     lng=restaurant.lng,
+                    delivery_fee=restaurant.delivery_fee,
                     logo=restaurant.logo,
                 )
             ]
@@ -123,6 +126,7 @@ class ListRestaurantsQueryHandler(QueryHandler):
                     phone=restaurant.phone,
                     lat=restaurant.lat,
                     lng=restaurant.lng,
+                    delivery_fee=restaurant.delivery_fee,
                     logo=restaurant.logo,
                 )
             ]
@@ -170,6 +174,7 @@ class GetUserRestaurantQueryHandler(QueryHandler):
                     phone=restaurant.phone,
                     lat=restaurant.lat,
                     lng=restaurant.lng,
+                    delivery_fee=restaurant.delivery_fee,
                     logo=restaurant.logo,
                 )
         return None

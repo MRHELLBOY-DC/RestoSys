@@ -11,6 +11,10 @@ public record CreateOrderRequest(
         UUID clientId,
         OrderType type,
         String tableNumber,
+        String deliveryAddress,
+        Double deliveryLat,
+        Double deliveryLng,
+        BigDecimal deliveryFee,
         List<CreateOrderItemRequest> items
 ) {
     public record CreateOrderItemRequest(

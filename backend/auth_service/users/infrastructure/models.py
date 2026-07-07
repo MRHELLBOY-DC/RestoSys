@@ -17,6 +17,7 @@ class User(AbstractUser):
         ('admin', 'Super Administrador'),
         ('restaurante', 'Administrador de Restaurante'),
         ('empleado', 'Empleado'),
+        ('repartidor', 'Repartidor'),
     )
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
@@ -38,6 +39,7 @@ class Restaurant(models.Model):
     phone = models.CharField(max_length=30, blank=True, null=True)
     lat = models.FloatField(blank=True, null=True)
     lng = models.FloatField(blank=True, null=True)
+    delivery_fee = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     logo = models.CharField(max_length=500, blank=True, null=True)
 
     class Meta:

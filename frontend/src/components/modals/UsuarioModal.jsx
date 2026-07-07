@@ -1,15 +1,16 @@
 // src/components/modals/UsuarioModal.jsx
 import { useEffect, useRef } from "react";
 
-export default function UsuarioModal({ 
-    isOpen, 
-    onClose, 
-    onSubmit, 
-    editing, 
-    form, 
-    setForm, 
+export default function UsuarioModal({
+    isOpen,
+    onClose,
+    onSubmit,
+    editing,
+    form,
+    setForm,
     restaurantes,
-    loading 
+    loading,
+    restrictToEmpleadoRepartidor = false
 }) {
     const modalRef = useRef(null);
 
@@ -146,10 +147,15 @@ export default function UsuarioModal({
                                 restaurante_id: (e.target.value === 'cliente' || e.target.value === 'admin') ? "" : form.restaurante_id
                             })}
                         >
-                            <option value="cliente" className="bg-dark text-white">Cliente</option>
                             <option value="empleado" className="bg-dark text-white">Empleado</option>
-                            <option value="restaurante" className="bg-dark text-white">Administrador de Restaurante</option>
-                            <option value="admin" className="bg-dark text-white">Super Administrador</option>
+                            <option value="repartidor" className="bg-dark text-white">Repartidor</option>
+                            {!restrictToEmpleadoRepartidor && (
+                                <>
+                                    <option value="cliente" className="bg-dark text-white">Cliente</option>
+                                    <option value="restaurante" className="bg-dark text-white">Administrador de Restaurante</option>
+                                    <option value="admin" className="bg-dark text-white">Super Administrador</option>
+                                </>
+                            )}
                         </select>
                     </div>
 

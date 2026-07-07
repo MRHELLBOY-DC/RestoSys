@@ -14,6 +14,7 @@ class RestaurantDTO:
     phone: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    delivery_fee: Optional[float] = None
     logo: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -24,5 +25,6 @@ class RestaurantDTO:
             'phone': self.phone,
             'lat': self.lat,
             'lng': self.lng,
+            'delivery_fee': self.delivery_fee,
             'logo': self.logo,
         }

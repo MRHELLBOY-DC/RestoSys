@@ -126,6 +126,18 @@ export default function RestauranteModal({
                             onChange={e => setForm({...form, phone: e.target.value})}
                         />
                     </div>
+                    <div className="mb-3">
+                        <label className="form-label small fw-bold text-white">Costo de envio (delivery)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="form-control admin-input"
+                            placeholder="Ej: 5.00"
+                            value={form.delivery_fee}
+                            onChange={e => setForm({...form, delivery_fee: e.target.value})}
+                        />
+                    </div>
                     <div className="mb-4">
                         <label className="form-label small fw-bold text-white">Logo</label>
                         <input

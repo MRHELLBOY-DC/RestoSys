@@ -17,6 +17,7 @@ class Restaurant(AggregateRoot):
     phone: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    delivery_fee: Optional[float] = None
     logo: Optional[str] = None
     
     def __post_init__(self):
@@ -92,7 +93,15 @@ class Restaurant(AggregateRoot):
         self.lat = new_lat
         self.lng = new_lng
         self.record_updated(old_data, {'lat': self.lat, 'lng': self.lng})
-    
+
+    def update_delivery_fee(self, new_delivery_fee: Optional[float]) -> None:
+        """
+        Actualiza el costo de envio del restaurante.
+        """
+        old_data = {'delivery_fee': self.delivery_fee}
+        self.delivery_fee = new_delivery_fee
+        self.record_updated(old_data, {'delivery_fee': self.delivery_fee})
+
     # ========== MÉTODOS DE EVENTOS DE DOMINIO ==========
     
     def record_created(self, actor_username: str = None) -> Dict[str, Any]:
@@ -104,6 +113,7 @@ class Restaurant(AggregateRoot):
             'phone': self.phone,
             'lat': self.lat,
             'lng': self.lng,
+            'delivery_fee': self.delivery_fee,
             'logo': self.logo,
         }
         if actor_username:
@@ -122,6 +132,7 @@ class Restaurant(AggregateRoot):
                 'phone': self.phone,
                 'lat': self.lat,
                 'lng': self.lng,
+                'delivery_fee': self.delivery_fee,
                 'logo': self.logo,
             },
         }

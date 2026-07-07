@@ -17,6 +17,7 @@ class UpdateRestaurantCommand(Command):
     phone: Optional[str] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
+    delivery_fee: Optional[float] = None
     logo: Optional[Any] = None
     actor_username: Optional[str] = None
 
@@ -47,6 +48,7 @@ class UpdateRestaurantCommandHandler(CommandHandler):
             'phone': restaurant.phone,
             'lat': restaurant.lat,
             'lng': restaurant.lng,
+            'delivery_fee': restaurant.delivery_fee,
             'logo': restaurant.logo,
         }
 
@@ -66,6 +68,10 @@ class UpdateRestaurantCommandHandler(CommandHandler):
         if command.lat is not None or command.lng is not None:
             restaurant.update_location(command.lat, command.lng)
 
+        # 6b. Actualizar costo de envio si se proporciona
+        if command.delivery_fee is not None:
+            restaurant.update_delivery_fee(command.delivery_fee)
+
         # 7. Actualizar logo si se proporciona
         if command.logo is not None:
             restaurant.update_logo(command.logo)
@@ -84,7 +90,8 @@ class UpdateRestaurantCommandHandler(CommandHandler):
                 actor_username=command.actor_username or "",
                 phone=restaurant.phone,
                 lat=restaurant.lat,
-                lng=restaurant.lng
+                lng=restaurant.lng,
+                delivery_fee=restaurant.delivery_fee
             )
         else:
             # Si es una URL o None, usar update normal
@@ -95,6 +102,7 @@ class UpdateRestaurantCommandHandler(CommandHandler):
                 phone=restaurant.phone,
                 lat=restaurant.lat,
                 lng=restaurant.lng,
+                delivery_fee=restaurant.delivery_fee,
                 logo=command.logo if command.logo is not None else restaurant.logo
             )
         
